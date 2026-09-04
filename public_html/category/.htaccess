@@ -1,0 +1,6 @@
+<ifModule mod_rewrite.c>
+RewriteEngine on
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ http://localhost:3000/category/$1 [R=302,L,NE]
+</ifModule>

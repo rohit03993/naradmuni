@@ -1,0 +1,14 @@
+# RewriteEngine On
+RewriteBase /naradmuni/
+
+# Old public PHP UI → Next.js on :3000 (paths preserved for SEO)
+RewriteRule ^$ http://localhost:3000/ [R=302,L]
+RewriteRule ^index\.php$ http://localhost:3000/ [R=302,L]
+RewriteRule ^mobile\.php$ http://localhost:3000/ [R=302,L]
+RewriteRule ^news/(.+)$ http://localhost:3000/news/$1 [R=302,L,NE]
+RewriteRule ^category/(.+)$ http://localhost:3000/category/$1 [R=302,L,NE]
+
+# Keep existing category.php fallback unused for public (Next handles categories)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^category/(.*)$ category.php?slug=$1 [L,QSA]

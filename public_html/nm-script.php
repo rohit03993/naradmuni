@@ -1,0 +1,26 @@
+<?php 
+include"admin/config.php";
+	if(isset($_POST['token'])) {
+	    
+	    $sql_u = "SELECT `token` FROM `tokens` WHERE `token`='".$_POST['token']."'";
+        $res_u = mysqli_query($con, $sql_u);
+        if (mysqli_num_rows($res_u) > 0) { echo "Sorry... Token already saved."; 
+            
+        }else{
+            require 'DbConnect.php';
+    		$db = new DbConnect;
+    		$conn = $db->connect();
+    		$cdate = date('Y-m-d');
+    		$stmt = $conn->prepare('INSERT INTO tokens VALUES(null, :token, :cdate)');
+    		$stmt->bindParam(':token', $_POST['token']);
+    		$stmt->bindParam(':cdate', $cdate);
+    		if($stmt->execute()) {
+    			echo 'Token Saved..';
+    		} else {
+    			echo 'Failed to saved token..';
+    		}
+		
+        }
+	}
+
+ ?>

@@ -1,0 +1,8 @@
+.form-inline .custom-select, .form-inline .input-group {
+    width: 100%;
+}
+.copyrights{
+    background: #000;
+    text-align: center;
+    color: #fff;
+}

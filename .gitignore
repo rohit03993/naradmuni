@@ -1,0 +1,15 @@
+﻿node_modules/
+web/node_modules/
+web/.next/
+web/.env
+web/.env.local
+web/.env*.local
+*.log
+.DS_Store
+public_html/images/news/
+public_html/userfiles/
+public_html/videos/
+*.sql
+*.sql.gz
+
+.cursor/
