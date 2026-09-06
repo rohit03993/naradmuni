@@ -2,6 +2,10 @@
 include "config.php";
 require_once __DIR__ . "/news_media.php";
 
+@set_time_limit(180);
+@ini_set("max_execution_time", "180");
+ignore_user_abort(true);
+
 header("Content-Type: application/json; charset=utf-8");
 
 if (!isset($_SESSION["aemail"])) {
@@ -15,7 +19,8 @@ if (!isset($_POST["confirm"]) || $_POST["confirm"] !== "CONFIRM") {
 }
 
 $mode = isset($_POST["mode"]) ? $_POST["mode"] : "ids";
-$limit = isset($_POST["limit"]) ? min(50, max(1, (int) $_POST["limit"])) : 25;
+// Small batches keep Apache alive on large news_views tables
+$limit = isset($_POST["limit"]) ? min(30, max(1, (int) $_POST["limit"])) : 10;
 $deleted = 0;
 $skipped = 0;
 $files = 0;
@@ -28,7 +33,6 @@ if ($mode === "all") {
 	$months = isset($_POST["months"]) ? max(1, (int) $_POST["months"]) : 6;
 	$afterId = isset($_POST["after_id"]) ? max(0, (int) $_POST["after_id"]) : 0;
 	$where = nm_age_where_sql($months);
-	// Cursor by newsid so protected (3k+ views) posts are skipped without infinite loop
 	$q = mysqli_query(
 		$con,
 		"SELECT `newsid` FROM news WHERE $where AND `newsid` > $afterId ORDER BY `newsid` ASC LIMIT $limit"
@@ -41,17 +45,17 @@ if ($mode === "all") {
 	$maxId = $afterId;
 	foreach ($ids as $id) {
 		$maxId = max($maxId, $id);
-		if (nm_is_view_protected(isset($viewMap[$id]) ? $viewMap[$id] : 0)) {
+		$v = isset($viewMap[$id]) ? $viewMap[$id] : 0;
+		if (nm_is_view_protected($v)) {
 			$skipped++;
 			continue;
 		}
-		$res = nm_delete_news_article($con, $id);
+		$res = nm_delete_news_article($con, $id, $v);
 		if ($res["ok"]) {
 			$deleted++;
 			$files += (int) $res["files_removed"];
 			$bytes += isset($res["bytes_freed"]) ? (int) $res["bytes_freed"] : 0;
 		} else {
-			// Still protected at delete time, or missing
 			if (strpos($res["message"], "Protected:") === 0) {
 				$skipped++;
 			} else {
@@ -60,10 +64,9 @@ if ($mode === "all") {
 		}
 	}
 	$afterId = $maxId;
-	$cr = mysqli_query($con, "SELECT COUNT(*) AS c FROM news WHERE $where AND `newsid` > $afterId");
-	$row = $cr ? mysqli_fetch_assoc($cr) : null;
-	$remaining = $row ? (int) $row["c"] : 0;
+	// Avoid COUNT(*) on full age filter every batch — that hangs Apache on ~200k rows
 	$done = (count($ids) === 0);
+	$remaining = $done ? 0 : null;
 } else {
 	$ids = isset($_POST["ids"]) ? $_POST["ids"] : array();
 	if (!is_array($ids)) {
@@ -99,9 +102,8 @@ echo json_encode(array(
 	"bytes_label" => nm_format_bytes($bytes),
 	"remaining" => $remaining,
 	"after_id" => $afterId,
-	"done" => !empty($done) || ($remaining === 0),
+	"done" => !empty($done),
 	"message" => "Batch: deleted $deleted, skipped protected $skipped, files $files, freed " . nm_format_bytes($bytes)
-		. ($remaining !== null ? (", remaining ~$remaining") : "")
 		. (count($errors) ? (" | " . implode("; ", array_slice($errors, 0, 2))) : ""),
 	"errors" => $errors,
 ));

@@ -103,7 +103,7 @@ if(isset($_POST['add']))
                             }
 
                             if (!empty($name) && !empty($_FILES['video_file']['tmp_name'])) {
-                                $target_dir = "../videos/";
+                                $target_dir = __DIR__ . "/../videos/";
                                 if (!is_dir($target_dir)) {
                                     @mkdir($target_dir, 0755, true);
                                 }
@@ -114,7 +114,11 @@ if(isset($_POST['add']))
                             $ext = pathinfo($_FILES["image"]["name"], PATHINFO_EXTENSION);
                             $rand = md5(uniqid().rand());
                             $post_image = $rand.".".$ext;
-                            move_uploaded_file($tmp_file, "../images/news/".$post_image);
+                            $news_img_dir = __DIR__ . "/../images/news/";
+                            if (!is_dir($news_img_dir)) {
+                                @mkdir($news_img_dir, 0755, true);
+                            }
+                            move_uploaded_file($tmp_file, $news_img_dir . $post_image);
 
                             if ($slider_priority !== '' && $slider_priority !== '0') {
                                 $pri = mysqli_query($con,"SELECT `slider_priority`,`newsid` FROM `news` WHERE `slider`='Yes' AND `slider_priority` >= '$slider_priority' ORDER BY `slider_priority` ASC");

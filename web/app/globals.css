@@ -618,9 +618,12 @@ button { font-family: inherit; cursor: pointer; }
   display: none !important;
 }
 .body img {
-  max-width: 100%;
-  height: auto;
-  margin: 10px 0 !important;
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 10px auto !important;
+  display: block;
+  object-fit: contain;
 }
 .body::after { content: ""; display: block; clear: both; }
 
@@ -1211,8 +1214,27 @@ button { font-family: inherit; cursor: pointer; }
   .h1 { font-size: 20px; line-height: 1.4; }
   .summary { font-size: 15px; line-height: 1.5; }
   .article-lead { float: none; width: 100%; margin: 0 0 14px; }
-  .article-lead img { width: 100%; height: auto; aspect-ratio: 16/9; }
+  /* Full photo on phones — avoid 16:9 crop cutting faces/text in frame */
+  .article-lead img {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    aspect-ratio: auto;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+  .hero-lead img,
+  .hero-ph,
+  .topic-feature img,
+  .topic-feature-ph {
+    object-fit: cover;
+  }
   .body { font-size: 16px; line-height: 1.6; }
+  .body img {
+    max-width: 100% !important;
+    width: auto !important;
+    height: auto !important;
+  }
   .related-grid { grid-template-columns: 1fr; }
 
   .city-grid { grid-template-columns: 1fr 1fr; }

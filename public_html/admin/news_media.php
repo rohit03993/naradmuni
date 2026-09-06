@@ -49,38 +49,45 @@ function nm_min_views_keep() {
 
 function nm_news_view_count($con, $newsid) {
     $newsid = (int) $newsid;
+    $cap = nm_min_views_keep();
+    // Stop at keep-threshold (avoids counting millions of rows for popular posts)
     try {
-        $q = mysqli_query($con, "SELECT COUNT(*) AS c FROM `news_views` WHERE `newsid`='$newsid'");
-        $r = $q ? mysqli_fetch_assoc($q) : null;
-        return $r ? (int) $r["c"] : 0;
+        $q = mysqli_query($con, "SELECT 1 FROM `news_views` WHERE `newsid`='$newsid' LIMIT $cap");
+        $n = 0;
+        while ($q && mysqli_fetch_row($q)) {
+            $n++;
+        }
+        return $n;
     } catch (Throwable $e) {
         return 0;
     }
 }
 
 /**
- * Batch view counts for a small id list (page / delete batch). Fast with index on news_views.newsid.
- * Do NOT use correlated COUNT(*) across all old news — that hangs Apache on large news_views.
+ * Batch view counts capped at keep-threshold (enough to decide KEEP vs delete).
  * @param int[] $ids
- * @return array<int,int> newsid => view count
+ * @return array<int,int>
  */
 function nm_batch_view_counts($con, array $ids) {
     $out = array();
     $ids = array_values(array_unique(array_filter(array_map("intval", $ids))));
+    $cap = nm_min_views_keep();
+    foreach ($ids as $id) {
+        $out[$id] = 0;
+    }
     if (!$ids) {
         return $out;
     }
-    $in = implode(",", $ids);
-    try {
-        $q = mysqli_query($con, "SELECT `newsid`, COUNT(*) AS c FROM `news_views` WHERE `newsid` IN ($in) GROUP BY `newsid`");
-        while ($q && ($r = mysqli_fetch_assoc($q))) {
-            $out[(int) $r["newsid"]] = (int) $r["c"];
-        }
-    } catch (Throwable $e) {
-        // missing table / error → treat as 0 views
-    }
+    // Per-id capped read is safer than GROUP BY COUNT(*) on huge table without index
     foreach ($ids as $id) {
-        if (!isset($out[$id])) {
+        try {
+            $q = mysqli_query($con, "SELECT 1 FROM `news_views` WHERE `newsid`='$id' LIMIT $cap");
+            $n = 0;
+            while ($q && mysqli_fetch_row($q)) {
+                $n++;
+            }
+            $out[$id] = $n;
+        } catch (Throwable $e) {
             $out[$id] = 0;
         }
     }
@@ -219,20 +226,20 @@ function nm_format_media_badge($analysis) {
  * Delete one news article + related rows + media files on disk.
  * @return array{ok:bool, message:string, files_removed:int, newsid:int}
  */
-function nm_delete_news_article($con, $newsid) {
+function nm_delete_news_article($con, $newsid, $knownViews = null) {
     $newsid = (int) $newsid;
     if ($newsid <= 0) {
         return array("ok" => false, "message" => "Invalid id", "files_removed" => 0, "bytes_freed" => 0, "newsid" => 0);
     }
 
-    $res = mysqli_query($con, "SELECT `newsid`,`image`,`description`,`video_file`,`newsurl` FROM `news` WHERE `newsid`='$newsid' LIMIT 1");
+    $res = mysqli_query($con, "SELECT `newsid`,`image`,`video_file`,`newsurl` FROM `news` WHERE `newsid`='$newsid' LIMIT 1");
     $row = $res ? mysqli_fetch_assoc($res) : null;
     if (!$row) {
         return array("ok" => false, "message" => "Not found", "files_removed" => 0, "bytes_freed" => 0, "newsid" => $newsid);
     }
 
     // Hard rule: 3000+ views → never delete (any age)
-    $views = nm_news_view_count($con, $newsid);
+    $views = ($knownViews !== null) ? (int) $knownViews : nm_news_view_count($con, $newsid);
     if ($views >= nm_min_views_keep()) {
         return array(
             "ok" => false,
@@ -243,11 +250,20 @@ function nm_delete_news_article($con, $newsid) {
         );
     }
 
-    $analysis = nm_analyze_media($row["image"], $row["description"], $row["video_file"]);
+    // Fast path: featured image + video only (skip parsing huge HTML bodies)
     $removed = 0;
     $bytes = 0;
-    foreach ($analysis["disk_files"] as $rel) {
-        $freed = nm_safe_unlink($rel);
+    $image = trim((string) $row["image"]);
+    if ($image !== "" && $image !== "null") {
+        $freed = nm_safe_unlink("images/news/" . basename($image));
+        if ($freed > 0) {
+            $removed++;
+            $bytes += $freed;
+        }
+    }
+    $videoFile = trim((string) (isset($row["video_file"]) ? $row["video_file"] : ""));
+    if ($videoFile !== "" && $videoFile !== "null") {
+        $freed = nm_safe_unlink("videos/" . basename($videoFile));
         if ($freed > 0) {
             $removed++;
             $bytes += $freed;
@@ -256,7 +272,7 @@ function nm_delete_news_article($con, $newsid) {
 
     @mysqli_query($con, "DELETE FROM `news_cat` WHERE `news_id`='$newsid'");
     @mysqli_query($con, "DELETE FROM `comments` WHERE `newsid`='$newsid'");
-    @mysqli_query($con, "DELETE FROM `news_views` WHERE `newsid`='$newsid'");
+    // Skip per-row DELETE on news_views (millions of rows, often no index) — orphans cleaned later via CLI/orphan purge.
 
     $ex = mysqli_query($con, "DELETE FROM `news` WHERE `newsid`='$newsid' LIMIT 1");
     if ($ex) {

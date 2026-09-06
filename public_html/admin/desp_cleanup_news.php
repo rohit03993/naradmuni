@@ -1,8 +1,14 @@
 <?php
+/**
+ * Lightweight preview for cleanup — no STR_TO_DATE in SQL, no news_views scans.
+ * (Full delete = CLI: cli_cleanup_old_news.php --fast)
+ */
 include "config.php";
 require_once "dbcontroller.php";
 require_once "pagination.class.php";
 require_once "news_media.php";
+
+@set_time_limit(60);
 
 $db_handle = new DBController();
 $perPage = new PerPage();
@@ -10,69 +16,71 @@ $perPage->perpage = 25;
 
 $months = isset($_GET["months"]) ? max(1, (int) $_GET["months"]) : 6;
 $minViews = nm_min_views_keep();
-$ageSql = nm_age_where_sql($months);
-
-$baseWhere = " WHERE " . $ageSql;
-$countSql = "SELECT COUNT(*) AS c FROM news" . $baseWhere;
-$listSql = "SELECT `newsid`, `newsurl`, `title`, `image`, `description`, `video_file`, `category`, `date`, `status`
-	FROM news" . $baseWhere . " ORDER BY STR_TO_DATE(`date`,'%d-%m-%Y') ASC";
+$cutoff = new DateTime("today");
+$cutoff->modify("-{$months} months");
 
 $page = !empty($_GET["page"]) ? max(1, (int) $_GET["page"]) : 1;
-$start = ($page - 1) * $perPage->perpage;
-if ($start < 0) {
-	$start = 0;
-}
+$per = (int) $perPage->perpage;
+$needFrom = ($page - 1) * $per;
+$needTo = $needFrom + $per;
 
-if (!empty($_GET["rowcount"]) && ctype_digit((string) $_GET["rowcount"])) {
-	$rowcount = (int) $_GET["rowcount"];
-} else {
-	$cr = $db_handle->runQuery($countSql);
-	$rowcount = !empty($cr[0]["c"]) ? (int) $cr[0]["c"] : 0;
-}
-
-$query = $listSql . " LIMIT " . (int) $start . "," . (int) $perPage->perpage;
-$faq = $db_handle->runQuery($query);
-if (empty($faq)) {
-	$faq = array();
-}
-
-$viewMap = array();
-if ($faq) {
-	$ids = array();
-	foreach ($faq as $row) {
-		$ids[] = (int) $row["newsid"];
+function nm_parse_dmy($dateStr) {
+	$dateStr = trim((string) $dateStr);
+	if ($dateStr === "") {
+		return null;
 	}
-	$viewMap = nm_batch_view_counts($con, $ids);
+	$dt = DateTime::createFromFormat("d-m-Y", $dateStr);
+	if ($dt instanceof DateTime) {
+		$dt->setTime(0, 0, 0);
+		return $dt;
+	}
+	return null;
 }
+
+// Walk by PK; filter date in PHP (safe on local after CLI shrink)
+$matched = array();
+$totalMatched = 0;
+$afterId = 0;
+$guard = 0;
+$maxScan = 80000;
+
+while ($guard < $maxScan) {
+	$guard += 2000;
+	$q = mysqli_query(
+		$con,
+		"SELECT `newsid`,`newsurl`,`title`,`image`,`video_file`,`category`,`date`,`status`
+		 FROM `news` WHERE `newsid` > $afterId ORDER BY `newsid` ASC LIMIT 2000"
+	);
+	if (!$q || mysqli_num_rows($q) === 0) {
+		break;
+	}
+	while ($r = mysqli_fetch_assoc($q)) {
+		$afterId = (int) $r["newsid"];
+		$dt = nm_parse_dmy($r["date"]);
+		if (!$dt || $dt >= $cutoff) {
+			continue;
+		}
+		if ($totalMatched >= $needFrom && $totalMatched < $needTo) {
+			$matched[] = $r;
+		}
+		$totalMatched++;
+	}
+}
+
+$rowcount = $totalMatched;
+$faq = $matched;
+$start = $needFrom;
+$from = $rowcount ? ($start + 1) : 0;
+$to = min($start + count($faq), $rowcount);
 
 $paginationlink = "desp_cleanup_news.php?page=";
 $perpageresult = $perPage->getAllPageLinks($rowcount, $paginationlink);
-
-$pageDisk = 0;
-$pageBase64 = 0;
-$pageBytes = 0;
-$pageProtected = 0;
-foreach ($faq as $row) {
-	$views = isset($viewMap[(int) $row["newsid"]]) ? (int) $viewMap[(int) $row["newsid"]] : 0;
-	if (nm_is_view_protected($views)) {
-		$pageProtected++;
-	}
-	$a = nm_analyze_media($row["image"], $row["description"], isset($row["video_file"]) ? $row["video_file"] : "");
-	$pageDisk += $a["disk_count"];
-	$pageBase64 += $a["base64_embeds"];
-	$pageBytes += nm_featured_bytes($row["image"], isset($row["video_file"]) ? $row["video_file"] : "");
-}
-
-$from = $rowcount ? ($start + 1) : 0;
-$to = min($start + count($faq), $rowcount);
 ?>
 <input type="hidden" id="rowcount" value="<?php echo (int) $rowcount; ?>" />
 <p id="summary-inline" style="margin:0 0 12px;">
 	<strong><?php echo number_format($rowcount); ?></strong> posts older than <strong><?php echo (int) $months; ?></strong> months
 	· showing <?php echo (int) $from; ?>–<?php echo (int) $to; ?>
-	· this page: <strong><?php echo (int) $pageDisk; ?></strong> files (~<?php echo htmlspecialchars(nm_format_bytes($pageBytes)); ?>)
-	<?php if ($pageProtected) { ?> · <strong><?php echo (int) $pageProtected; ?></strong> KEEP (<?php echo (int) $minViews; ?>+ views)<?php } ?>
-	<?php if ($pageBase64) { ?> · <strong><?php echo (int) $pageBase64; ?></strong> base64 embeds<?php } ?>
+	· <em>Views not loaded here</em> (avoids hanging Apache). Delete via CLI for bulk.
 </p>
 <script>
 $("#summary").html($("#summary-inline").html());
@@ -87,9 +95,7 @@ if (typeof syncDeleteSummary === "function") syncDeleteSummary();
       <th>Title</th>
       <th>Category</th>
       <th>Status</th>
-      <th>Views</th>
       <th>Will delete?</th>
-      <th>Images</th>
     </tr>
   </thead>
   <tbody>
@@ -100,31 +106,19 @@ foreach ($faq as $row) {
 	if ($cq && ($cr = mysqli_fetch_assoc($cq))) {
 		$catName = $cr["maincat"];
 	}
-	$media = nm_analyze_media($row["image"], $row["description"], isset($row["video_file"]) ? $row["video_file"] : "");
-	$nid = (int) $row["newsid"];
-	$views = isset($viewMap[$nid]) ? (int) $viewMap[$nid] : 0;
-	$protected = nm_is_view_protected($views);
 	?>
-    <tr<?php echo $protected ? ' class="table-success"' : ""; ?>>
+    <tr>
       <td><?php echo htmlspecialchars($row["date"]); ?></td>
       <td><code style="font-size:12px;"><?php echo htmlspecialchars($row["newsurl"]); ?></code></td>
       <td><?php echo htmlspecialchars(substr($row["title"], 0, 80)); ?></td>
       <td><?php echo htmlspecialchars($catName); ?></td>
       <td><?php echo htmlspecialchars($row["status"]); ?></td>
-      <td><span class="badge badge-info"><?php echo number_format($views); ?></span></td>
-      <td>
-        <?php if ($protected) { ?>
-          <span class="badge badge-success">KEEP</span>
-        <?php } else { ?>
-          <span class="badge badge-danger">Yes (if you run delete)</span>
-        <?php } ?>
-      </td>
-      <td><span class="badge badge-dark"><?php echo htmlspecialchars(nm_format_media_badge($media)); ?></span></td>
+      <td><span class="badge badge-danger">Age match (CLI recommended)</span></td>
     </tr>
 	<?php
 }
 if (!count($faq)) {
-	echo '<tr><td colspan="8">No posts older than ' . (int) $months . ' months.</td></tr>';
+	echo '<tr><td colspan="6">No posts older than ' . (int) $months . ' months.</td></tr>';
 }
 ?>
   </tbody>
@@ -143,7 +137,6 @@ window.getresult = function (url) {
     type: "GET",
     data: {
       months: $("#months").val(),
-      rowcount: $("#rowcount").val() || "",
       page: pageMatch ? pageMatch[1] : 1
     },
     success: function (data) {

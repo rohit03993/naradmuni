@@ -76,7 +76,10 @@ $video_id = $video_id[0];
     
 $name = $_FILES['video_file']['name'];
 if(!empty($name)){
-    $target_dir = "../videos/";
+    $target_dir = __DIR__ . "/../videos/";
+    if (!is_dir($target_dir)) {
+        @mkdir($target_dir, 0755, true);
+    }
     $target_file = $target_dir . $_FILES["video_file"]["name"];
     move_uploaded_file($_FILES['video_file']['tmp_name'],$target_file);
 }else{
@@ -95,8 +98,12 @@ if(!empty($name)){
                             $fileinfo = @getimagesize($_FILES["image"]["tmp_name"]);
                             $width = $fileinfo[0];
                             $height = $fileinfo[1];
-                            
-                           echo  move_uploaded_file($tmp_file,"../images/news/".$post_image);
+
+                            $news_img_dir = __DIR__ . "/../images/news/";
+                            if (!is_dir($news_img_dir)) {
+                                @mkdir($news_img_dir, 0755, true);
+                            }
+                           echo  move_uploaded_file($tmp_file, $news_img_dir . $post_image);
                             
                            }
                              /*   Linkname starts  */
