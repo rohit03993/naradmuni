@@ -102,17 +102,59 @@ async function fetchShortsUncached(): Promise<YoutubeShort[]> {
   return out;
 }
 
-/** Placeholder Shorts so homepage layout is visible before API is connected */
+/** Placeholder Shorts so homepage layout is visible before API is connected.
+ *  Uses real public YouTube video IDs so inline play works for UI preview.
+ */
 export function getDemoShorts(): YoutubeShort[] {
   return [
-    { id: "demo-1", title: "भोपाल की ताज़ा घटना — डेमो शॉर्ट", thumb: "", url: "#" },
-    { id: "demo-2", title: "मध्य प्रदेश समाचार क्लिप — डेमो", thumb: "", url: "#" },
-    { id: "demo-3", title: "इंदौर अपडेट 60 सेकंड में — डेमो", thumb: "", url: "#" },
-    { id: "demo-4", title: "जन्माष्टमी कवरेज शॉर्ट — डेमो", thumb: "", url: "#" },
-    { id: "demo-5", title: "स्पोर्ट्स हाइलाइट्स — डेमो", thumb: "", url: "#" },
-    { id: "demo-6", title: "ब्रेकिंग न्यूज़ रील्स — डेमो", thumb: "", url: "#" },
-    { id: "demo-7", title: "शहर की सड़क रिपोर्ट — डेमो", thumb: "", url: "#" },
-    { id: "demo-8", title: "राशिफल क्विक टिप — डेमो", thumb: "", url: "#" },
+    {
+      id: "aqz-KE-bpKQ",
+      title: "Big Buck Bunny — डेमो प्ले",
+      thumb: "https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg",
+      url: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+    },
+    {
+      id: "LXb3EKWsInQ",
+      title: "Nature clip — डेमो प्ले",
+      thumb: "https://i.ytimg.com/vi/LXb3EKWsInQ/hqdefault.jpg",
+      url: "https://www.youtube.com/watch?v=LXb3EKWsInQ",
+    },
+    {
+      id: "ScMzIvxBSi4",
+      title: "Ocean view — डेमो प्ले",
+      thumb: "https://i.ytimg.com/vi/ScMzIvxBSi4/hqdefault.jpg",
+      url: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+    },
+    {
+      id: "eRsGyueVLvQ",
+      title: "City lights — डेमो प्ले",
+      thumb: "https://i.ytimg.com/vi/eRsGyueVLvQ/hqdefault.jpg",
+      url: "https://www.youtube.com/watch?v=eRsGyueVLvQ",
+    },
+    {
+      id: "C0DPdy98e4c",
+      title: "Test media — डेमो प्ले",
+      thumb: "https://i.ytimg.com/vi/C0DPdy98e4c/hqdefault.jpg",
+      url: "https://www.youtube.com/watch?v=C0DPdy98e4c",
+    },
+    {
+      id: "hFZFjoX2cGg",
+      title: "Travel reel — डेमो प्ले",
+      thumb: "https://i.ytimg.com/vi/hFZFjoX2cGg/hqdefault.jpg",
+      url: "https://www.youtube.com/watch?v=hFZFjoX2cGg",
+    },
+    {
+      id: "tgbNymZ7vqY",
+      title: "W3Schools sample — डेमो",
+      thumb: "https://i.ytimg.com/vi/tgbNymZ7vqY/hqdefault.jpg",
+      url: "https://www.youtube.com/watch?v=tgbNymZ7vqY",
+    },
+    {
+      id: "D0UnqGm_miA",
+      title: "Ambient clip — डेमो प्ले",
+      thumb: "https://i.ytimg.com/vi/D0UnqGm_miA/hqdefault.jpg",
+      url: "https://www.youtube.com/watch?v=D0UnqGm_miA",
+    },
   ];
 }
 
