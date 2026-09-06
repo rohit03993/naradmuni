@@ -55,6 +55,7 @@ button { font-family: inherit; cursor: pointer; }
   min-height: 64px;
   display: flex;
   align-items: center;
+  overflow: visible;
 }
 .header-inner {
   display: flex;
@@ -63,23 +64,31 @@ button { font-family: inherit; cursor: pointer; }
   gap: 16px;
   width: min(var(--shell), calc(100% - 32px));
   margin: 0 auto;
-  padding: 10px 0;
+  padding: 12px 0;
+  overflow: visible;
 }
 .header-left {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
+  overflow: visible;
 }
 .logo {
   display: flex;
   align-items: center;
   gap: 10px;
+  overflow: visible;
+  flex-shrink: 1;
+  min-width: 0;
 }
 .logo img {
   height: 48px;
+  max-height: 52px;
   width: auto;
+  max-width: min(220px, 55vw);
   object-fit: contain;
+  object-position: left center;
 }
 .logo-fallback {
   display: flex;
@@ -208,8 +217,12 @@ button { font-family: inherit; cursor: pointer; }
   min-width: 0;
 }
 .mnav-brand img {
-  height: 36px;
+  height: 40px;
+  max-height: 44px;
   width: auto;
+  max-width: 180px;
+  object-fit: contain;
+  object-position: left center;
 }
 .mnav-close {
   width: 40px;
@@ -569,10 +582,14 @@ button { font-family: inherit; cursor: pointer; }
   margin: 0 20px 12px 0;
 }
 .article-lead img {
-  width: 400px;
-  max-width: 100%;
-  height: 225px;
-  object-fit: cover;
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  max-height: 320px;
+  object-fit: contain;
+  object-position: center;
+  background: var(--grey);
+  border-radius: 4px;
 }
 .caption {
   font-size: 12px;
@@ -645,17 +662,19 @@ button { font-family: inherit; cursor: pointer; }
 }
 .related-item {
   display: grid;
-  grid-template-columns: 22px 1fr 80px;
+  grid-template-columns: 22px 1fr 96px;
   gap: 8px;
   align-items: start;
 }
 .related-item .num { color: #9ca3af; font-weight: 700; font-size: 18px; }
 .related-item h3 { font-size: 15px; line-height: 1.35; margin: 0; font-weight: 600; }
 .related-item img {
-  width: 80px;
-  height: 50px;
-  object-fit: cover;
+  width: 96px;
+  height: 72px;
+  object-fit: contain;
+  object-position: center;
   border-radius: 6px;
+  background: #fff;
 }
 
 .author-box {
@@ -740,7 +759,8 @@ button { font-family: inherit; cursor: pointer; }
 .list-ph {
   width: 84px;
   height: 64px;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   border-radius: 4px;
   background: var(--grey);
 }
@@ -755,8 +775,10 @@ button { font-family: inherit; cursor: pointer; }
 .hero-lead img,
 .hero-ph {
   width: 100%;
-  height: 340px;
-  object-fit: cover;
+  height: auto;
+  max-height: 420px;
+  object-fit: contain;
+  object-position: center;
   border-radius: 4px;
   background: var(--grey);
 }
@@ -834,8 +856,11 @@ button { font-family: inherit; cursor: pointer; }
 .card img,
 .card-ph {
   width: 100%;
-  height: 140px;
-  object-fit: cover;
+  height: auto;
+  max-height: 180px;
+  aspect-ratio: auto;
+  object-fit: contain;
+  object-position: center;
   border-radius: 4px;
   background: var(--grey);
 }
@@ -864,8 +889,10 @@ button { font-family: inherit; cursor: pointer; }
 .topic-feature img,
 .topic-feature-ph {
   width: 100%;
-  height: 240px;
-  object-fit: cover;
+  height: auto;
+  max-height: 320px;
+  object-fit: contain;
+  object-position: center;
   border-radius: 4px;
   background: var(--grey);
 }
@@ -891,8 +918,10 @@ button { font-family: inherit; cursor: pointer; }
 }
 .cat-tile img {
   width: 100%;
-  height: 170px;
-  object-fit: cover;
+  height: auto;
+  max-height: 200px;
+  object-fit: contain;
+  object-position: center;
   border-radius: 4px;
   background: var(--grey);
 }
@@ -1070,9 +1099,14 @@ button { font-family: inherit; cursor: pointer; }
   /* Sidebar off phone — single column like MP mobile */
   .rail { display: none; }
 
-  .header { min-height: 56px; }
-  .header-inner { padding: 8px 0; gap: 8px; }
-  .logo img { height: 36px; }
+  .header { min-height: 60px; overflow: visible; }
+  .header-inner { padding: 10px 0; gap: 8px; overflow: visible; }
+  .logo img {
+    height: 40px;
+    max-height: 44px;
+    max-width: min(200px, 52vw);
+    object-fit: contain;
+  }
   .city-btn {
     height: 36px;
     min-width: 36px;
@@ -1105,9 +1139,12 @@ button { font-family: inherit; cursor: pointer; }
   .hero-ph {
     width: 100%;
     height: auto;
-    aspect-ratio: 16 / 10;
     max-height: none;
+    aspect-ratio: auto;
+    object-fit: contain;
+    object-position: center;
     border-radius: 6px;
+    background: var(--grey);
   }
   .hero-lead h2 {
     font-size: 17px;
@@ -1147,9 +1184,12 @@ button { font-family: inherit; cursor: pointer; }
   .topic-feature img,
   .topic-feature-ph {
     height: auto;
-    aspect-ratio: 16 / 10;
     max-height: none;
+    aspect-ratio: auto;
+    object-fit: contain;
+    object-position: center;
     border-radius: 6px;
+    background: var(--grey);
   }
   .topic-feature h3 {
     font-size: 16px;
@@ -1169,8 +1209,11 @@ button { font-family: inherit; cursor: pointer; }
   }
   .topic-side .list-item img,
   .topic-side .list-ph {
-    width: 64px;
-    height: 48px;
+    width: 72px;
+    height: 54px;
+    object-fit: contain;
+    object-position: center;
+    background: var(--grey);
   }
 
   .cards,
@@ -1183,8 +1226,12 @@ button { font-family: inherit; cursor: pointer; }
   .card-ph {
     width: 100%;
     height: auto;
-    aspect-ratio: 4 / 3;
+    max-height: none;
+    aspect-ratio: auto;
+    object-fit: contain;
+    object-position: center;
     border-radius: 6px;
+    background: var(--grey);
   }
   .card h3 {
     font-size: 12px;
@@ -1201,8 +1248,12 @@ button { font-family: inherit; cursor: pointer; }
   }
   .cat-tile img {
     height: auto;
-    aspect-ratio: 4 / 3;
+    max-height: none;
+    aspect-ratio: auto;
+    object-fit: contain;
+    object-position: center;
     border-radius: 6px;
+    background: var(--grey);
   }
   .cat-tile h3 {
     font-size: 12px;
@@ -1214,20 +1265,25 @@ button { font-family: inherit; cursor: pointer; }
   .h1 { font-size: 20px; line-height: 1.4; }
   .summary { font-size: 15px; line-height: 1.5; }
   .article-lead { float: none; width: 100%; margin: 0 0 14px; }
-  /* Full photo on phones — avoid 16:9 crop cutting faces/text in frame */
   .article-lead img {
     width: 100%;
+    max-width: 100%;
     height: auto;
     max-height: none;
     aspect-ratio: auto;
     object-fit: contain;
+    object-position: center;
     border-radius: 6px;
+    background: var(--grey);
   }
-  .hero-lead img,
-  .hero-ph,
-  .topic-feature img,
-  .topic-feature-ph {
-    object-fit: cover;
+  .related-item {
+    grid-template-columns: 22px 1fr 96px;
+  }
+  .related-item img {
+    width: 96px;
+    height: 72px;
+    object-fit: contain;
+    background: #fff;
   }
   .body { font-size: 16px; line-height: 1.6; }
   .body img {
