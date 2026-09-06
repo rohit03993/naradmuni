@@ -26,14 +26,24 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-noto), var(--font-inter), system-ui, sans-serif;
+  /* Hindi-first: Noto Sans Devanagari for the whole site */
+  font-family: var(--font-noto), system-ui, sans-serif;
   font-size: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
   line-height: 1.5;
   overflow-x: clip;
 }
 a { color: inherit; text-decoration: none; }
 img { max-width: 100%; height: auto; display: block; }
-button { font-family: inherit; cursor: pointer; }
+button { font-family: inherit; cursor: pointer; font-weight: 500; }
+
+h1, h2, h3, h4, .h1, .section-head h2, .cat-h1 {
+  font-family: inherit;
+  font-weight: 700;
+  letter-spacing: normal;
+}
+strong, b { font-weight: 700; }
 
 .shell {
   width: min(var(--shell), calc(100% - 32px));
@@ -94,7 +104,7 @@ button { font-family: inherit; cursor: pointer; }
   display: flex;
   flex-direction: column;
   line-height: 1.05;
-  font-weight: 800;
+  font-weight: 700;
 }
 .logo-fallback span:first-child {
   background: var(--accent);
@@ -166,6 +176,7 @@ button { font-family: inherit; cursor: pointer; }
   flex: 0 0 auto;
   padding: 12px 12px;
   font-size: 15px;
+  font-weight: 500;
   white-space: nowrap;
   border-bottom: 2px solid transparent;
 }
@@ -412,7 +423,7 @@ button { font-family: inherit; cursor: pointer; }
 .pwa-card h3 {
   margin: 0 0 8px;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.35;
 }
 .pwa-card > p {
@@ -490,7 +501,7 @@ button { font-family: inherit; cursor: pointer; }
 .pwa-promo strong {
   display: block;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
 }
 .pwa-promo p {
   margin: 2px 0 0;
@@ -536,6 +547,7 @@ button { font-family: inherit; cursor: pointer; }
   line-height: 45px;
   font-weight: 700;
   margin: 0 0 12px;
+  letter-spacing: normal;
 }
 
 .meta-row {
@@ -597,7 +609,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 .byline-author a {
   color: var(--text);
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: underline;
   text-decoration-color: transparent;
   text-underline-offset: 2px;
@@ -676,8 +688,10 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 .body {
-  font-size: 20px;
-  line-height: 1.55;
+  font-size: clamp(17px, 4.5vw, 19px);
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.75;
 }
 /* Nuke legacy CKEditor spacing — old articles use nested div/span + br spacers */
 .body * {
@@ -906,7 +920,8 @@ button { font-family: inherit; cursor: pointer; }
 .section-head h2 {
   margin: 0;
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: normal;
 }
 .section-head .more {
   color: var(--accent);
@@ -1095,7 +1110,7 @@ button { font-family: inherit; cursor: pointer; }
 .modal-head h2 {
   margin: 0;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
 }
 .modal-close {
   width: 40px;
@@ -1425,7 +1440,7 @@ button { font-family: inherit; cursor: pointer; }
     object-fit: contain;
     background: #fff;
   }
-  .body { font-size: 16px; line-height: 1.6; }
+  .body { font-size: 17px; line-height: 1.75; font-weight: 400; letter-spacing: normal; }
   .body img {
     max-width: 100% !important;
     width: auto !important;

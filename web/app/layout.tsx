@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Noto_Sans_Devanagari } from "next/font/google";
+import { Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
 import SiteShell from "@/components/SiteShell";
 import { getSiteChrome } from "@/lib/site";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const noto = Noto_Sans_Devanagari({
   subsets: ["devanagari"],
   variable: "--font-noto",
@@ -46,7 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const chrome = await getSiteChrome();
   return (
     <html lang="hi">
-      <body className={`${inter.variable} ${noto.variable}`}>
+      <body className={noto.variable}>
         <SiteShell
           nav={chrome.nav}
           cities={chrome.cities}
