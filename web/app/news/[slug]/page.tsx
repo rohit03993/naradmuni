@@ -5,7 +5,7 @@ import ArticleByline from "@/components/ArticleByline";
 import AuthorBox from "@/components/AuthorBox";
 import YeBhiPadhein from "@/components/YeBhiPadhein";
 import { asHtmlString, sanitizeArticleHtml } from "@/lib/html";
-import { newsImage } from "@/lib/images";
+import { newsImage, newsShareImage } from "@/lib/images";
 import { getArticleBySlug, getRelated } from "@/lib/queries";
 import { getSiteUrl } from "@/lib/siteUrl";
 
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const site = getSiteUrl();
   const url = `${site}/news/${article.newsurl}`;
-  const img = newsImage(article.image);
+  const shareImg = newsShareImage(article.image, site);
   const description = article.metad || article.short_description || article.title;
 
   return {
@@ -32,13 +32,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       siteName: "The Naradmuni",
       locale: "hi_IN",
-      images: img ? [{ url: img, alt: article.title }] : [],
+      images: shareImg
+        ? [{ url: shareImg, width: 1200, height: 630, alt: article.title, type: "image/jpeg" }]
+        : [],
     },
     twitter: {
-      card: img ? "summary_large_image" : "summary",
+      card: shareImg ? "summary_large_image" : "summary",
       title: article.title,
       description,
-      images: img ? [img] : [],
+      images: shareImg ? [shareImg] : [],
     },
   };
 }
