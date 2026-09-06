@@ -50,7 +50,6 @@ export default async function NewsPage({ params }: Props) {
         <ArticleByline author={article.author} place={article.hindi_name} />
         <ArticleActions title={article.title} url={url} />
       </div>
-      {article.short_description ? <div className="summary">{article.short_description}</div> : null}
       {src ? (
         <figure className="article-lead">
           <img src={src} alt={article.title} />
