@@ -102,60 +102,25 @@ async function fetchShortsUncached(): Promise<YoutubeShort[]> {
   return out;
 }
 
-/** Placeholder Shorts so homepage layout is visible before API is connected.
- *  Uses real public YouTube video IDs so inline play works for UI preview.
+/** Placeholder Shorts before API is connected.
+ *  Only IDs that allow embedding (Error 150 = owner blocked embed).
  */
 export function getDemoShorts(): YoutubeShort[] {
-  return [
-    {
-      id: "aqz-KE-bpKQ",
-      title: "Big Buck Bunny — डेमो प्ले",
-      thumb: "https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg",
-      url: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
-    },
-    {
-      id: "LXb3EKWsInQ",
-      title: "Nature clip — डेमो प्ले",
-      thumb: "https://i.ytimg.com/vi/LXb3EKWsInQ/hqdefault.jpg",
-      url: "https://www.youtube.com/watch?v=LXb3EKWsInQ",
-    },
-    {
-      id: "ScMzIvxBSi4",
-      title: "Ocean view — डेमो प्ले",
-      thumb: "https://i.ytimg.com/vi/ScMzIvxBSi4/hqdefault.jpg",
-      url: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
-    },
-    {
-      id: "eRsGyueVLvQ",
-      title: "City lights — डेमो प्ले",
-      thumb: "https://i.ytimg.com/vi/eRsGyueVLvQ/hqdefault.jpg",
-      url: "https://www.youtube.com/watch?v=eRsGyueVLvQ",
-    },
-    {
-      id: "C0DPdy98e4c",
-      title: "Test media — डेमो प्ले",
-      thumb: "https://i.ytimg.com/vi/C0DPdy98e4c/hqdefault.jpg",
-      url: "https://www.youtube.com/watch?v=C0DPdy98e4c",
-    },
-    {
-      id: "hFZFjoX2cGg",
-      title: "Travel reel — डेमो प्ले",
-      thumb: "https://i.ytimg.com/vi/hFZFjoX2cGg/hqdefault.jpg",
-      url: "https://www.youtube.com/watch?v=hFZFjoX2cGg",
-    },
-    {
-      id: "tgbNymZ7vqY",
-      title: "W3Schools sample — डेमो",
-      thumb: "https://i.ytimg.com/vi/tgbNymZ7vqY/hqdefault.jpg",
-      url: "https://www.youtube.com/watch?v=tgbNymZ7vqY",
-    },
-    {
-      id: "D0UnqGm_miA",
-      title: "Ambient clip — डेमो प्ले",
-      thumb: "https://i.ytimg.com/vi/D0UnqGm_miA/hqdefault.jpg",
-      url: "https://www.youtube.com/watch?v=D0UnqGm_miA",
-    },
+  // Official / commonly embeddable public samples (not random viral clips).
+  const demos: { id: string; title: string }[] = [
+    { id: "M7lc1UVf-VE", title: "YouTube API demo — प्ले" },
+    { id: "C0DPdy98e4c", title: "Google test clip — प्ले" },
+    { id: "jNQXAC9IVRw", title: "Me at the zoo — प्ले" },
+    { id: "aqz-KE-bpKQ", title: "Big Buck Bunny — प्ले" },
+    { id: "tgbNymZ7vqY", title: "Sample media — प्ले" },
+    { id: "YE7VzlLtp-4", title: "Sintel trailer — प्ले" },
   ];
+  return demos.map((d) => ({
+    id: d.id,
+    title: d.title,
+    thumb: `https://i.ytimg.com/vi/${d.id}/hqdefault.jpg`,
+    url: `https://www.youtube.com/watch?v=${d.id}`,
+  }));
 }
 
 /** Homepage Shorts — refresh ~every 10 minutes; demos if not configured yet */

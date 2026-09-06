@@ -61,7 +61,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <YoutubeShortsRail items={shorts.items} isDemo={shorts.isDemo} />
+      <YoutubeShortsRail items={shorts.items} />
 
       {/* Dense photo grid — like MP “राज्य” / top cards */}
       <section className="topic-block">

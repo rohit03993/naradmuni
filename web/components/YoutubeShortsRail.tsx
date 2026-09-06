@@ -3,13 +3,7 @@
 import { useCallback, useState } from "react";
 import type { YoutubeShort } from "@/lib/youtube";
 
-export default function YoutubeShortsRail({
-  items,
-  isDemo = false,
-}: {
-  items: YoutubeShort[];
-  isDemo?: boolean;
-}) {
+export default function YoutubeShortsRail({ items }: { items: YoutubeShort[] }) {
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   const play = useCallback((id: string) => {
@@ -28,9 +22,14 @@ export default function YoutubeShortsRail({
         {items.map((s, i) => {
           const active = playingId === s.id;
           const tone = `shorts-thumb--tone${(i % 5) + 1}`;
+          // mute=1 required for reliable autoplay; user can unmute in player.
+          // origin helps YouTube allow embed on this site.
+          const origin =
+            typeof window !== "undefined" ? encodeURIComponent(window.location.origin) : "";
           const embedSrc =
             `https://www.youtube.com/embed/${encodeURIComponent(s.id)}` +
-            `?autoplay=1&mute=0&playsinline=1&rel=0&modestbranding=1`;
+            `?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1` +
+            (origin ? `&origin=${origin}` : "");
 
           return (
             <div key={s.id} className={`shorts-card${active ? " is-playing" : ""}`} role="listitem">
@@ -42,6 +41,7 @@ export default function YoutubeShortsRail({
                     title={s.title}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
                   />
                 ) : (
                   <>
@@ -69,7 +69,6 @@ export default function YoutubeShortsRail({
           );
         })}
       </div>
-      {isDemo ? null : null}
     </section>
   );
 }
