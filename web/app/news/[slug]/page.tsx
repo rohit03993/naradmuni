@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import ArticleActions from "@/components/ArticleActions";
 import ArticleByline from "@/components/ArticleByline";
 import AuthorBox from "@/components/AuthorBox";
 import YeBhiPadhein from "@/components/YeBhiPadhein";
@@ -45,6 +46,7 @@ export default async function NewsPage({ params }: Props) {
       <h1 className="h1">{article.title}</h1>
       <div className="meta-row">
         <ArticleByline author={article.author} place={article.hindi_name} />
+        <ArticleActions title={article.title} url={url} />
       </div>
       {src ? (
         <figure className="article-lead">
@@ -55,7 +57,7 @@ export default async function NewsPage({ params }: Props) {
       {bodyHtml.trim() ? (
         <div className="body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
       ) : null}
-      <YeBhiPadhein items={related} shareTitle={article.title} shareUrl={url} />
+      <YeBhiPadhein items={related} />
       <AuthorBox author={article.author} />
     </article>
   );
