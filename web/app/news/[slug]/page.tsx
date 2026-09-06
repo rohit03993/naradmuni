@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ArticleActions from "@/components/ArticleActions";
+import ArticleByline from "@/components/ArticleByline";
 import AuthorBox from "@/components/AuthorBox";
 import YeBhiPadhein from "@/components/YeBhiPadhein";
-import { formatStamp, asHtmlString, sanitizeArticleHtml, splitHtmlAfterBlocks } from "@/lib/html";
+import { asHtmlString, sanitizeArticleHtml, splitHtmlAfterBlocks } from "@/lib/html";
 import { newsImage } from "@/lib/images";
 import { getArticleBySlug, getRelated } from "@/lib/queries";
 
@@ -46,18 +47,7 @@ export default async function NewsPage({ params }: Props) {
       ) : null}
       <h1 className="h1">{article.title}</h1>
       <div className="meta-row">
-        <div className="byline">
-          {formatStamp(article.date, article.time)}
-          {article.author ? (
-            <>
-              {" · "}By <a href={`/author/${article.author.t_id}`}>{article.author.name}</a>
-            </>
-          ) : null}
-          <div>
-            <strong>The Naradmuni</strong>
-            {article.hindi_name ? `, ${article.hindi_name}` : ""}
-          </div>
-        </div>
+        <ArticleByline author={article.author} place={article.hindi_name} />
         <ArticleActions title={article.title} url={url} />
       </div>
       {article.short_description ? <div className="summary">{article.short_description}</div> : null}

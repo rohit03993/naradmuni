@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+type Props = { title: string; url: string };
 
-export default function ArticleActions({ title, url }: { title: string; url: string }) {
-  const encodedUrl = useMemo(() => encodeURIComponent(url), [url]);
-  const encodedTitle = useMemo(() => encodeURIComponent(title), [title]);
-  const waText = useMemo(() => encodeURIComponent(`${title}\n${url}`), [title, url]);
+export default function ArticleActions({ title, url }: Props) {
+  const encodedUrl = encodeURIComponent(url);
+  const encodedTitle = encodeURIComponent(title);
+  const waText = encodeURIComponent(`${title}\n${url}`);
 
   return (
     <div className="actions share-actions" aria-label="Share">
@@ -14,7 +14,7 @@ export default function ArticleActions({ title, url }: { title: string; url: str
         href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
         target="_blank"
         rel="noreferrer"
-        aria-label="Facebook पर शेयर करें"
+        aria-label="Share on Facebook"
         title="Facebook"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -26,7 +26,7 @@ export default function ArticleActions({ title, url }: { title: string; url: str
         href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
         target="_blank"
         rel="noreferrer"
-        aria-label="X पर शेयर करें"
+        aria-label="Share on X"
         title="X"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -38,7 +38,7 @@ export default function ArticleActions({ title, url }: { title: string; url: str
         href={`https://wa.me/?text=${waText}`}
         target="_blank"
         rel="noreferrer"
-        aria-label="WhatsApp पर शेयर करें"
+        aria-label="Share on WhatsApp"
         title="WhatsApp"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
