@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import ArticleActions from "@/components/ArticleActions";
 import ArticleByline from "@/components/ArticleByline";
 import AuthorBox from "@/components/AuthorBox";
 import YeBhiPadhein from "@/components/YeBhiPadhein";
-import { asHtmlString, sanitizeArticleHtml, splitHtmlAfterBlocks } from "@/lib/html";
+import { asHtmlString, sanitizeArticleHtml } from "@/lib/html";
 import { newsImage } from "@/lib/images";
 import { getArticleBySlug, getRelated } from "@/lib/queries";
 
@@ -32,9 +31,7 @@ export default async function NewsPage({ params }: Props) {
 
   const related = await getRelated(article.category, article.newsid);
   const src = newsImage(article.image);
-  const html = asHtmlString(article.description);
-  const [before, after] = splitHtmlAfterBlocks(html, 2);
-  const hasBody = Boolean(before || after);
+  const bodyHtml = sanitizeArticleHtml(asHtmlString(article.description)) || asHtmlString(article.description);
   const site = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
   const url = `${site}/news/${article.newsurl}`;
 
@@ -48,7 +45,6 @@ export default async function NewsPage({ params }: Props) {
       <h1 className="h1">{article.title}</h1>
       <div className="meta-row">
         <ArticleByline author={article.author} place={article.hindi_name} />
-        <ArticleActions title={article.title} url={url} />
       </div>
       {src ? (
         <figure className="article-lead">
@@ -56,15 +52,10 @@ export default async function NewsPage({ params }: Props) {
           {article.img_abt ? <figcaption className="caption">{article.img_abt}</figcaption> : null}
         </figure>
       ) : null}
-      {before ? <div className="body" dangerouslySetInnerHTML={{ __html: before }} /> : null}
-      <YeBhiPadhein items={related} />
-      {after ? <div className="body" dangerouslySetInnerHTML={{ __html: after }} /> : null}
-      {!hasBody && html.trim() ? (
-        <div
-          className="body"
-          dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(html) || asHtmlString(html) }}
-        />
+      {bodyHtml.trim() ? (
+        <div className="body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
       ) : null}
+      <YeBhiPadhein items={related} shareTitle={article.title} shareUrl={url} />
       <AuthorBox author={article.author} />
     </article>
   );
