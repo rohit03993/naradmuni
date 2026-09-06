@@ -540,10 +540,10 @@ button { font-family: inherit; cursor: pointer; }
 
 .meta-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px 16px;
+  gap: 10px 12px;
   margin-bottom: 16px;
 }
 .byline { font-size: 14px; color: var(--muted); }
@@ -1360,25 +1360,36 @@ button { font-family: inherit; cursor: pointer; }
   .h1 { font-size: 20px; line-height: 1.4; }
   .summary { font-size: 15px; line-height: 1.5; }
   .meta-row {
-    align-items: flex-start;
-    gap: 12px;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 14px;
   }
   .byline--modern {
-    gap: 10px;
-    width: calc(100% - 148px);
-    max-width: 100%;
+    gap: 8px;
+    width: auto;
+    max-width: none;
+    flex: 1 1 0;
+    min-width: 0;
   }
   .byline-avatar {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
   }
-  .byline-author { font-size: 15px; }
-  .byline-desk { font-size: 12px; }
-  .share-actions { gap: 8px; margin-left: auto; }
+  .byline-author { font-size: 14px; }
+  .byline-desk { font-size: 11px; }
+  .share-actions {
+    gap: 6px;
+    margin-left: 0;
+    flex: 0 0 auto;
+  }
   .share-btn {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
+  }
+  .share-btn svg {
+    width: 15px;
+    height: 15px;
   }
   .article-lead { float: none; width: 100%; margin: 0 0 14px; }
   .article-lead img {
