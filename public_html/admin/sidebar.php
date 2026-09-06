@@ -97,6 +97,11 @@ if (!function_exists("nm_nav_active")) {
       </a>
     </li>
     <li>
+      <a class="<?php echo nm_nav_active($nmPage, "youtube_shorts.php"); ?>" href="youtube_shorts.php">
+        <i class="fab fa-youtube"></i> YouTube Shorts
+      </a>
+    </li>
+    <li>
       <a class="<?php echo nm_nav_active($nmPage, "team.php"); ?>" href="team.php">
         <i class="fas fa-users"></i> Team
       </a>

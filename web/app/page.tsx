@@ -1,19 +1,23 @@
 import NewsListItem from "@/components/NewsListItem";
 import NewsCardTile from "@/components/NewsCardTile";
+import YoutubeShortsRail from "@/components/YoutubeShortsRail";
 import { newsImage } from "@/lib/images";
 import { getLatest, getLead, getTopicSections } from "@/lib/queries";
+import { getHomepageShorts } from "@/lib/youtube";
 
 export default async function HomePage() {
   let lead = null;
   let latest: Awaited<ReturnType<typeof getLatest>> = [];
   let topics: Awaited<ReturnType<typeof getTopicSections>> = [];
+  let shorts: Awaited<ReturnType<typeof getHomepageShorts>> = [];
   let err = "";
 
   try {
-    [lead, latest, topics] = await Promise.all([
+    [lead, latest, topics, shorts] = await Promise.all([
       getLead(),
       getLatest(20),
       getTopicSections(8),
+      getHomepageShorts(),
     ]);
   } catch (e) {
     err = e instanceof Error ? e.message : String(e);
@@ -56,6 +60,8 @@ export default async function HomePage() {
           ))}
         </div>
       </div>
+
+      <YoutubeShortsRail items={shorts} />
 
       {/* Dense photo grid — like MP “राज्य” / top cards */}
       <section className="topic-block">
