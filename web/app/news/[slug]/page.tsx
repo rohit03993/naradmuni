@@ -7,6 +7,7 @@ import YeBhiPadhein from "@/components/YeBhiPadhein";
 import { asHtmlString, sanitizeArticleHtml } from "@/lib/html";
 import { newsImage } from "@/lib/images";
 import { getArticleBySlug, getRelated } from "@/lib/queries";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -14,13 +15,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) return { title: "The Naradmuni" };
+
+  const site = getSiteUrl();
+  const url = `${site}/news/${article.newsurl}`;
+  const img = newsImage(article.image);
+  const description = article.metad || article.short_description || article.title;
+
   return {
     title: article.metat || article.title,
-    description: article.metad || article.short_description || "",
+    description,
+    alternates: { canonical: url },
     openGraph: {
+      type: "article",
+      url,
       title: article.title,
-      description: article.short_description || "",
-      images: newsImage(article.image) ? [newsImage(article.image) as string] : [],
+      description,
+      siteName: "The Naradmuni",
+      locale: "hi_IN",
+      images: img ? [{ url: img, alt: article.title }] : [],
+    },
+    twitter: {
+      card: img ? "summary_large_image" : "summary",
+      title: article.title,
+      description,
+      images: img ? [img] : [],
     },
   };
 }
@@ -33,8 +51,7 @@ export default async function NewsPage({ params }: Props) {
   const related = await getRelated(article.category, article.newsid);
   const src = newsImage(article.image);
   const bodyHtml = sanitizeArticleHtml(asHtmlString(article.description)) || asHtmlString(article.description);
-  const site = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-  const url = `${site}/news/${article.newsurl}`;
+  const url = `${getSiteUrl()}/news/${article.newsurl}`;
 
   return (
     <article>

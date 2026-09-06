@@ -3,6 +3,7 @@ import { Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
 import SiteShell from "@/components/SiteShell";
 import { getSiteChrome } from "@/lib/site";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 const noto = Noto_Sans_Devanagari({
   subsets: ["devanagari"],
@@ -12,6 +13,7 @@ const noto = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: "The Naradmuni | हिंदी न्यूज़ मध्य प्रदेश",
   description: "मध्य प्रदेश और छत्तीसगढ़ की ताज़ा खबरें, The Naradmuni पर।",
   applicationName: "The Naradmuni",
