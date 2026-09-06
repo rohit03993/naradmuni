@@ -9,7 +9,7 @@ export default async function HomePage() {
   let lead = null;
   let latest: Awaited<ReturnType<typeof getLatest>> = [];
   let topics: Awaited<ReturnType<typeof getTopicSections>> = [];
-  let shorts: Awaited<ReturnType<typeof getHomepageShorts>> = [];
+  let shorts: Awaited<ReturnType<typeof getHomepageShorts>> = { items: [], isDemo: true };
   let err = "";
 
   try {
@@ -61,7 +61,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <YoutubeShortsRail items={shorts} />
+      <YoutubeShortsRail items={shorts.items} isDemo={shorts.isDemo} />
 
       {/* Dense photo grid — like MP “राज्य” / top cards */}
       <section className="topic-block">

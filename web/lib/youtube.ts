@@ -102,7 +102,30 @@ async function fetchShortsUncached(): Promise<YoutubeShort[]> {
   return out;
 }
 
-/** Homepage Shorts — refresh ~every 10 minutes */
-export const getHomepageShorts = unstable_cache(fetchShortsUncached, ["homepage-youtube-shorts"], {
-  revalidate: 600,
-});
+/** Placeholder Shorts so homepage layout is visible before API is connected */
+export function getDemoShorts(): YoutubeShort[] {
+  return [
+    { id: "demo-1", title: "भोपाल की ताज़ा घटना — डेमो शॉर्ट", thumb: "", url: "#" },
+    { id: "demo-2", title: "मध्य प्रदेश समाचार क्लिप — डेमो", thumb: "", url: "#" },
+    { id: "demo-3", title: "इंदौर अपडेट 60 सेकंड में — डेमो", thumb: "", url: "#" },
+    { id: "demo-4", title: "जन्माष्टमी कवरेज शॉर्ट — डेमो", thumb: "", url: "#" },
+    { id: "demo-5", title: "स्पोर्ट्स हाइलाइट्स — डेमो", thumb: "", url: "#" },
+    { id: "demo-6", title: "ब्रेकिंग न्यूज़ रील्स — डेमो", thumb: "", url: "#" },
+    { id: "demo-7", title: "शहर की सड़क रिपोर्ट — डेमो", thumb: "", url: "#" },
+    { id: "demo-8", title: "राशिफल क्विक टिप — डेमो", thumb: "", url: "#" },
+  ];
+}
+
+/** Homepage Shorts — refresh ~every 10 minutes; demos if not configured yet */
+export async function getHomepageShorts(): Promise<{ items: YoutubeShort[]; isDemo: boolean }> {
+  const cached = unstable_cache(fetchShortsUncached, ["homepage-youtube-shorts"], {
+    revalidate: 600,
+  });
+  try {
+    const items = await cached();
+    if (items.length) return { items, isDemo: false };
+  } catch {
+    // fall through to demos
+  }
+  return { items: getDemoShorts(), isDemo: true };
+}
