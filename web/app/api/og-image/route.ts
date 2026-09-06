@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     .jpeg({ quality: 72, mozjpeg: true })
     .toBuffer();
 
-  return new NextResponse(out, {
+  return new NextResponse(new Uint8Array(out), {
     status: 200,
     headers: {
       "Content-Type": "image/jpeg",
