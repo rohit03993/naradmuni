@@ -33,7 +33,7 @@ $perPage = new PerPage();
 		}
 	}
 $orderby = " ORDER BY id desc";
-$sql = "SELECT * from categories" . $queryCondition;
+$sql = "SELECT id, maincat, parent, cat_url, short, main_heading, menu from categories" . $queryCondition;
 $paginationlink = "desp_categories.php?page=";	
 $pagination_setting = isset($_GET["pagination_setting"]) ? $_GET["pagination_setting"] : "";
 				
@@ -51,7 +51,7 @@ $faq = $db_handle->runQuery($query);
 if (empty($faq)) { $faq = array(); }
 
 if(empty($_GET["rowcount"])) {
-$_GET["rowcount"] = $db_handle->numRows($sql);
+$_GET["rowcount"] = $db_handle->numRows("SELECT id from categories" . $queryCondition);
 }
 
 if($pagination_setting == "prev-next") {
@@ -64,19 +64,17 @@ $output = '';
 
 ?>
 
-                        <div class="nm-table-wrap">
+                        <div class="nm-table-wrap nm-table-wrap--fit">
                         <table id="myTable" class="table table-bordered nm-cats-table">
                             <thead class="bg-info">
                               <tr>
 							<th>S.N.</th>
 							<th>Category</th>
                             <th>Parent</th>
-                            <th>Category Url</th>
+                            <th>URL</th>
                             <th>Order</th>
                             <th>Child</th>
                             <th>Menu</th>
-                            <th>Meta Title</th>
-                            <th>Meta Desc.</th>
 							<th>Action</th>
 						  </tr>
                             </thead>
@@ -100,8 +98,6 @@ $output = '';
                             <td><?php echo htmlspecialchars($faq[$k]["short"]); ?></td>
                             <td><?php echo htmlspecialchars($faq[$k]["main_heading"]); ?></td>
                             <td><?php echo htmlspecialchars($faq[$k]["menu"]); ?></td>
-                            <td><div class="nm-meta-cell" title="<?php echo htmlspecialchars($faq[$k]["metat"]); ?>"><?php echo htmlspecialchars($faq[$k]["metat"]); ?></div></td>
-                            <td><div class="nm-meta-cell" title="<?php echo htmlspecialchars($faq[$k]["metad"]); ?>"><?php echo htmlspecialchars($faq[$k]["metad"]); ?></div></td>
                              <td class="nm-actions-cell">
                                 <a class="btn btn-warning text-white btn-sm" href="edit_category.php?eid=<?php echo (int)$faq[$k]["id"]; ?>" title="Edit"><i class="fas fa-edit"></i></a>
                                 <a type="button" name="delete" id="<?php echo (int)$faq[$k]["id"]; ?>" class="delete btn btn-danger text-white btn-sm" title="Delete"><i class="fas fa-trash-alt"></i></a>
@@ -118,12 +114,16 @@ $output = '';
                         </div>
     <script type="text/javascript" language="javascript" >
         $(document).ready(function(){
+        if ($.fn.DataTable.isDataTable('#myTable')) {
+          $('#myTable').DataTable().destroy();
+        }
         $('#myTable').DataTable( {
-           responsive: true,
+           responsive: false,
            "bPaginate": false,
             "searching": false,
             "autoWidth": false,
-            "scrollX": false
+            "scrollX": false,
+            "ordering": false
            } );
         });
     </script>

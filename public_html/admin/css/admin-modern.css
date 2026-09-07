@@ -706,27 +706,42 @@ body:not(.nm-login) p {
   border-color: var(--nm-accent) !important;
 }
 
-/* News list — contain wide tables inside the page (no body horizontal scroll) */
+/* News / categories lists — fit viewport; never create page or table sideways scroll */
+.page-content,
+#content,
+#pagination-result {
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
 .nm-table-wrap {
   width: 100%;
   max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden !important;
   border: 1px solid var(--nm-line);
   border-radius: 10px;
   background: #fff;
 }
 
-.nm-news-table {
+.nm-table-wrap--fit {
+  overflow-x: hidden !important;
+}
+
+.nm-news-table,
+.nm-cats-table {
   margin-bottom: 0 !important;
   border: 0 !important;
   width: 100% !important;
+  max-width: 100% !important;
   table-layout: fixed;
 }
 
 .nm-news-table th,
-.nm-news-table td {
+.nm-news-table td,
+.nm-cats-table th,
+.nm-cats-table td {
   word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .nm-url-cell {
@@ -769,11 +784,11 @@ body:not(.nm-login) p {
 }
 
 .nm-news-table th:nth-child(1),
-.nm-news-table td:nth-child(1) { width: 3%; }
+.nm-news-table td:nth-child(1) { width: 4%; }
 .nm-news-table th:nth-child(2),
-.nm-news-table td:nth-child(2) { width: 14%; }
+.nm-news-table td:nth-child(2) { width: 12%; }
 .nm-news-table th:nth-child(3),
-.nm-news-table td:nth-child(3) { width: 22%; }
+.nm-news-table td:nth-child(3) { width: 28%; }
 .nm-news-table th:nth-child(4),
 .nm-news-table td:nth-child(4) { width: 7%; }
 .nm-news-table th:nth-child(5),
@@ -793,6 +808,22 @@ body:not(.nm-login) p {
 .nm-news-table th:nth-child(12),
 .nm-news-table td:nth-child(12) { width: 8%; }
 
+/* Hide rarely-needed news list columns on medium screens so table fits */
+@media (max-width: 1400px) {
+  .nm-news-table th:nth-child(2),
+  .nm-news-table td:nth-child(2),
+  .nm-news-table th:nth-child(5),
+  .nm-news-table td:nth-child(5),
+  .nm-news-table th:nth-child(6),
+  .nm-news-table td:nth-child(6),
+  .nm-news-table th:nth-child(9),
+  .nm-news-table td:nth-child(9) {
+    display: none;
+  }
+  .nm-news-table th:nth-child(3),
+  .nm-news-table td:nth-child(3) { width: 40%; }
+}
+
 .nm-meta-cell {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -805,33 +836,22 @@ body:not(.nm-login) p {
   word-break: break-word;
 }
 
-.nm-cats-table {
-  margin-bottom: 0 !important;
-  border: 0 !important;
-  width: 100% !important;
-  table-layout: fixed;
-}
-
 .nm-cats-table th:nth-child(1),
-.nm-cats-table td:nth-child(1) { width: 4%; }
+.nm-cats-table td:nth-child(1) { width: 5%; }
 .nm-cats-table th:nth-child(2),
-.nm-cats-table td:nth-child(2) { width: 12%; }
+.nm-cats-table td:nth-child(2) { width: 18%; }
 .nm-cats-table th:nth-child(3),
-.nm-cats-table td:nth-child(3) { width: 10%; }
+.nm-cats-table td:nth-child(3) { width: 14%; }
 .nm-cats-table th:nth-child(4),
-.nm-cats-table td:nth-child(4) { width: 12%; }
+.nm-cats-table td:nth-child(4) { width: 18%; }
 .nm-cats-table th:nth-child(5),
-.nm-cats-table td:nth-child(5) { width: 6%; }
+.nm-cats-table td:nth-child(5) { width: 8%; }
 .nm-cats-table th:nth-child(6),
-.nm-cats-table td:nth-child(6) { width: 8%; }
+.nm-cats-table td:nth-child(6) { width: 10%; }
 .nm-cats-table th:nth-child(7),
-.nm-cats-table td:nth-child(7) { width: 6%; }
+.nm-cats-table td:nth-child(7) { width: 8%; }
 .nm-cats-table th:nth-child(8),
-.nm-cats-table td:nth-child(8) { width: 16%; }
-.nm-cats-table th:nth-child(9),
-.nm-cats-table td:nth-child(9) { width: 16%; }
-.nm-cats-table th:nth-child(10),
-.nm-cats-table td:nth-child(10) { width: 10%; }
+.nm-cats-table td:nth-child(8) { width: 12%; }
 
 code {
   color: var(--nm-accent);
@@ -842,6 +862,17 @@ code {
 }
 
 /* DataTables */
+.dataTables_wrapper {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+.dataTables_wrapper .dataTables_scroll,
+.dataTables_wrapper .dataTables_scrollBody,
+.dataTables_wrapper .dataTables_scrollHead {
+  overflow-x: hidden !important;
+}
+
 .dataTables_wrapper .dataTables_filter input,
 .dataTables_wrapper .dataTables_length select {
   border: 1px solid var(--nm-line);
