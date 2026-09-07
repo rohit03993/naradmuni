@@ -56,7 +56,10 @@ if(isset($_POST['add']))
                             $team_id = $post('team_id', '0');
                             $hashtags = $post('hashtags');
                             $pub_date_time = $post('pub_date_time');
-                            $status = 'Unpublished';
+                            if ($pub_date_time === '') {
+                                $pub_date_time = date("Y-m-d H:i");
+                            }
+                            $status = 'Published';
                             $name = (isset($_FILES['video_file']['name']) ? $_FILES['video_file']['name'] : '');
                             $video_id = '';
                             $post_image = '';
@@ -157,7 +160,7 @@ if(isset($_POST['add']))
                               mysqli_query($con, "INSERT INTO `news_cat`(`category`, `news_id`) VALUES('$category','$lastInsertId')");
                             }
                                    echo("<script language='javascript'>
-                                  window.alert('added Successfully')
+                                  window.alert('Published successfully')
                                   window.location.href='news.php';
                                   </script>");
                               }
@@ -213,13 +216,9 @@ if(isset($_POST['add']))
                     </div>
                     <p class="nm-form-hint">Auto-converts Hindi/English title to an SEO slug. Edit anytime. Path: <code>/news/{slug}</code></p>
                   </div>
-                  <div class="nm-form-field">
+                  <div class="nm-form-field nm-form-field--full">
                     <label class="control-label">Image (850×565)</label>
                     <input class="form-control" type="file" name="image" accept="image/*" required>
-                  </div>
-                  <div class="nm-form-field">
-                    <label class="control-label" for="datetimepicker">Publish Date Time</label>
-                    <input class="form-control" id="datetimepicker" type="text" name="pub_date_time" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['pub_date_time']); } ?>" readonly>
                   </div>
                 </div>
               </section>
@@ -257,7 +256,7 @@ if(isset($_POST['add']))
               </section>
 
               <div class="nm-form-actions">
-                <button type="submit" name="add" class="btn btn-info">Add News</button>
+                <button type="submit" name="add" class="btn btn-info">Publish</button>
                 <a class="btn btn-outline-secondary" href="news.php">Cancel</a>
               </div>
         </form>
@@ -306,17 +305,6 @@ if(isset($_POST['add']))
 <script src="../include/js/jquery-ui.js"></script>
 <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.2.5/js/dataTables.responsive.min.js"></script>
-    
-<script src="https://unpkg.com/gijgo@1.9.13/js/gijgo.min.js" type="text/javascript"></script>
-<link href="https://unpkg.com/gijgo@1.9.13/css/gijgo.min.css" rel="stylesheet" type="text/css" />
-<script>
-        $('#datetimepicker').datetimepicker({
-            uiLibrary: 'bootstrap4',
-            modal: true,
-            footer: true,
-            format: 'yy-mm-dd HH:MM'
-        });
-    </script>
     <script>
     $("#newstype").on('change', function(){
 			$.ajax({
