@@ -35,7 +35,7 @@ $perPage = new PerPage();
 $orderby = " ORDER BY id desc";
 $sql = "SELECT * from categories" . $queryCondition;
 $paginationlink = "desp_categories.php?page=";	
-$pagination_setting = $_GET["pagination_setting"];
+$pagination_setting = isset($_GET["pagination_setting"]) ? $_GET["pagination_setting"] : "";
 				
 $page = 1;
 if(!empty($_GET["page"])) {
@@ -48,6 +48,7 @@ if($start < 0) $start = 0;
 $query =  $sql . $orderby . " limit " . $start . "," . $perPage->perpage; 
 
 $faq = $db_handle->runQuery($query);
+if (empty($faq)) { $faq = array(); }
 
 if(empty($_GET["rowcount"])) {
 $_GET["rowcount"] = $db_handle->numRows($sql);
@@ -63,15 +64,16 @@ $output = '';
 
 ?>
 
-                        <table id="myTable" class="table table-bordered">
+                        <div class="nm-table-wrap">
+                        <table id="myTable" class="table table-bordered nm-cats-table">
                             <thead class="bg-info">
                               <tr>
 							<th>S.N.</th>
 							<th>Category</th>
                             <th>Parent</th>
                             <th>Category Url</th>
-                            <th>Short Order</th>
-                            <th>Child Category</th>
+                            <th>Order</th>
+                            <th>Child</th>
                             <th>Menu</th>
                             <th>Meta Title</th>
                             <th>Meta Desc.</th>
@@ -85,40 +87,43 @@ $output = '';
                             ?>
                             <tr>
 							<td><?php echo $i+$k; ?></td>
-                            <td><?php echo $faq[$k]["maincat"]; ?></td>
+                            <td><?php echo htmlspecialchars($faq[$k]["maincat"]); ?></td>
                             <td><?php
                             $catid=$faq[$k]["parent"];
-                                    if(isset($catid)){
-                                        $qry12=mysqli_query($con,"SELECT * FROM `categories` WHERE id='$catid'");
+                                    if(isset($catid) && $catid !== "" && $catid !== null){
+                                        $qry12=mysqli_query($con,"SELECT maincat FROM `categories` WHERE id='".mysqli_real_escape_string($con, (string)$catid)."'");
                             $rs99=mysqli_fetch_array($qry12);
-                            echo $rs99["maincat"];
+                            echo htmlspecialchars(isset($rs99["maincat"]) ? $rs99["maincat"] : "");
                                     }
                              ?></td>
-                            <td><?php echo $faq[$k]["cat_url"]; ?></td>
-                            <td><?php echo $faq[$k]["short"]; ?></td>
-                            <td><?php echo $faq[$k]["main_heading"]; ?></td>
-                            <td><?php echo $faq[$k]["menu"]; ?></td>
-                            <td><?php echo $faq[$k]["metat"]; ?></td>
-                            <td><?php echo $faq[$k]["metad"]; ?></td>
-                             <td>
-                                <a class="" href="edit_category.php?eid=<?php echo $faq[$k]["id"]; ?>"><i class="fas fa-edit"></i></a>
-                                <a type="button" name="delete" id="<?php echo $faq[$k]["id"]; ?>" class="delete fas fa-trash-alt"></a>
+                            <td><code class="nm-url-cell" title="<?php echo htmlspecialchars($faq[$k]["cat_url"]); ?>"><?php echo htmlspecialchars($faq[$k]["cat_url"]); ?></code></td>
+                            <td><?php echo htmlspecialchars($faq[$k]["short"]); ?></td>
+                            <td><?php echo htmlspecialchars($faq[$k]["main_heading"]); ?></td>
+                            <td><?php echo htmlspecialchars($faq[$k]["menu"]); ?></td>
+                            <td><div class="nm-meta-cell" title="<?php echo htmlspecialchars($faq[$k]["metat"]); ?>"><?php echo htmlspecialchars($faq[$k]["metat"]); ?></div></td>
+                            <td><div class="nm-meta-cell" title="<?php echo htmlspecialchars($faq[$k]["metad"]); ?>"><?php echo htmlspecialchars($faq[$k]["metad"]); ?></div></td>
+                             <td class="nm-actions-cell">
+                                <a class="btn btn-warning text-white btn-sm" href="edit_category.php?eid=<?php echo (int)$faq[$k]["id"]; ?>" title="Edit"><i class="fas fa-edit"></i></a>
+                                <a type="button" name="delete" id="<?php echo (int)$faq[$k]["id"]; ?>" class="delete btn btn-danger text-white btn-sm" title="Delete"><i class="fas fa-trash-alt"></i></a>
                               </td>
 						  </tr>
                         <?php
                         }
                         if(!empty($perpageresult)) {
-                        $output .= '<table class="table" id="table"><tr><div id="pagination">' . $perpageresult . '</div></tr></table>';
+                        $output .= '<div id="pagination">' . $perpageresult . '</div>';
                         }
                         print $output;
                         ?>
+                        </table>
+                        </div>
     <script type="text/javascript" language="javascript" >
         $(document).ready(function(){
         $('#myTable').DataTable( {
            responsive: true,
            "bPaginate": false,
-            "searching": false
+            "searching": false,
+            "autoWidth": false,
+            "scrollX": false
            } );
         });
-
     </script>
