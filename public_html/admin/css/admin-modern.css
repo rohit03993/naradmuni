@@ -127,7 +127,7 @@ body:not(.nm-login) p {
 
 #sidebar ul li a:hover {
   color: #fff !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 #sidebar ul li.active > a,
@@ -135,6 +135,7 @@ body:not(.nm-login) p {
   color: #fff !important;
   background: var(--nm-accent) !important;
   font-weight: 600;
+  box-shadow: 0 4px 14px rgba(198, 40, 40, 0.35);
 }
 
 #content {
@@ -368,6 +369,24 @@ body:not(.nm-login) p {
   background: var(--nm-surface) !important;
 }
 
+.nm-stat--focus {
+  border-color: #c5d0db !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 32, 0.05), 0 12px 28px rgba(15, 23, 32, 0.08);
+}
+
+.nm-stat--focus h4 {
+  font-size: 1.85rem !important;
+}
+
+.nm-quick-heading {
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  margin: 8px 0 12px !important;
+  color: var(--nm-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .nm-quick {
   display: flex;
   flex-wrap: wrap;
@@ -388,15 +407,34 @@ body:not(.nm-login) p {
   font-size: 0.88rem;
   box-shadow: var(--nm-shadow);
   text-decoration: none !important;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 
 .nm-quick a:hover {
   border-color: var(--nm-accent);
   color: var(--nm-accent) !important;
+  transform: translateY(-1px);
 }
 
 .nm-quick a i {
   color: var(--nm-accent);
+}
+
+.nm-quick a.nm-quick--primary {
+  background: var(--nm-accent) !important;
+  border-color: var(--nm-accent) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 16px rgba(198, 40, 40, 0.28);
+}
+
+.nm-quick a.nm-quick--primary i {
+  color: #fff !important;
+}
+
+.nm-quick a.nm-quick--primary:hover {
+  background: #b71c1c !important;
+  border-color: #b71c1c !important;
+  color: #fff !important;
 }
 
 /* ——— Toolbar buttons (list pages) ——— */
@@ -448,16 +486,38 @@ body:not(.nm-login) p {
 }
 
 #content .form-control,
-#content .custom-select {
+#content .custom-select,
+#content textarea.form-control,
+#content input[type="text"],
+#content input[type="email"],
+#content input[type="password"],
+#content input[type="number"],
+#content input[type="url"],
+#content input[type="search"],
+#content select {
   border-radius: 9px !important;
   border-color: var(--nm-line) !important;
   font-size: 0.9rem;
 }
 
 #content .form-control:focus,
-#content .custom-select:focus {
+#content .custom-select:focus,
+#content textarea.form-control:focus,
+#content input:focus,
+#content select:focus {
   border-color: var(--nm-accent) !important;
   box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.14) !important;
+  outline: none !important;
+}
+
+#content label {
+  font-weight: 600;
+  color: var(--nm-ink);
+  font-size: 0.88rem;
+}
+
+#content .btn:focus {
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.18) !important;
 }
 
 /* ——— Tables ——— */
@@ -483,14 +543,17 @@ body:not(.nm-login) p {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 700 !important;
-  padding: 12px 10px !important;
+  padding: 11px 10px !important;
   white-space: nowrap;
   vertical-align: middle;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 #content table.table td,
 #content #myTable td {
-  padding: 10px !important;
+  padding: 9px 10px !important;
   vertical-align: middle !important;
   border-color: var(--nm-line) !important;
   font-size: 0.86rem;
@@ -498,8 +561,12 @@ body:not(.nm-login) p {
   background: #fff !important;
 }
 
-#content table.table tbody tr:hover td {
+#content table.table tbody tr:nth-child(even) td {
   background: #fafbfc !important;
+}
+
+#content table.table tbody tr:hover td {
+  background: #f3f6f9 !important;
 }
 
 /* Inline fields inside tables → calm read-only look */
@@ -661,6 +728,19 @@ code {
   padding: 4px 8px;
 }
 
+.dataTables_wrapper .dataTables_filter input:focus,
+.dataTables_wrapper .dataTables_length select:focus {
+  border-color: var(--nm-accent);
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.14);
+  outline: none;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: var(--nm-accent) !important;
+  border-color: var(--nm-accent) !important;
+  color: #fff !important;
+}
+
 @media (max-width: 1200px) {
   .nm-dash-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -670,15 +750,18 @@ code {
 @media (max-width: 768px) {
   #sidebar {
     margin-left: calc(var(--nm-sidebar-w) * -1) !important;
+    box-shadow: 12px 0 40px rgba(0, 0, 0, 0.28);
   }
   #sidebar.active {
     margin-left: 0 !important;
   }
   .page-content {
     margin: 0 12px 16px !important;
+    padding: 16px !important;
   }
   .nm-dash-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
   .nm-clock .nm-clock-label {
     display: none;
@@ -686,6 +769,23 @@ code {
   .nm-dash-wrap {
     padding-left: 12px;
     padding-right: 12px;
+  }
+  .nm-topbar.navbar,
+  .navbar.nm-topbar {
+    padding: 10px 12px !important;
+  }
+  #sidebarCollapse span {
+    display: none;
+  }
+  .breadcrumb {
+    padding: 12px 12px 6px !important;
+  }
+  .nm-quick a {
+    flex: 1 1 calc(50% - 10px);
+    justify-content: center;
+  }
+  .nm-quick a.nm-quick--primary {
+    flex: 1 1 100%;
   }
 }
 

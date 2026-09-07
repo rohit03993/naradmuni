@@ -42,7 +42,7 @@ function nm_dash_count(mysqli $con, string $sql): int {
   <link rel="stylesheet" href="../include/css/bootstrap.min.css">
   <link rel="stylesheet" href="css/all.min.css">
   <link rel="stylesheet" href="../include/css/style.css">
-  <link rel="stylesheet" href="css/admin-modern.css?v=3">
+  <link rel="stylesheet" href="css/admin-modern.css?v=4">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.5.2/css/buttons.dataTables.min.css"> 
 <link rel="stylesheet" href="../include/css/jquery-ui.css">
@@ -75,7 +75,7 @@ function nm_dash_count(mysqli $con, string $sql): int {
         <p class="nm-dash-sub">Overview of your CMS · live MySQL counts</p>
 
         <div class="nm-dash-grid">
-            <div class="nm-stat" style="--nm-stat-accent:#1565c0">
+            <div class="nm-stat nm-stat--focus" style="--nm-stat-accent:#1565c0">
                 <i class="dash-icon fas fa-file-alt"></i>
                 <h3>Content news</h3>
                 <h4><?php echo number_format(nm_dash_count($con, "SELECT COUNT(*) AS c FROM news WHERE newstype='Content'")); ?></h4>
@@ -85,12 +85,12 @@ function nm_dash_count(mysqli $con, string $sql): int {
                 <h3>Video news</h3>
                 <h4><?php echo number_format(nm_dash_count($con, "SELECT COUNT(*) AS c FROM news WHERE newstype='Video'")); ?></h4>
             </div>
-            <div class="nm-stat" style="--nm-stat-accent:#455a64">
+            <div class="nm-stat nm-stat--focus" style="--nm-stat-accent:#455a64">
                 <i class="dash-icon fas fa-bell"></i>
                 <h3>Push subscribers</h3>
                 <h4><?php echo number_format(nm_dash_count($con, "SELECT COUNT(*) AS c FROM tokens")); ?></h4>
             </div>
-            <div class="nm-stat" style="--nm-stat-accent:#6d4c41">
+            <div class="nm-stat nm-stat--focus" style="--nm-stat-accent:#6d4c41">
                 <i class="dash-icon fas fa-broom"></i>
                 <h3>Old news (6mo+)</h3>
                 <h4><?php echo number_format(nm_dash_count($con, "SELECT COUNT(*) AS c FROM news WHERE STR_TO_DATE(`date`,'%d-%m-%Y') < DATE_SUB(CURDATE(), INTERVAL 6 MONTH)")); ?></h4>
@@ -120,10 +120,10 @@ function nm_dash_count(mysqli $con, string $sql): int {
             </div>
         </div>
 
-        <h3 style="font-size:0.95rem;font-weight:700;margin:8px 0 10px;color:#5a6a7a;text-transform:uppercase;letter-spacing:0.06em;">Quick links</h3>
+        <h3 class="nm-quick-heading">Quick links</h3>
         <div class="nm-quick">
-          <a href="news.php"><i class="fas fa-newspaper"></i> Manage news</a>
-          <a href="add_news.php"><i class="fas fa-plus"></i> Add news</a>
+          <a class="nm-quick--primary" href="add_news.php"><i class="fas fa-plus"></i> Add news</a>
+          <a class="nm-quick--primary" href="news.php"><i class="fas fa-newspaper"></i> Manage news</a>
           <a href="cleanup_news.php"><i class="fas fa-broom"></i> Cleanup</a>
           <a href="categories.php"><i class="fas fa-folder-open"></i> Categories</a>
           <a href="notification.php"><i class="fas fa-bell"></i> Notification</a>

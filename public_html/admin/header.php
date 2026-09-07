@@ -3,7 +3,7 @@ $date = date_default_timezone_set("Asia/Kolkata");
 $nmAdminName = !empty($userRow["aname"]) ? $userRow["aname"] : (!empty($userRow["aemail"]) ? $userRow["aemail"] : "Admin");
 if (!defined("NM_ADMIN_ASSETS")) {
 	define("NM_ADMIN_ASSETS", true);
-	echo '<link rel="stylesheet" href="css/admin-modern.css?v=3">' . "\n";
+	echo '<link rel="stylesheet" href="css/admin-modern.css?v=4">' . "\n";
 }
 ?>
 <nav class="navbar navbar-expand-lg navbar-light nm-topbar">
@@ -35,13 +35,22 @@ if (!defined("NM_ADMIN_ASSETS")) {
   </div>
 </nav>
 <script type="text/javascript">
-setInterval(function () {
-  var xmlhttp = new XMLHttpRequest();
-  xmlhttp.open("GET", "check.php", false);
-  xmlhttp.send(null);
-  var el = document.getElementById("TimestatusMsg");
-  if (el) el.innerHTML = xmlhttp.responseText;
-}, 10000000000);
+(function () {
+  function nmUpdateClock() {
+    var el = document.getElementById("TimestatusMsg");
+    if (!el) return;
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "check.php", true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        el.innerHTML = xhr.responseText;
+      }
+    };
+    xhr.send(null);
+  }
+  nmUpdateClock();
+  setInterval(nmUpdateClock, 30000);
+})();
 </script>
 <style>
   tr { font-size: 13px; }
