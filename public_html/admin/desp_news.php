@@ -58,8 +58,6 @@ $query =  $sql . $orderby . " limit " . $start . "," . $perPage->perpage;
 $faq = $db_handle->runQuery($query);
 if (empty($faq)) { $faq = array(); }
 
-require_once __DIR__ . "/news_media.php";
-
 if(empty($_GET["rowcount"])) {
 $_GET["rowcount"] = $db_handle->numRows("SELECT newsid from news" . $queryCondition);
 }
@@ -79,14 +77,9 @@ $output = '';
                             <thead class="bg-info">
                               <tr>
 							<th>S.N.</th>
-							<th>News URL</th>
                             <th>Title</th>
-							<th>Type</th>
-							<th>Slider</th>
-							<th>Latest</th>
                             <th>Category</th>
                             <th>Photo</th>
-                            <th>Images</th>
                             <th>Status</th>
                             <th>Date</th>
 							<th>Action</th>
@@ -99,27 +92,18 @@ $output = '';
                                     
                                     $q33 = mysqli_query($con,"SELECT `maincat` FROM `categories` WHERE `id`='".$faq[$k]["category"]."'");
                                     $cat = mysqli_fetch_array($q33);
-                                    $media = nm_analyze_media(
-                                        isset($faq[$k]["image"]) ? $faq[$k]["image"] : "",
-                                        "",
-                                        isset($faq[$k]["video_file"]) ? $faq[$k]["video_file"] : ""
-                                    );
                             ?>
                             <tr>
 							<td><?php echo $i+$k; ?></td>
-                            <td><code class="nm-url-cell" title="<?php echo htmlspecialchars($faq[$k]["newsurl"]); ?>"><?php echo htmlspecialchars($faq[$k]["newsurl"]); ?></code></td>
-							<td><div class="nm-title-cell"><?php echo htmlspecialchars($faq[$k]["title"]); ?></div></td>
-                            <td><?php echo htmlspecialchars($faq[$k]["newstype"]); ?></td>
-                            <td><?php echo htmlspecialchars($faq[$k]["slider"].' / '.$faq[$k]['slider_priority']); ?></td>
-                            <td><?php echo htmlspecialchars($faq[$k]["latest_news"].' / '.$faq[$k]['latest_priority']); ?></td>
+							<td>
+                              <div class="nm-title-cell"><?php echo htmlspecialchars($faq[$k]["title"]); ?></div>
+                              <code class="nm-url-cell" title="<?php echo htmlspecialchars($faq[$k]["newsurl"]); ?>"><?php echo htmlspecialchars($faq[$k]["newsurl"]); ?></code>
+                            </td>
                             <td><?php echo htmlspecialchars(isset($cat["maincat"]) ? $cat["maincat"] : ""); ?></td>
                             <td>
                                 <?php if (!empty($faq[$k]["image"])) { ?>
                                 <img src="../images/news/<?php echo htmlspecialchars($faq[$k]["image"]); ?>" width="72" height="54" class="img-thumbnail" alt="" loading="lazy" decoding="async">
                                 <?php } else { echo "—"; } ?>
-                            </td>
-                            <td>
-                                <span class="badge badge-secondary" title="Disk files (list view skips body scan for speed)"><?php echo htmlspecialchars(nm_format_media_badge($media)); ?></span>
                             </td>
                             <td>
                                    <form id="SubmitForm<?php echo $faq[$k]["newsid"]; ?>">
@@ -141,13 +125,15 @@ $output = '';
 						  </tr>
                         <?php
                         }
-                        if(!empty($perpageresult)) {
-                        $output .= '<div id="pagination">' . $perpageresult . '</div>';
-                        }
-                        print $output;
                         ?>
+                            </tbody>
                         </table>
                         </div>
+                        <?php
+                        if(!empty($perpageresult)) {
+                          echo '<div id="pagination">' . $perpageresult . '</div>';
+                        }
+                        ?>
     <script type="text/javascript" language="javascript" >
         $(document).ready(function(){
         $('#myTable').DataTable( {
