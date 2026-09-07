@@ -211,7 +211,7 @@ if(isset($_POST['add']))
                       <input class="form-control" id="nm-newsurl" type="text" name="newsurl" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['newsurl']); } ?>" required autocomplete="off">
                       <button type="button" class="btn btn-outline-secondary btn-sm" id="nm-url-resync" title="Fill URL from title again">From title</button>
                     </div>
-                    <p class="nm-form-hint">Fills automatically from an English title. You can edit it anytime. Path: <code>/news/{slug}</code></p>
+                    <p class="nm-form-hint">Auto-converts Hindi/English title to an SEO slug. Edit anytime. Path: <code>/news/{slug}</code></p>
                   </div>
                   <div class="nm-form-field">
                     <label class="control-label">Image (850×565)</label>
@@ -356,12 +356,86 @@ if(isset($_POST['add']))
 
   var urlManual = false;
 
+  var VOWELS = {
+    "अ": "a", "आ": "aa", "इ": "i", "ई": "ee", "उ": "u", "ऊ": "oo",
+    "ए": "e", "ऐ": "ai", "ओ": "o", "औ": "au", "ऋ": "ri"
+  };
+  var MATRAS = {
+    "ा": "aa", "ि": "i", "ी": "ee", "ु": "u", "ू": "oo",
+    "े": "e", "ै": "ai", "ो": "o", "ौ": "au", "ृ": "ri",
+    "ं": "n", "ँ": "n", "ः": "h"
+  };
+  var CONSONANTS = {
+    "क": "k", "ख": "kh", "ग": "g", "घ": "gh", "ङ": "ng",
+    "च": "ch", "छ": "chh", "ज": "j", "झ": "jh", "ञ": "ny",
+    "ट": "t", "ठ": "th", "ड": "d", "ढ": "dh", "ण": "n",
+    "त": "t", "थ": "th", "द": "d", "ध": "dh", "न": "n",
+    "प": "p", "फ": "ph", "ब": "b", "भ": "bh", "म": "m",
+    "य": "y", "र": "r", "ल": "l", "व": "v", "श": "sh",
+    "ष": "sh", "स": "s", "ह": "h", "ळ": "l", "ऱ": "r",
+    "क़": "q", "ख़": "kh", "ग़": "g", "ज़": "z", "ड़": "d",
+    "ढ़": "dh", "फ़": "f", "य़": "y"
+  };
+  var DIGITS = {
+    "०": "0", "१": "1", "२": "2", "३": "3", "४": "4",
+    "५": "5", "६": "6", "७": "7", "८": "8", "९": "9"
+  };
+  var VIRAMA = "्";
+
+  function transliterateDevanagari(text) {
+    var out = "";
+    var i = 0;
+    var s = String(text || "");
+    while (i < s.length) {
+      var ch = s.charAt(i);
+      var next = s.charAt(i + 1);
+
+      if (DIGITS[ch]) {
+        out += DIGITS[ch];
+        i += 1;
+        continue;
+      }
+      if (VOWELS[ch]) {
+        out += VOWELS[ch];
+        i += 1;
+        continue;
+      }
+      if (CONSONANTS[ch]) {
+        out += CONSONANTS[ch];
+        i += 1;
+        if (next === VIRAMA) {
+          i += 1; // conjunct: no inherent vowel
+        } else if (MATRAS[next]) {
+          out += MATRAS[next];
+          i += 1;
+        } else {
+          out += "a"; // inherent अ
+        }
+        continue;
+      }
+      if (MATRAS[ch]) {
+        out += MATRAS[ch];
+        i += 1;
+        continue;
+      }
+      if (ch === VIRAMA) {
+        i += 1;
+        continue;
+      }
+      out += ch;
+      i += 1;
+    }
+    return out;
+  }
+
   function slugify(text) {
-    var s = String(text || "").toLowerCase().trim();
-    // Match admin PHP replace set, then keep ASCII slug only for clean /news/{slug}
+    var s = transliterateDevanagari(String(text || ""));
+    s = s.toLowerCase().trim();
     s = s.replace(/[,\.'&_\-:()+\";#!*{}\[\]?\/\\|@%\s$]+/g, "-");
     s = s.replace(/[^a-z0-9-]+/g, "-");
     s = s.replace(/-+/g, "-").replace(/^-+|-+$/g, "");
+    // Keep SEO slugs usable (avoid ultra-long URLs)
+    if (s.length > 120) s = s.slice(0, 120).replace(/-+$/g, "");
     return s;
   }
 
@@ -386,7 +460,6 @@ if(isset($_POST['add']))
     });
   }
 
-  // If redisplayed after error with empty URL, sync once
   if (!urlEl.value && titleEl.value) fillFromTitle();
 })();
 </script>
