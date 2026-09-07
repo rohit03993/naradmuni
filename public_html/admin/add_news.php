@@ -207,8 +207,11 @@ if(isset($_POST['add']))
                   </div>
                   <div class="nm-form-field nm-form-field--full">
                     <label class="control-label" for="nm-newsurl">News URL</label>
-                    <input class="form-control" id="nm-newsurl" type="text" name="newsurl" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['newsurl']); } ?>" required>
-                    <p class="nm-form-hint">Public path: <code>/news/{this-slug}</code> — keep stable after publish.</p>
+                    <div class="nm-url-row">
+                      <input class="form-control" id="nm-newsurl" type="text" name="newsurl" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['newsurl']); } ?>" required autocomplete="off">
+                      <button type="button" class="btn btn-outline-secondary btn-sm" id="nm-url-resync" title="Fill URL from title again">From title</button>
+                    </div>
+                    <p class="nm-form-hint">Fills automatically from an English title. You can edit it anytime. Path: <code>/news/{slug}</code></p>
                   </div>
                   <div class="nm-form-field">
                     <label class="control-label">Image (850×565)</label>
@@ -343,6 +346,49 @@ if(isset($_POST['add']))
 						}
 			});
 	});
+</script>
+<script>
+(function () {
+  var titleEl = document.getElementById("nm-title");
+  var urlEl = document.getElementById("nm-newsurl");
+  var resyncBtn = document.getElementById("nm-url-resync");
+  if (!titleEl || !urlEl) return;
+
+  var urlManual = false;
+
+  function slugify(text) {
+    var s = String(text || "").toLowerCase().trim();
+    // Match admin PHP replace set, then keep ASCII slug only for clean /news/{slug}
+    s = s.replace(/[,\.'&_\-:()+\";#!*{}\[\]?\/\\|@%\s$]+/g, "-");
+    s = s.replace(/[^a-z0-9-]+/g, "-");
+    s = s.replace(/-+/g, "-").replace(/^-+|-+$/g, "");
+    return s;
+  }
+
+  function fillFromTitle() {
+    var slug = slugify(titleEl.value);
+    if (slug) urlEl.value = slug;
+  }
+
+  titleEl.addEventListener("input", function () {
+    if (!urlManual) fillFromTitle();
+  });
+
+  urlEl.addEventListener("input", function () {
+    urlManual = true;
+  });
+
+  if (resyncBtn) {
+    resyncBtn.addEventListener("click", function () {
+      urlManual = false;
+      fillFromTitle();
+      urlEl.focus();
+    });
+  }
+
+  // If redisplayed after error with empty URL, sync once
+  if (!urlEl.value && titleEl.value) fillFromTitle();
+})();
 </script>
 </body>
 </html>

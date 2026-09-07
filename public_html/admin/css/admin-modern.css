@@ -1082,6 +1082,22 @@ code {
   grid-column: 1 / -1;
 }
 
+.nm-news-form .nm-url-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.nm-news-form .nm-url-row .form-control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.nm-news-form .nm-url-row .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .nm-news-form .nm-form-hint {
   margin: 6px 0 0;
   font-size: 0.78rem;
