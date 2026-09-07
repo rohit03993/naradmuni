@@ -3,7 +3,7 @@ date_default_timezone_set("Asia/Kolkata");
 $nmAdminName = !empty($userRow["aname"]) ? $userRow["aname"] : (!empty($userRow["aemail"]) ? $userRow["aemail"] : "Admin");
 if (!defined("NM_ADMIN_ASSETS")) {
 	define("NM_ADMIN_ASSETS", true);
-	echo '<link rel="stylesheet" href="css/admin-modern.css?v=10">' . "\n";
+	echo '<link rel="stylesheet" href="css/admin-modern.css?v=11">' . "\n";
 }
 ?>
 <nav class="navbar navbar-expand-lg navbar-light nm-topbar">

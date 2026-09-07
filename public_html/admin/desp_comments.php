@@ -4,7 +4,7 @@ require_once("pagination.class.php");
 $db_handle = new DBController();
 $perPage = new PerPage();
 
-    $by_todate=$_GET['by_todate'];
+    $by_todate = isset($_GET['by_todate']) ? $_GET['by_todate'] : "";
     $queryCondition = "";
 
 	if(!empty($_GET["search"])) {
@@ -34,9 +34,9 @@ $perPage = new PerPage();
 	}
 $orderby = " ORDER BY comments.c_id desc";
 $sql = "SELECT comments.*,news.title FROM comments INNER JOIN news ON comments.newsid=news.newsid" . $queryCondition;
-$paginationlink = "desp_comments.php?page=";	
-$pagination_setting = $_GET["pagination_setting"];
-				
+$paginationlink = "desp_comments.php?page=";
+$pagination_setting = isset($_GET["pagination_setting"]) ? $_GET["pagination_setting"] : "";
+
 $page = 1;
 if(!empty($_GET["page"])) {
 $page = $_GET["page"];
@@ -45,25 +45,25 @@ $page = $_GET["page"];
 $start = ($page-1)*$perPage->perpage;
 if($start < 0) $start = 0;
 
-$query =  $sql . $orderby . " limit " . $start . "," . $perPage->perpage; 
+$query =  $sql . $orderby . " limit " . $start . "," . $perPage->perpage;
 
 $faq = $db_handle->runQuery($query);
+if (empty($faq)) { $faq = array(); }
 
 if(empty($_GET["rowcount"])) {
 $_GET["rowcount"] = $db_handle->numRows($sql);
 }
 
 if($pagination_setting == "prev-next") {
-	$perpageresult = $perPage->getPrevNext($_GET["rowcount"], $paginationlink,$pagination_setting);	
+	$perpageresult = $perPage->getPrevNext($_GET["rowcount"], $paginationlink,$pagination_setting);
 } else {
-	$perpageresult = $perPage->getAllPageLinks($_GET["rowcount"], $paginationlink,$pagination_setting);	
+	$perpageresult = $perPage->getAllPageLinks($_GET["rowcount"], $paginationlink,$pagination_setting);
 }
-
-$output = '';
 
 ?>
 
-                        <table id="myTable" class="table table-bordered">
+                        <div class="nm-table-wrap nm-table-wrap--fit">
+                        <table id="myTable" class="table table-bordered nm-comments-table">
                             <thead class="bg-info">
                               <tr>
                                 <th>S.N.</th>
@@ -72,7 +72,6 @@ $output = '';
                                 <th>Email</th>
                                 <th>Comment</th>
                                 <th>Date</th>
-                                <th>Time</th>
                                 <th>Status</th>
                               </tr>
                             </thead>
@@ -82,17 +81,19 @@ $output = '';
                                 foreach($faq as $k=>$v) {
                             ?>
                             <tr>
-							<td><?php echo $i++;?></td>
-                            <td><textarea cols="15" rows="5" readonly><?php echo $faq[$k]["title"]; ?></textarea></td>
-                            <td><?php echo $faq[$k]["name"]; ?></td>
-                            <td><?php echo $faq[$k]["u_id"]; ?></td>
-                            <td><?php echo $faq[$k]["comment"]; ?></td>
-                            <td><?php echo $faq[$k]["date"]; ?></td>
-                            <td><?php echo $faq[$k]["time"]; ?></td>
+							<td><?php echo $i++; ?></td>
+                            <td><div class="nm-title-cell" title="<?php echo htmlspecialchars($faq[$k]["title"]); ?>"><?php echo htmlspecialchars($faq[$k]["title"]); ?></div></td>
+                            <td><?php echo htmlspecialchars($faq[$k]["name"]); ?></td>
+                            <td><span class="nm-email-cell"><?php echo htmlspecialchars($faq[$k]["u_id"]); ?></span></td>
+                            <td><div class="nm-comment-cell"><?php echo htmlspecialchars($faq[$k]["comment"]); ?></div></td>
+                            <td class="nm-date-cell">
+                              <?php echo htmlspecialchars($faq[$k]["date"]); ?><br>
+                              <span class="nm-muted"><?php echo htmlspecialchars($faq[$k]["time"]); ?></span>
+                            </td>
                             <td>
-                                   <form id="SubmitForm<?php echo $faq[$k]["c_id"]; ?>">
-                                    <select name="status" class="status custom-select" id="<?php echo $faq[$k]["c_id"]; ?>">
-                                        <option value="<?php echo $faq[$k]["status"]; ?>"><?php echo $faq[$k]["status"]; ?></option>
+                                   <form id="SubmitForm<?php echo (int) $faq[$k]["c_id"]; ?>">
+                                    <select name="status" class="status custom-select" id="<?php echo (int) $faq[$k]["c_id"]; ?>">
+                                        <option value="<?php echo htmlspecialchars($faq[$k]["status"]); ?>"><?php echo htmlspecialchars($faq[$k]["status"]); ?></option>
                                         <option value="Approved">Approve</option>
                                         <option value="Declined">Decline</option>
                                       </select>
@@ -101,17 +102,24 @@ $output = '';
 						  </tr>
                         <?php
                         }
+                        ?>
+                            </tbody>
+                        </table>
+                        </div>
+                        <?php
                         if(!empty($perpageresult)) {
-                        $output .= '<table class="table" id="table"><tr><div id="pagination">' . $perpageresult . '</div></tr></table>';
+                          echo '<div id="pagination">' . $perpageresult . '</div>';
                         }
-                        print $output;
                         ?>
 <script type="text/javascript" language="javascript" >
         $(document).ready(function(){
         $('#myTable').DataTable( {
-           responsive: true,
+           responsive: false,
            "bPaginate": false,
-            "searching": false
+            "searching": false,
+            "autoWidth": false,
+            "scrollX": false,
+            "ordering": false
            } );
         });
 

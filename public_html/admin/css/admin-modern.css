@@ -597,7 +597,7 @@ body:not(.nm-login) {
   background: #f3f6f9 !important;
 }
 
-/* Inline fields inside tables → calm read-only look */
+/* Inline fields inside tables → calm read-only look (no inner scrollboxes) */
 #content table textarea,
 #content table input[type="text"],
 #content table input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
@@ -605,10 +605,10 @@ body:not(.nm-login) {
   background: transparent !important;
   box-shadow: none !important;
   resize: none !important;
-  max-height: 4.2em;
-  overflow: auto !important;
+  max-height: none;
+  overflow: visible !important;
   width: 100% !important;
-  min-width: 120px;
+  min-width: 0;
   padding: 0 !important;
   margin: 0 !important;
   font-size: 0.86rem !important;
@@ -847,6 +847,60 @@ body:not(.nm-login) {
 
 #content .nm-news-table select.custom-select,
 #content .nm-news-table select {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Comments list */
+.nm-comments-table {
+  margin-bottom: 0 !important;
+  border: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed;
+}
+
+.nm-comments-table th,
+.nm-comments-table td {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.nm-comments-table th:nth-child(1),
+.nm-comments-table td:nth-child(1) { width: 4%; }
+.nm-comments-table th:nth-child(2),
+.nm-comments-table td:nth-child(2) { width: 24%; }
+.nm-comments-table th:nth-child(3),
+.nm-comments-table td:nth-child(3) { width: 12%; }
+.nm-comments-table th:nth-child(4),
+.nm-comments-table td:nth-child(4) { width: 14%; }
+.nm-comments-table th:nth-child(5),
+.nm-comments-table td:nth-child(5) { width: 26%; }
+.nm-comments-table th:nth-child(6),
+.nm-comments-table td:nth-child(6) { width: 10%; }
+.nm-comments-table th:nth-child(7),
+.nm-comments-table td:nth-child(7) { width: 10%; }
+
+.nm-comment-cell {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--nm-ink);
+  max-width: 100%;
+}
+
+.nm-email-cell {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--nm-muted);
+  word-break: break-all;
+}
+
+#content .nm-comments-table select.custom-select,
+#content .nm-comments-table select {
   max-width: 100%;
   min-width: 0;
 }
