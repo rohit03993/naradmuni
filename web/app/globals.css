@@ -19,7 +19,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 body {
   margin: 0;
@@ -32,7 +32,8 @@ body {
   font-weight: 400;
   letter-spacing: normal;
   line-height: 1.5;
-  overflow-x: clip;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 a { color: inherit; text-decoration: none; }
 img { max-width: 100%; height: auto; display: block; }
@@ -530,9 +531,12 @@ strong, b { font-weight: 700; }
   grid-template-columns: minmax(0, var(--article)) var(--rail);
   gap: var(--gap);
   align-items: start;
+  min-width: 0;
+  max-width: 100%;
 }
 .layout > div {
   min-width: 0;
+  max-width: 100%;
 }
 
 .crumb {
@@ -1198,40 +1202,54 @@ article .author-box {
   word-break: break-word;
 }
 
-/* Category listing — same dense tiles */
+/* Category listing — image + title only (no date/time) */
+.cat-page {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
 .cat-tiles {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
   margin: 8px 0 20px;
+  min-width: 0;
 }
 .cat-tile {
   display: block;
   border-bottom: 0;
+  min-width: 0;
+  transition: opacity 0.15s ease;
 }
-.cat-tile img {
+.cat-tile:hover h3 {
+  color: var(--accent);
+}
+.cat-tile img,
+.cat-tile-ph {
   width: 100%;
   height: auto;
   max-height: 200px;
-  object-fit: contain;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
   object-position: center;
-  border-radius: 4px;
+  border-radius: 6px;
   background: var(--grey);
+}
+.cat-tile-ph {
+  min-height: 120px;
 }
 .cat-tile h3 {
   font-size: 15px;
-  line-height: 1.4;
+  line-height: 1.45;
   font-weight: 700;
-  margin: 8px 0 0;
+  margin: 10px 0 0;
+  color: var(--text);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-.cat-tile .card-meta {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--muted);
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .cat-h1 { font-size: 40px; margin: 8px 0 8px; }
@@ -1594,10 +1612,8 @@ article .author-box {
   .cat-tile {
     display: grid;
     grid-template-columns: 100px minmax(0, 1fr);
-    grid-template-rows: auto auto;
     column-gap: 12px;
-    row-gap: 4px;
-    align-items: start;
+    align-items: center;
     padding: 12px 0;
     border-bottom: 1px solid var(--border);
   }
@@ -1605,8 +1621,8 @@ article .author-box {
     border-bottom: 0;
   }
   .cat-tile img,
+  .cat-tile-ph,
   .cat-tile .ph {
-    grid-row: 1 / span 2;
     grid-column: 1;
     width: 100px;
     height: 75px;
@@ -1616,16 +1632,13 @@ article .author-box {
     object-position: center;
     border-radius: 6px;
     background: var(--grey);
+    min-height: 0;
   }
   .cat-tile h3 {
     grid-column: 2;
     font-size: 14px;
     line-height: 1.45;
     font-weight: 600;
-    margin: 0;
-  }
-  .cat-tile .card-meta {
-    grid-column: 2;
     margin: 0;
   }
   .cat-h1 { font-size: 24px; line-height: 1.3; }

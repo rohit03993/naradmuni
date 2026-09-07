@@ -712,6 +712,93 @@ body:not(.nm-login) p {
   border-color: var(--nm-accent) !important;
 }
 
+/* News list — contain wide tables inside the page (no body horizontal scroll) */
+.nm-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--nm-line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.nm-news-table {
+  margin-bottom: 0 !important;
+  border: 0 !important;
+  width: 100% !important;
+  table-layout: fixed;
+}
+
+.nm-news-table th,
+.nm-news-table td {
+  word-break: break-word;
+}
+
+.nm-url-cell {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.72rem !important;
+  background: transparent !important;
+  color: var(--nm-muted) !important;
+  padding: 0 !important;
+}
+
+.nm-title-cell {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  color: var(--nm-ink);
+  max-width: 100%;
+}
+
+.nm-date-cell {
+  white-space: nowrap;
+  font-size: 0.78rem !important;
+  line-height: 1.35;
+}
+
+.nm-date-cell .nm-muted,
+.nm-muted {
+  color: var(--nm-muted) !important;
+  font-size: 0.72rem;
+}
+
+.nm-actions-cell {
+  white-space: nowrap;
+}
+
+.nm-news-table th:nth-child(1),
+.nm-news-table td:nth-child(1) { width: 3%; }
+.nm-news-table th:nth-child(2),
+.nm-news-table td:nth-child(2) { width: 14%; }
+.nm-news-table th:nth-child(3),
+.nm-news-table td:nth-child(3) { width: 22%; }
+.nm-news-table th:nth-child(4),
+.nm-news-table td:nth-child(4) { width: 7%; }
+.nm-news-table th:nth-child(5),
+.nm-news-table td:nth-child(5),
+.nm-news-table th:nth-child(6),
+.nm-news-table td:nth-child(6) { width: 7%; }
+.nm-news-table th:nth-child(7),
+.nm-news-table td:nth-child(7) { width: 9%; }
+.nm-news-table th:nth-child(8),
+.nm-news-table td:nth-child(8) { width: 6%; }
+.nm-news-table th:nth-child(9),
+.nm-news-table td:nth-child(9) { width: 6%; }
+.nm-news-table th:nth-child(10),
+.nm-news-table td:nth-child(10) { width: 8%; }
+.nm-news-table th:nth-child(11),
+.nm-news-table td:nth-child(11) { width: 7%; }
+.nm-news-table th:nth-child(12),
+.nm-news-table td:nth-child(12) { width: 8%; }
+
 code {
   color: var(--nm-accent);
   background: var(--nm-accent-soft);

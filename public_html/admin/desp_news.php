@@ -41,7 +41,7 @@ $perPage = new PerPage();
 		}
 	}
 $orderby = " ORDER BY newsid desc";
-$sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `description`, `video_file`, `newstype`, `category`, `team_id`, `latest_news`, `breaking`, `slider`, `latest_priority`, `slider_priority`, `date`, `time`, `status`, `pub_date_time` from news" . $queryCondition;
+$sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `video_file`, `newstype`, `category`, `team_id`, `latest_news`, `breaking`, `slider`, `latest_priority`, `slider_priority`, `date`, `time`, `status`, `pub_date_time` from news" . $queryCondition;
 $paginationlink = "desp_news.php?page=";
 $pagination_setting = isset($_GET["pagination_setting"]) ? $_GET["pagination_setting"] : "";
 
@@ -74,20 +74,21 @@ $output = '';
 
 ?>
 
-                        <table id="myTable" class="table table-bordered">
+                        <div class="nm-table-wrap">
+                        <table id="myTable" class="table table-bordered nm-news-table">
                             <thead class="bg-info">
                               <tr>
 							<th>S.N.</th>
 							<th>News URL</th>
                             <th>Title</th>
-							<th>News Type</th>
+							<th>Type</th>
 							<th>Slider</th>
 							<th>Latest</th>
                             <th>Category</th>
                             <th>Photo</th>
                             <th>Images</th>
                             <th>Status</th>
-                            <th>Date / Time</th>
+                            <th>Date</th>
 							<th>Action</th>
 						  </tr>
                             </thead>
@@ -100,27 +101,27 @@ $output = '';
                                     $cat = mysqli_fetch_array($q33);
                                     $media = nm_analyze_media(
                                         isset($faq[$k]["image"]) ? $faq[$k]["image"] : "",
-                                        isset($faq[$k]["description"]) ? $faq[$k]["description"] : "",
+                                        "",
                                         isset($faq[$k]["video_file"]) ? $faq[$k]["video_file"] : ""
                                     );
                             ?>
                             <tr>
 							<td><?php echo $i+$k; ?></td>
-                            <td><?php echo htmlspecialchars($faq[$k]["newsurl"]); ?></td>
-							<td><textarea cols="20" rows="5"><?php echo htmlspecialchars($faq[$k]["title"]); ?></textarea></td>
+                            <td><code class="nm-url-cell" title="<?php echo htmlspecialchars($faq[$k]["newsurl"]); ?>"><?php echo htmlspecialchars($faq[$k]["newsurl"]); ?></code></td>
+							<td><div class="nm-title-cell"><?php echo htmlspecialchars($faq[$k]["title"]); ?></div></td>
                             <td><?php echo htmlspecialchars($faq[$k]["newstype"]); ?></td>
                             <td><?php echo htmlspecialchars($faq[$k]["slider"].' / '.$faq[$k]['slider_priority']); ?></td>
                             <td><?php echo htmlspecialchars($faq[$k]["latest_news"].' / '.$faq[$k]['latest_priority']); ?></td>
                             <td><?php echo htmlspecialchars(isset($cat["maincat"]) ? $cat["maincat"] : ""); ?></td>
                             <td>
                                 <?php if (!empty($faq[$k]["image"])) { ?>
-                                <img src="../images/news/<?php echo htmlspecialchars($faq[$k]["image"]); ?>" width="100" class="img-thumbnail" alt="">
+                                <img src="../images/news/<?php echo htmlspecialchars($faq[$k]["image"]); ?>" width="72" height="54" class="img-thumbnail" alt="" loading="lazy" decoding="async">
                                 <?php } else { echo "—"; } ?>
                             </td>
                             <td>
-                                <span class="badge badge-secondary" title="Disk files + optional base64 embeds in body"><?php echo htmlspecialchars(nm_format_media_badge($media)); ?></span>
+                                <span class="badge badge-secondary" title="Disk files (list view skips body scan for speed)"><?php echo htmlspecialchars(nm_format_media_badge($media)); ?></span>
                             </td>
-                            <td width="10%">
+                            <td>
                                    <form id="SubmitForm<?php echo $faq[$k]["newsid"]; ?>">
                                     <select name="status" class="status custom-select" id="<?php echo $faq[$k]["newsid"]; ?>">
                                         <option value="<?php echo $faq[$k]["status"]; ?>"><?php echo $faq[$k]["status"]; ?></option>
@@ -129,10 +130,10 @@ $output = '';
                                       </select>
                                     </form>
                             </td>
-                            <td width="10%">
-                            <?php echo htmlspecialchars($faq[$k]["date"]); ?> / <?php echo htmlspecialchars($faq[$k]["time"]); ?>
+                            <td class="nm-date-cell">
+                            <?php echo htmlspecialchars($faq[$k]["date"]); ?><br><span class="nm-muted"><?php echo htmlspecialchars($faq[$k]["time"]); ?></span>
                             </td>
-                             <td width="15%">
+                             <td class="nm-actions-cell">
                                  <a class="btn btn-info" href="<?php echo $publicroot.'news/'.$faq[$k]["newsurl"]; ?>" target="_blank" title="View on public site"><i class="fas fa-eye"></i></a>
                                 <a class="btn btn-warning text-white" href="edit_news.php?eid=<?php echo $faq[$k]["newsid"]; ?>"><i class="fas fa-edit"></i></a>
                                 <a type="button" class="delete btn btn-danger text-white" name="delete" id="<?php echo $faq[$k]["newsid"]; ?>"><i class="delete fas fa-trash-alt"></i></a>
@@ -141,17 +142,20 @@ $output = '';
                         <?php
                         }
                         if(!empty($perpageresult)) {
-                        $output .= '<table class="table" id="table"><tr><div id="pagination">' . $perpageresult . '</div></tr></table>';
+                        $output .= '<div id="pagination">' . $perpageresult . '</div>';
                         }
                         print $output;
                         ?>
+                        </table>
+                        </div>
     <script type="text/javascript" language="javascript" >
         $(document).ready(function(){
         $('#myTable').DataTable( {
            responsive: true,
            "bPaginate": false,
-            "searching": false
+            "searching": false,
+            "autoWidth": false,
+            "scrollX": false
            } );
         });
-
     </script>

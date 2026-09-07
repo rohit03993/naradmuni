@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { newsImage } from "@/lib/images";
-import { formatStamp } from "@/lib/html";
 import { getCategoryByUrl, getChildCategories, countNewsByCategory, getNewsByCategory } from "@/lib/queries";
 
 type Props = {
@@ -25,7 +24,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const canonical = cat.cat_url || slug;
 
   return (
-    <section>
+    <section className="cat-page">
       <h1 className="cat-h1">{cat.hindi_name}</h1>
       {cat.metad ? <p className="cat-intro">{cat.metad}</p> : null}
       {children.length ? (
@@ -46,13 +45,22 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       ) : null}
       {items.length ? (
         <div className="cat-tiles">
-          {items.map((n) => {
+          {items.map((n, i) => {
             const src = newsImage(n.image);
             return (
               <a className="cat-tile" key={n.newsid} href={`/news/${n.newsurl}`}>
-                {src ? <img src={src} alt={n.title} /> : <div className="ph" style={{ height: 180 }} />}
+                {src ? (
+                  <img
+                    src={src}
+                    alt=""
+                    loading={i < 3 ? "eager" : "lazy"}
+                    decoding="async"
+                    {...(i < 3 ? { fetchPriority: "high" as const } : {})}
+                  />
+                ) : (
+                  <div className="ph cat-tile-ph" />
+                )}
                 <h3>{n.title}</h3>
-                <div className="card-meta">{formatStamp(n.date, n.time)}</div>
               </a>
             );
           })}
