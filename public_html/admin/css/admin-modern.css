@@ -35,10 +35,34 @@ body:not(.nm-login) p {
   line-height: 1.5;
 }
 
+/* One vertical scrollbar only: html scrolls; body must NOT also scroll.
+   Never set overflow-x:hidden on body without overflow-y:visible —
+   browsers then force overflow-y:auto and you get a second scrollbar. */
+html {
+  overflow-x: clip;
+  overflow-y: auto;
+  height: auto;
+}
+
+body:not(.nm-login) {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  max-width: 100%;
+}
+
+@supports not (overflow-x: clip) {
+  html {
+    overflow-x: hidden;
+  }
+}
+
 .wrapper {
   min-height: 100vh;
   background: var(--nm-bg);
   align-items: stretch;
+  overflow: visible !important;
+  max-width: 100%;
 }
 
 #sidebar {
@@ -48,6 +72,12 @@ body:not(.nm-login) p {
   color: #e8eef4 !important;
   box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
   z-index: 1040;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #sidebar.active {
@@ -140,9 +170,13 @@ body:not(.nm-login) p {
 
 #content {
   width: 100% !important;
+  min-width: 0; /* flex child: shrink instead of spawning overflow scroll */
   padding: 0 0 48px !important;
   min-height: 100vh;
   background: var(--nm-bg) !important;
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
 }
 
 /* ——— Top bar ——— */
@@ -706,25 +740,28 @@ body:not(.nm-login) p {
   border-color: var(--nm-accent) !important;
 }
 
-/* News / categories lists — fit viewport; never create page or table sideways scroll */
+/* Fit tables to width; never create a nested page scroller */
 .page-content,
-#content,
-#pagination-result {
+#pagination-result,
+#content > .container,
+#content > .container-fluid {
   max-width: 100%;
-  overflow-x: hidden !important;
+  min-width: 0;
+  overflow: visible !important;
 }
 
 .nm-table-wrap {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden !important;
+  min-width: 0;
+  overflow: visible !important;
   border: 1px solid var(--nm-line);
   border-radius: 10px;
   background: #fff;
 }
 
 .nm-table-wrap--fit {
-  overflow-x: hidden !important;
+  overflow: visible !important;
 }
 
 .nm-news-table,
@@ -864,13 +901,13 @@ code {
 /* DataTables */
 .dataTables_wrapper {
   max-width: 100% !important;
-  overflow-x: hidden !important;
+  overflow: visible !important;
 }
 
 .dataTables_wrapper .dataTables_scroll,
 .dataTables_wrapper .dataTables_scrollBody,
 .dataTables_wrapper .dataTables_scrollHead {
-  overflow-x: hidden !important;
+  overflow: visible !important;
 }
 
 .dataTables_wrapper .dataTables_filter input,
