@@ -61,6 +61,17 @@ if(isset($_POST['add']))
                             $video_id = '';
                             $post_image = '';
 
+                            // Lean form: fill SEO/summary from title when not posted
+                            if ($short_description === '' && $title !== '') {
+                                $short_description = $title;
+                            }
+                            if ($metat === '' && $title !== '') {
+                                $metat = $title;
+                            }
+                            if ($metad === '' && $title !== '') {
+                                $metad = $title;
+                            }
+
                             if (empty($title)) { array_push($errors, "Kindly fill news title"); }
                             if (empty($short_description)) { array_push($errors, "Kindly fill Short Description"); }
                             if (empty($newsurl)) { array_push($errors, "Kindly fill news url"); }
@@ -141,18 +152,10 @@ if(isset($_POST['add']))
                              $lastInsertId = mysqli_insert_id($con);
                               if($ex>0) {
 
-                            $number1 = isset($_POST["cat_id"]) ? count($_POST["cat_id"]) : 0;
-                             if($number1 > 0)
-                             {
-                                  for($i=0; $i<$number1; $i++)
-                                  {
-                                       if(trim($_POST["cat_id"][$i] != ''))
-                                       {
-                                            $cat_id=mysqli_real_escape_string($con, $_POST["cat_id"][$i]);
-                                            mysqli_query($con, "INSERT INTO `news_cat`(`category`, `news_id`) VALUES('$cat_id','$lastInsertId')");
-                                       }
-                                  }
-                             }
+                            // Mirror Home Category into news_cat so listings/APIs that join news_cat still work
+                            if (!empty($category) && $category !== '0') {
+                              mysqli_query($con, "INSERT INTO `news_cat`(`category`, `news_id`) VALUES('$category','$lastInsertId')");
+                            }
                                    echo("<script language='javascript'>
                                   window.alert('added Successfully')
                                   window.location.href='news.php';
@@ -200,26 +203,30 @@ if(isset($_POST['add']))
                 <div class="nm-form-grid">
                   <div class="nm-form-field nm-form-field--full">
                     <label class="control-label" for="nm-title">Title</label>
-                    <input class="form-control" id="nm-title" type="text" name="title" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['title']); } ?>" >
+                    <input class="form-control" id="nm-title" type="text" name="title" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['title']); } ?>" required>
                   </div>
                   <div class="nm-form-field nm-form-field--full">
                     <label class="control-label" for="nm-newsurl">News URL</label>
-                    <input class="form-control" id="nm-newsurl" type="text" name="newsurl" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['newsurl']); } ?>" >
-                    <p class="nm-form-hint">Public path stays <code>/news/{this-slug}</code> — do not change after publish.</p>
+                    <input class="form-control" id="nm-newsurl" type="text" name="newsurl" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['newsurl']); } ?>" required>
+                    <p class="nm-form-hint">Public path: <code>/news/{this-slug}</code> — keep stable after publish.</p>
                   </div>
-                  <div class="nm-form-field nm-form-field--full">
-                    <label class="control-label" for="nm-short">Short Description</label>
-                    <textarea class="form-control" id="nm-short" cols="20" rows="3" name="short_description"><?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['short_description']); } ?></textarea>
+                  <div class="nm-form-field">
+                    <label class="control-label">Image (850×565)</label>
+                    <input class="form-control" type="file" name="image" accept="image/*" required>
+                  </div>
+                  <div class="nm-form-field">
+                    <label class="control-label" for="datetimepicker">Publish Date Time</label>
+                    <input class="form-control" id="datetimepicker" type="text" name="pub_date_time" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['pub_date_time']); } ?>" readonly>
                   </div>
                 </div>
               </section>
 
               <section class="nm-form-section">
-                <h2 class="nm-form-section__title">Where it appears</h2>
+                <h2 class="nm-form-section__title">Category</h2>
                 <div class="nm-form-grid">
-                  <div class="nm-form-field">
+                  <div class="nm-form-field nm-form-field--full">
                     <label class="control-label" for="category">Home Category</label>
-                    <select class="custom-select" id="category" name="category">
+                    <select class="custom-select" id="category" name="category" required>
                       <option value="0">select</option>
                       <?php
                       $query = $con->query("SELECT * FROM `categories` ORDER BY id ASC");
@@ -233,121 +240,10 @@ if(isset($_POST['add']))
                       }
                       ?>
                     </select>
-                  </div>
-                  <div class="nm-form-field">
-                    <label class="control-label" for="newstype">News Type</label>
-                    <select class="custom-select" id="newstype" name="newstype">
-                      <option>Content</option>
-                      <option>Video</option>
-                    </select>
-                  </div>
-                  <div class="nm-form-field nm-form-field--full">
-                    <label class="control-label">Select Categories</label>
-                    <input type="search" class="form-control nm-cat-filter" placeholder="Filter categories…" autocomplete="off" aria-label="Filter categories">
-                    <div class="nm-cat-grid">
-                      <?php
-                      $query = $con->query("SELECT * FROM `categories` WHERE `cat_url` IS NOT NULL ORDER BY id ASC");
-                      $rowCount = $query->num_rows;
-                      if($rowCount > 0){
-                          while($row = $query->fetch_assoc()){
-                              echo '<label class="nm-cat-chip"><input type="checkbox" name="cat_id[]" value="'.(int)$row['id'].'"> <span>'.htmlspecialchars($row['maincat']).'</span></label>';
-                          }
-                      }else{
-                          echo '<p class="nm-form-hint">No categories available.</p>';
-                      }
-                      ?>
-                    </div>
-                  </div>
-                </div>
-                <div id="vid"></div>
-                <div id="vid2"></div>
-              </section>
-
-              <section class="nm-form-section">
-                <h2 class="nm-form-section__title">Media &amp; author</h2>
-                <div class="nm-form-grid">
-                  <div class="nm-form-field">
-                    <label class="control-label">Image (850×565)</label>
-                    <input class="form-control" type="file" name="image">
-                  </div>
-                  <div class="nm-form-field">
-                    <label class="control-label" for="team_id">Select Author</label>
-                    <select class="custom-select" id="team_id" name="team_id">
-                      <?php if(isset($_POST['add'])){ echo '<option>'.htmlspecialchars($_POST['img_abt']).'</option>'; }else{
-                      echo '<option value="0">select</option>'; } ?>
-                      <?php
-                      $query = $con->query("SELECT * FROM `team` ORDER BY t_id ASC");
-                      $rowCount = $query->num_rows;
-                      if($rowCount > 0){
-                          while($row = $query->fetch_assoc()){
-                              echo '<option value="'.(int)$row['t_id'].'">'.htmlspecialchars($row['name']).'</option>';
-                          }
-                      }else{
-                          echo '<option value="0">no data available</option>';
-                      }
-                      ?>
-                    </select>
-                  </div>
-                  <div class="nm-form-field">
-                    <label class="control-label">About Image</label>
-                    <input class="form-control" type="text" name="img_abt" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['img_abt']); } ?>" >
-                  </div>
-                  <div class="nm-form-field">
-                    <label class="control-label">Image Source</label>
-                    <input class="form-control" type="text" name="img_source" >
+                    <p class="nm-form-hint">This is where the story appears on the site (e.g. Indore, Bhopal, Big Breaking).</p>
                   </div>
                 </div>
               </section>
-
-              <section class="nm-form-section">
-                <h2 class="nm-form-section__title">Publish &amp; placement</h2>
-                <div class="nm-form-grid">
-                  <div class="nm-form-field">
-                    <label class="control-label" for="datetimepicker">Publish Date Time</label>
-                    <input class="form-control" id="datetimepicker" type="text" name="pub_date_time" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['pub_date_time']); } ?>" readonly>
-                  </div>
-                  <div class="nm-form-field">
-                    <label class="control-label" for="slider">Show In Slider</label>
-                    <select class="custom-select" id="slider" name="slider">
-                      <option>No</option>
-                      <option>Yes</option>
-                    </select>
-                  </div>
-                  <div class="nm-form-field">
-                    <label class="control-label">Slider Priority</label>
-                    <input class="form-control" type="number" name="slider_priority" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['slider_priority']); } ?>" >
-                  </div>
-                  <div class="nm-form-field">
-                    <label class="control-label" for="latest_news">Latest News</label>
-                    <select class="custom-select" id="latest_news" name="latest_news">
-                      <option>No</option>
-                      <option>Yes</option>
-                    </select>
-                  </div>
-                  <div class="nm-form-field">
-                    <label class="control-label">Latest News Priority</label>
-                    <input class="form-control" type="number" name="latest_priority" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['latest_priority']); } ?>" >
-                  </div>
-                </div>
-              </section>
-
-              <details class="nm-form-section nm-form-section--optional">
-                <summary class="nm-form-section__title">SEO &amp; hashtags <span>(optional)</span></summary>
-                <div class="nm-form-grid">
-                  <div class="nm-form-field nm-form-field--full">
-                    <label class="control-label">Meta Title</label>
-                    <input class="form-control" type="text" name="metat" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['metat']); } ?>" >
-                  </div>
-                  <div class="nm-form-field nm-form-field--full">
-                    <label class="control-label">Meta Description</label>
-                    <textarea class="form-control" cols="20" rows="3" name="metad"><?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['metad']); } ?></textarea>
-                  </div>
-                  <div class="nm-form-field nm-form-field--full">
-                    <label class="control-label">Hashtags for social media</label>
-                    <textarea class="form-control" cols="20" rows="3" name="hashtags"><?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['hashtags']); } ?></textarea>
-                  </div>
-                </div>
-              </details>
 
               <section class="nm-form-section">
                 <h2 class="nm-form-section__title">Full article</h2>
@@ -447,20 +343,6 @@ if(isset($_POST['add']))
 						}
 			});
 	});
-</script>
-<script>
-(function () {
-  var input = document.querySelector(".nm-news-form .nm-cat-filter");
-  var chips = document.querySelectorAll(".nm-news-form .nm-cat-chip");
-  if (!input || !chips.length) return;
-  input.addEventListener("input", function () {
-    var q = (input.value || "").toLowerCase().trim();
-    chips.forEach(function (chip) {
-      var text = (chip.textContent || "").toLowerCase();
-      chip.classList.toggle("is-hidden", q !== "" && text.indexOf(q) === -1);
-    });
-  });
-})();
 </script>
 </body>
 </html>
