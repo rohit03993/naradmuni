@@ -13,28 +13,30 @@ const pub = path.join(webRoot, "public");
 const iconsDir = path.join(pub, "icons");
 const brandDir = path.join(webRoot, "brand");
 
-const candidates = [
-  process.argv[2],
-  path.join(brandDir, "pwa-icon-source.png"),
-  path.join(brandDir, "pwa-icon-source.jpg"),
-  "C:/Users/user/.cursor/projects/e-Softwares-DEV-Chiki-naradmuni/assets/naradmuni-icon-real.png",
-  "C:/Users/user/.cursor/projects/e-Softwares-DEV-Chiki-naradmuni/assets/naradmuni-favicon.png",
-].filter(Boolean);
-
-const src = candidates.find((p) => fs.existsSync(p));
-if (!src) {
-  console.error("No source image found. Pass a path: node scripts/make-pwa-icons.mjs path/to/icon.png");
-  process.exit(1);
-}
-
 fs.mkdirSync(iconsDir, { recursive: true });
 fs.mkdirSync(brandDir, { recursive: true });
 
-// Keep a copy in-repo so server builds can regenerate without Cursor paths.
-const brandCopy = path.join(brandDir, "pwa-icon-source.png");
-await sharp(src).png().toFile(brandCopy);
+// Prefer Cursor-generated mark; fall back to argv / brand file.
+const preferred = [
+  process.argv[2],
+  "C:/Users/user/.cursor/projects/e-Softwares-DEV-Chiki-naradmuni/assets/naradmuni-icon-real.png",
+  "C:/Users/user/.cursor/projects/e-Softwares-DEV-Chiki-naradmuni/assets/naradmuni-favicon.png",
+  path.join(brandDir, "pwa-icon-source.png"),
+  path.join(brandDir, "pwa-icon-source.jpg"),
+].filter(Boolean);
+const input = preferred.find((p) => fs.existsSync(p));
+if (!input) {
+  console.error("No source image found.");
+  process.exit(1);
+}
 
-const base = await sharp(src)
+const brandCopy = path.join(brandDir, "pwa-icon-source.png");
+const inputBuf = await sharp(input).png().toBuffer();
+if (path.resolve(input) !== path.resolve(brandCopy)) {
+  fs.writeFileSync(brandCopy, inputBuf);
+}
+
+const base = await sharp(inputBuf)
   .resize(512, 512, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 1 } })
   .png()
   .toBuffer();
