@@ -188,7 +188,7 @@ export default function PwaClient() {
         const body = data.body || payload.notification?.body || "";
         const n = new Notification(title, {
           body,
-          icon: data.icon || "/icons/app-icon.png",
+          icon: data.icon || "/icons/nm-192.png",
           // @ts-expect-error Chromium image
           image: data.image,
         });
@@ -308,7 +308,7 @@ export default function PwaClient() {
             <button type="button" className="pwa-card-close" onClick={dismissModal} aria-label="बाद में">
               ✕
             </button>
-            <img className="pwa-card-icon" src="/icons/app-icon.png" alt="" width={64} height={64} />
+            <img className="pwa-card-icon" src="/icons/nm-192.png" alt="" width={64} height={64} />
             <h3>The Naradmuni ऐप इंस्टॉल करें</h3>
             <p>होम स्क्रीन पर रखें — तेज़ खुलता है, और नई खबर आने पर सूचना मिलती है।</p>
 

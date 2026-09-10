@@ -28,7 +28,7 @@ export default function InstallAppButton() {
 
   return (
     <aside className="pwa-promo" aria-label="Install app">
-      <img src="/icons/app-icon.png" alt="" width={48} height={48} />
+      <img src="/icons/nm-192.png" alt="" width={48} height={48} />
       <div>
         <strong>The Naradmuni App</strong>
         <p>होम स्क्रीन पर इंस्टॉल करें</p>

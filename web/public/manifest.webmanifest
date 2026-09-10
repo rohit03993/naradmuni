@@ -13,19 +13,19 @@
   "categories": ["news", "magazines"],
   "icons": [
     {
-      "src": "/icons/app-icon.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/app-icon.png",
+      "src": "/icons/nm-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/app-icon.png",
+      "src": "/icons/nm-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/nm-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

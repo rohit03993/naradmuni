@@ -19,8 +19,8 @@ messaging.setBackgroundMessageHandler(function (payload) {
   const title = data.title || n.title || "The Naradmuni";
   const options = {
     body: data.body || n.body || "",
-    icon: data.icon || "/icons/app-icon.png",
-    badge: "/icons/app-icon.png",
+    icon: data.icon || "/icons/nm-192.png",
+    badge: "/icons/nm-192.png",
     image: data.image || undefined,
     data: {
       click_action: data.click_action || "/",
