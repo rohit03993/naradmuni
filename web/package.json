@@ -6,14 +6,15 @@
     "build": "next build",
     "start": "next start -p 3000",
     "go": "next dev -p 3000",
-    "prod": "next build && next start -p 3000"
+    "prod": "next build && next start -p 3000",
+    "icons": "node scripts/make-pwa-icons.mjs"
   },
   "dependencies": {
     "mysql2": "^3.14.0",
     "next": "^15.5.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "sharp": "^0.34.2"
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",

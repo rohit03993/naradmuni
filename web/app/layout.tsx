@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
+import GoogleAdSense from "@/components/GoogleAdSense";
 import SiteShell from "@/components/SiteShell";
 import { getSiteChrome } from "@/lib/site";
 import { getSiteUrl } from "@/lib/siteUrl";
@@ -24,6 +25,9 @@ export const metadata: Metadata = {
     title: "Naradmuni",
   },
   formatDetection: { telephone: false },
+  other: {
+    "google-adsense-account": "ca-pub-4403691045202329",
+  },
   icons: {
     icon: [
       { url: "/icons/app-icon.png", sizes: "512x512", type: "image/png" },
@@ -48,6 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="hi">
       <body className={noto.variable}>
+        <GoogleAdSense />
         <SiteShell
           nav={chrome.nav}
           cities={chrome.cities}

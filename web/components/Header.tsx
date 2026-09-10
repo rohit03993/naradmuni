@@ -85,6 +85,19 @@ export default function Header({
               <button
                 type="button"
                 className="icon-btn"
+                aria-label="ऐप इंस्टॉल करें"
+                title="ऐप इंस्टॉल करें"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new Event("nm:open-install"));
+                  }
+                }}
+              >
+                <img src="/icons/app-icon.png" alt="" width={22} height={22} style={{ borderRadius: 5 }} />
+              </button>
+              <button
+                type="button"
+                className="icon-btn"
                 aria-label="सूचनाएँ"
                 title="सूचनाएँ चालू करें"
                 onClick={() => {

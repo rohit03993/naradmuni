@@ -11,13 +11,6 @@
   "lang": "hi",
   "dir": "ltr",
   "categories": ["news", "magazines"],
-  "prefer_related_applications": false,
-  "related_applications": [
-    {
-      "platform": "webapp",
-      "url": "/manifest.webmanifest"
-    }
-  ],
   "icons": [
     {
       "src": "/icons/app-icon.png",

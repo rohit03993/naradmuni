@@ -42,9 +42,11 @@ export default function SiteShell({
         </div>
       ) : null}
       <div className="layout">
-        <div>{children}</div>
-        <aside className="rail">
+        <div>
           <InstallAppButton />
+          {children}
+        </div>
+        <aside className="rail">
           <TazaKhabar items={taza} />
         </aside>
       </div>
