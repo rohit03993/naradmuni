@@ -12,7 +12,11 @@ import {
 import type { NewsCard } from "@/lib/types";
 import { getHomepageShorts } from "@/lib/youtube";
 
-/** Keep first N cards not already shown elsewhere on the homepage. */
+/**
+ * Homepage rule: each newsid appears at most once on this page.
+ * Order of claim: lead → नारद कहिन → hero side → ताज़ा समाचार → other category blocks.
+ * Does not affect /category, /news, or admin.
+ */
 function takeUnique(pool: NewsCard[], seen: Set<number>, limit: number): NewsCard[] {
   const out: NewsCard[] = [];
   for (const item of pool) {
