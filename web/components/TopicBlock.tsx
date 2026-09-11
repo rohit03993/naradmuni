@@ -4,7 +4,14 @@ import { newsImage } from "@/lib/images";
 import type { TopicSection } from "@/lib/queries";
 
 /** Homepage category block: feature + side list + card row (MP style). */
-export default function TopicBlock({ section }: { section: TopicSection }) {
+export default function TopicBlock({
+  section,
+  showEmptyHint = false,
+}: {
+  section: TopicSection;
+  /** Only when this category has zero news in DB — not when dedupe emptied it */
+  showEmptyHint?: boolean;
+}) {
   const { cat, items, districts } = section;
   const feature = items[0];
   const side = items.slice(1, 4);
@@ -49,9 +56,9 @@ export default function TopicBlock({ section }: { section: TopicSection }) {
             ))}
           </div>
         </div>
-      ) : (
+      ) : showEmptyHint ? (
         <p className="topic-empty">जल्द आ रही हैं खबरें — टीम जल्द अपडेट करेगी।</p>
-      )}
+      ) : null}
 
       {more.length ? (
         <div className="cards cards--home cards--more">

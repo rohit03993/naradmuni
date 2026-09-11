@@ -8,7 +8,6 @@ import {
   getLead,
   getNaradKahinSection,
   getTopicSections,
-  type TopicSection,
 } from "@/lib/queries";
 import type { NewsCard } from "@/lib/types";
 import { getHomepageShorts } from "@/lib/youtube";
@@ -26,10 +25,8 @@ function takeUnique(pool: NewsCard[], seen: Set<number>, limit: number): NewsCar
   return out;
 }
 
-function dedupeSection(section: TopicSection, seen: Set<number>, limit = 8): TopicSection {
-  // Keep the section even if every story was already shown (or none yet)
-  const items = takeUnique(section.items, seen, limit);
-  return { ...section, items };
+function dedupeSection<T extends { items: NewsCard[] }>(section: T, seen: Set<number>, limit = 8): T {
+  return { ...section, items: takeUnique(section.items, seen, limit) };
 }
 
 export default async function HomePage() {
@@ -56,15 +53,21 @@ export default async function HomePage() {
   if (lead?.newsid) seen.add(Number(lead.newsid));
 
   const pool = latest.filter((n) => n.newsid != null);
-  const secondaries = takeUnique(pool, seen, 5);
 
-  // Dedupe in the same order sections appear on the page
+  // Claim नारद कहिन stories BEFORE hero side / ताज़ा so they are not stolen
+  const naradFromDb = naradKahin?.items.length ?? 0;
+  const naradBlock = naradKahin ? dedupeSection(naradKahin, seen, 8) : null;
+
+  const secondaries = takeUnique(pool, seen, 5);
+  const gridNews = takeUnique(pool, seen, 8);
+
   const otherTopicsRaw = naradKahin
     ? topics.filter((t) => t.cat.id !== naradKahin.cat.id)
     : topics;
-  const naradBlock = naradKahin ? dedupeSection(naradKahin, seen, 8) : null;
-  const gridNews = takeUnique(pool, seen, 8);
-  const otherTopics = otherTopicsRaw.map((section) => dedupeSection(section, seen, 8));
+  const otherTopics = otherTopicsRaw.map((section) => ({
+    section: dedupeSection(section, seen, 8),
+    fromDb: section.items.length,
+  }));
 
   const leadSrc = newsImage(lead?.image);
 
@@ -104,7 +107,9 @@ export default async function HomePage() {
 
       <YoutubeShortsRail items={shorts.items} />
 
-      {naradBlock ? <TopicBlock section={naradBlock} /> : null}
+      {naradBlock ? (
+        <TopicBlock section={naradBlock} showEmptyHint={naradFromDb === 0} />
+      ) : null}
 
       <section className="topic-block">
         <div className="section-head">
@@ -120,8 +125,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {otherTopics.map((section) => (
-        <TopicBlock key={section.cat.id} section={section} />
+      {otherTopics.map(({ section, fromDb }) => (
+        <TopicBlock key={section.cat.id} section={section} showEmptyHint={fromDb === 0} />
       ))}
     </div>
   );

@@ -22,7 +22,7 @@ const empty: Chrome = {
 };
 
 let cache: { at: number; data: Chrome } | null = null;
-const TTL = 60_000;
+const TTL = 5 * 60_000; // 5 min — fewer DB hits, faster repeat visits
 
 export async function getSiteChrome(): Promise<Chrome> {
   if (cache && Date.now() - cache.at < TTL) return cache.data;

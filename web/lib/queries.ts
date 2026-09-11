@@ -459,7 +459,7 @@ export async function getTopicSections(_limit = 12): Promise<TopicSection[]> {
 
   return Promise.all(
     cats.map(async (cat) => {
-      const items = await getNewsByCategory(cat.id, 1, 16, { primaryOnly: true });
+      const items = await getNewsByCategory(cat.id, 1, 16);
       const districts = stateIds.has(String(cat.id)) ? await getChildCategories(cat.id) : [];
       return { cat, items, districts };
     })
@@ -488,6 +488,6 @@ export async function getNaradKahinSection(): Promise<TopicSection | null> {
     cat = rows[0] || null;
   }
   if (!cat) return null;
-  const items = await getNewsByCategory(cat.id, 1, 16, { primaryOnly: true });
+  const items = await getNewsByCategory(cat.id, 1, 16);
   return { cat, items, districts: [] };
 }
