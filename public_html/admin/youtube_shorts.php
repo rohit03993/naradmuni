@@ -78,7 +78,7 @@ if ($count < 1) {
     <div class="container-fluid page-content" style="max-width:720px;">
       <h2 style="margin-top:0;">YouTube Shorts on homepage</h2>
       <p class="text-muted">
-        Show latest Shorts from your channel above <strong>ताज़ा समाचार</strong>.
+        Show latest Shorts from your channel above <strong>नारद कहिन</strong> / ताज़ा समाचार.
         The public site caches results for about <strong>10 minutes</strong>, then picks up new Shorts automatically.
       </p>
 

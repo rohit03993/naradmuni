@@ -329,6 +329,12 @@ export type TopicSection = {
   districts: Category[];
 };
 
+function isNaradKahinCategory(cat: Category): boolean {
+  const name = (cat.hindi_name || "").toLowerCase();
+  const url = (cat.cat_url || "").toLowerCase();
+  return name.includes("कहिन") || url.includes("kahin") || url.includes("narad-kahin");
+}
+
 /**
  * Homepage topic rows from real menu=Yes top-level categories.
  * Empty sections (no Published matches) are omitted.
@@ -348,4 +354,27 @@ export async function getTopicSections(limit = 12): Promise<TopicSection[]> {
     })
   );
   return pairs.filter((p): p is TopicSection => !!p);
+}
+
+/** Pin नारद कहिन under Shorts — resolve even if not in the first N menu topics. */
+export async function getNaradKahinSection(): Promise<TopicSection | null> {
+  const fromNav = (await getNavCategories()).find(isNaradKahinCategory);
+  let cat = fromNav || null;
+  if (!cat) {
+    const rows = await query<Category>(
+      `SELECT ${CAT_COLS}
+       FROM categories
+       WHERE hindi_name LIKE ?
+          OR LOWER(cat_url) LIKE ?
+          OR LOWER(cat_url) LIKE ?
+       ORDER BY id ASC
+       LIMIT 1`,
+      ["%कहिन%", "%kahin%", "%narad%kahin%"]
+    );
+    cat = rows[0] || null;
+  }
+  if (!cat) return null;
+  const items = await getNewsByCategory(cat.id, 1, 8);
+  if (!items.length) return null;
+  return { cat, items, districts: [] };
 }

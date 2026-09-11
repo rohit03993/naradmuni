@@ -40,7 +40,7 @@ export default function YoutubeShortsRail({ items }: { items: YoutubeShort[] }) 
   return (
     <section className="shorts-block topic-block" aria-label="YouTube Shorts">
       <div className="section-head">
-        <h2>शॉर्ट्स</h2>
+        <h2>Shorts</h2>
       </div>
 
       <div className="shorts-rail" role="list">
