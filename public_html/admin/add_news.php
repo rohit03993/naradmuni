@@ -231,11 +231,18 @@ if(isset($_POST['add']))
                     <select class="custom-select" id="category" name="category" required>
                       <option value="0">select</option>
                       <?php
-                      $query = $con->query("SELECT * FROM `categories` ORDER BY id ASC");
-                      $rowCount = $query->num_rows;
+                      $query = $con->query("SELECT id, hindi_name, maincat FROM `categories` ORDER BY id ASC");
+                      if (!$query) {
+                          $query = $con->query("SELECT id, hindi_name FROM `categories` ORDER BY id ASC");
+                      }
+                      if (!$query) {
+                          $query = $con->query("SELECT id, maincat FROM `categories` ORDER BY id ASC");
+                      }
+                      $rowCount = $query ? $query->num_rows : 0;
                       if($rowCount > 0){
                           while($row = $query->fetch_assoc()){
-                              echo '<option value="'.(int)$row['id'].'">'.htmlspecialchars($row['maincat']).'</option>';
+                              $label = !empty($row['hindi_name']) ? $row['hindi_name'] : (!empty($row['maincat']) ? $row['maincat'] : ('Cat #'.$row['id']));
+                              echo '<option value="'.(int)$row['id'].'">'.htmlspecialchars((string)$label).'</option>';
                           }
                       }else{
                           echo '<option value="0">no data available</option>';
