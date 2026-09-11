@@ -1,7 +1,6 @@
 import {
-  getDistricts,
-  getFeaturedDistricts,
-  getNavCategories,
+  getDistrictsWithNews,
+  getMainNavCategories,
   getPages,
   getTaza,
 } from "./queries";
@@ -29,21 +28,17 @@ export async function getSiteChrome(): Promise<Chrome> {
   if (cache && Date.now() - cache.at < TTL) return cache.data;
 
   try {
-    const [menu, districts, featured, taza, pages] = await Promise.all([
-      getNavCategories(),
-      getDistricts(),
-      getFeaturedDistricts(6),
+    // Parallel + short TTL cache — keeps every page chrome cheap
+    const [nav, cities, taza, pages] = await Promise.all([
+      getMainNavCategories(),
+      getDistrictsWithNews(),
       getTaza(8),
       getPages(),
     ]);
 
-    const pinned = featured.filter((f) => f.cat_url);
-    const pinnedUrls = new Set(pinned.map((p) => p.cat_url.toLowerCase()));
-    const rest = menu.filter((c) => c.cat_url && !pinnedUrls.has(c.cat_url.toLowerCase()));
-
     const data: Chrome = {
-      nav: [...pinned, ...rest],
-      cities: districts,
+      nav,
+      cities,
       taza,
       pages,
     };

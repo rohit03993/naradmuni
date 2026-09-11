@@ -55,6 +55,68 @@ export async function getNavCategories(): Promise<Category[]> {
   );
 }
 
+/** Fixed homepage/side-menu categories — always shown, in this order. */
+const MAIN_NAV_MATCHERS: { label: string; test: (c: Category) => boolean }[] = [
+  {
+    label: "बिग ब्रेकिंग",
+    test: (c) =>
+      /breaking/i.test(c.cat_url || "") ||
+      (c.hindi_name || "").includes("बिग ब्रेकिंग") ||
+      (c.hindi_name || "").includes("ब्रेकिंग"),
+  },
+  {
+    label: "नारद कहिन",
+    test: (c) =>
+      /kahin/i.test(c.cat_url || "") ||
+      (c.hindi_name || "").includes("कहिन") ||
+      /narad/i.test(c.cat_url || ""),
+  },
+  {
+    label: "हेल्थ",
+    test: (c) =>
+      /health/i.test(c.cat_url || "") ||
+      (c.hindi_name || "").includes("हेल्थ") ||
+      (c.hindi_name || "").includes("स्वास्थ्य"),
+  },
+  {
+    label: "मनोरंजन",
+    test: (c) =>
+      /entertain|cinema|bollywood|filmy/i.test(c.cat_url || "") ||
+      (c.hindi_name || "").includes("मनोरंजन") ||
+      (c.hindi_name || "").includes("सिनेमा"),
+  },
+  {
+    label: "बिज़नेस",
+    test: (c) =>
+      /business|biz/i.test(c.cat_url || "") ||
+      (c.hindi_name || "").includes("बिज़नेस") ||
+      (c.hindi_name || "").includes("बिजनेस") ||
+      (c.hindi_name || "").includes("व्यापार"),
+  },
+];
+
+/** Main side-menu categories (always visible). One DB read, in-memory pick — fast. */
+export async function getMainNavCategories(): Promise<Category[]> {
+  const rows = await query<Category>(
+    `SELECT ${CAT_COLS}
+     FROM categories
+     WHERE cat_url IS NOT NULL AND cat_url != ''
+       AND hindi_name IS NOT NULL AND hindi_name != ''
+       AND ${TOP_LEVEL}
+     ORDER BY short ASC, id ASC`
+  );
+  const used = new Set<number>();
+  const out: Category[] = [];
+  for (const m of MAIN_NAV_MATCHERS) {
+    const hit = rows.find((c) => !used.has(c.id) && m.test(c));
+    if (hit) {
+      used.add(hit.id);
+      out.push(hit);
+    }
+  }
+  return out;
+}
+
 /** Districts/cities under MP + CG only — never invent cities. */
 export async function getDistricts(): Promise<Category[]> {
   const parents = await getStateParentIds();
@@ -68,6 +130,41 @@ export async function getDistricts(): Promise<Category[]> {
        AND hindi_name IS NOT NULL AND hindi_name != ''
      ORDER BY latter ASC, hindi_name ASC`,
     parents
+  );
+  return rows.filter(isFilled);
+}
+
+/**
+ * Cities that have at least one Published news item.
+ * Single EXISTS query (no N+1) — keeps chrome load fast.
+ */
+export async function getDistrictsWithNews(): Promise<Category[]> {
+  const parents = await getStateParentIds();
+  if (!parents.length) return [];
+  const ph = parents.map(() => "?").join(",");
+  const rows = await query<Category>(
+    `SELECT ${CAT_COLS}
+     FROM categories c
+     WHERE c.parent IN (${ph})
+       AND c.cat_url IS NOT NULL AND c.cat_url != ''
+       AND c.hindi_name IS NOT NULL AND c.hindi_name != ''
+       AND EXISTS (
+         SELECT 1 FROM news n
+         WHERE n.status = ?
+           AND (n.newstype IS NULL OR n.newstype != 'Video')
+           AND (
+             n.category = CAST(c.id AS CHAR)
+             OR n.category = c.id
+             OR EXISTS (
+               SELECT 1 FROM news_cat nc
+               WHERE nc.news_id = n.newsid
+                 AND (nc.category = CAST(c.id AS CHAR) OR nc.category = c.id)
+             )
+           )
+         LIMIT 1
+       )
+     ORDER BY c.latter ASC, c.hindi_name ASC`,
+    [...parents, PUB]
   );
   return rows.filter(isFilled);
 }

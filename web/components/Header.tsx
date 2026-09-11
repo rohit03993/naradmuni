@@ -40,6 +40,8 @@ export default function Header({
   };
 
   const popularCities = cities.filter((c) => c.cat_url).slice(0, 12);
+  // Top strip: cities that have news (fast scroll). Side menu: main categories only.
+  const topCities = cities.filter((c) => c.cat_url).slice(0, 24);
 
   return (
     <>
@@ -124,7 +126,18 @@ export default function Header({
             {nav.map((c) =>
               c.cat_url ? (
                 <a
-                  key={c.id}
+                  key={`nav-${c.id}`}
+                  href={`/category/${c.cat_url}`}
+                  className={isActive(c.cat_url) ? "active" : ""}
+                >
+                  {c.hindi_name}
+                </a>
+              ) : null
+            )}
+            {topCities.map((c) =>
+              c.cat_url ? (
+                <a
+                  key={`city-${c.id}`}
                   href={`/category/${c.cat_url}`}
                   className={isActive(c.cat_url) ? "active" : ""}
                 >
