@@ -258,6 +258,22 @@ export async function getRelated(categoryId: string | number | null | undefined,
 }
 
 /**
+ * Homepage top-right strip: Breaking flag (latest_news=Yes), newest first.
+ */
+export async function getBreaking(limit = 5): Promise<NewsCard[]> {
+  const n = Math.min(Math.max(Number(limit) || 5, 1), 20);
+  return query<NewsCard>(
+    `SELECT ${CARD_COLS}
+     FROM news n
+     LEFT JOIN categories c ON c.id = n.category
+     WHERE n.status = ? AND ${NOT_VIDEO} AND n.latest_news = 'Yes'
+     ORDER BY n.newsid DESC
+     LIMIT ${n}`,
+    [PUB]
+  );
+}
+
+/**
  * ताज़ा list: prefer latest_news='Yes' (by latest_priority), then fill with newest Published.
  */
 export async function getTaza(limit = 8): Promise<NewsCard[]> {

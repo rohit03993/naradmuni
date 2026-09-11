@@ -4,6 +4,7 @@ import TopicBlock from "@/components/TopicBlock";
 import YoutubeShortsRail from "@/components/YoutubeShortsRail";
 import { newsImage } from "@/lib/images";
 import {
+  getBreaking,
   getLatest,
   getLead,
   getNaradKahinSection,
@@ -14,7 +15,7 @@ import { getHomepageShorts } from "@/lib/youtube";
 
 /**
  * Homepage rule: each newsid appears at most once on this page.
- * Order of claim: lead → नारद कहिन → hero side → ताज़ा समाचार → other category blocks.
+ * Order of claim: lead → नारद कहिन → Breaking hero-side → ताज़ा समाचार → other category blocks.
  * Does not affect /category, /news, or admin.
  */
 function takeUnique(pool: NewsCard[], seen: Set<number>, limit: number): NewsCard[] {
@@ -35,6 +36,7 @@ function dedupeSection<T extends { items: NewsCard[] }>(section: T, seen: Set<nu
 
 export default async function HomePage() {
   let lead = null;
+  let breaking: Awaited<ReturnType<typeof getBreaking>> = [];
   let latest: Awaited<ReturnType<typeof getLatest>> = [];
   let topics: Awaited<ReturnType<typeof getTopicSections>> = [];
   let naradKahin: Awaited<ReturnType<typeof getNaradKahinSection>> = null;
@@ -42,8 +44,9 @@ export default async function HomePage() {
   let err = "";
 
   try {
-    [lead, latest, topics, naradKahin, shorts] = await Promise.all([
+    [lead, breaking, latest, topics, naradKahin, shorts] = await Promise.all([
       getLead(),
+      getBreaking(5),
       getLatest(40),
       getTopicSections(8),
       getNaradKahinSection(),
@@ -62,7 +65,13 @@ export default async function HomePage() {
   const naradFromDb = naradKahin?.items.length ?? 0;
   const naradBlock = naradKahin ? dedupeSection(naradKahin, seen, 8) : null;
 
-  const secondaries = takeUnique(pool, seen, 5);
+  // Hero side: Breaking first (newest), fill to 5 with other latest if needed
+  const secondaries = [
+    ...takeUnique(breaking, seen, 5),
+  ];
+  if (secondaries.length < 5) {
+    secondaries.push(...takeUnique(pool, seen, 5 - secondaries.length));
+  }
   const gridNews = takeUnique(pool, seen, 8);
 
   const otherTopicsRaw = naradKahin

@@ -234,29 +234,43 @@ function changePagination(option) {
 	}
 }
 
-$(document).on('click', '.delete', function(){  
-           var id = $(this).attr("id");  
-           if(confirm("Are you sure you want to remove this data?"))  
-           {  
-                var actions = "delete";  
-                $.ajax({  
-                     url:"ajax_news.php",  
-                     method:"POST",  
-                     data:{id:id, actions:actions},
-                     beforeSend: function(){$("#overlay").show();},
-                     success:function(data)  
-                     {   
-                         alert(data); 
-                         $("#overlay").hide();
-                         getresult("desp_news.php");
-                     }  
-                })  
-           }  
-           else  
-           {  
-                return false;  
-           }  
-      });
+$(document).on('click', '.delete', function (e) {
+  e.preventDefault();
+  var $btn = $(this);
+  var id = $btn.attr("id");
+  if (!id) return false;
+  if (!confirm("Delete this news and its photo from the server? This cannot be undone.")) {
+    return false;
+  }
+  $btn.prop("disabled", true).addClass("disabled");
+  $.ajax({
+    url: "ajax_news.php",
+    method: "POST",
+    dataType: "json",
+    data: { id: id, actions: "delete" },
+    success: function (res) {
+      if (res && res.ok) {
+        var $row = $btn.closest("tr");
+        $row.fadeOut(200, function () { $(this).remove(); });
+        var $note = $("#nm-delete-toast");
+        if (!$note.length) {
+          $note = $('<div id="nm-delete-toast" class="alert alert-success" style="margin:8px 0;"></div>');
+          $("#pagination-result").prepend($note);
+        }
+        $note.stop(true, true).removeClass("alert-danger").addClass("alert-success")
+          .text(res.message || "Deleted.").show().delay(3500).fadeOut();
+      } else {
+        $btn.prop("disabled", false).removeClass("disabled");
+        alert((res && res.message) ? res.message : "Delete failed.");
+      }
+    },
+    error: function (xhr) {
+      $btn.prop("disabled", false).removeClass("disabled");
+      alert("Delete failed" + (xhr && xhr.status ? " (HTTP " + xhr.status + ")" : "") + ".");
+    }
+  });
+  return false;
+});
     
     $(document).on('click', '.reset', function(){  
         $('#SearchForm')[0].reset();

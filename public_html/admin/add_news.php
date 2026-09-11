@@ -35,7 +35,8 @@ if(isset($_POST['add']))
                             };
 
                             $title = $post('title');
-                            $latest_news = $post('latest_news', 'No');
+                            $latest_news = (isset($_POST['latest_news']) && $_POST['latest_news'] === 'Yes') ? 'Yes' : 'No';
+                            $latest_news = mysqli_real_escape_string($con, $latest_news);
                             $descriptionRaw = isset($_POST['description']) ? (string) $_POST['description'] : '';
                             if (function_exists('nm_clean_description_html')) {
                                 $descriptionRaw = nm_clean_description_html($descriptionRaw);
@@ -256,7 +257,14 @@ if(isset($_POST['add']))
                       }
                       ?>
                     </select>
-                    <p class="nm-form-hint">This is where the story appears on the site (e.g. Indore, Bhopal, Big Breaking).</p>
+                    <p class="nm-form-hint">Pick the real place/topic (e.g. Indore, Bhopal, नीमच). Required.</p>
+                  </div>
+                  <div class="nm-form-field nm-form-field--full">
+                    <label class="checkbox-inline" style="font-weight:600;">
+                      <input type="checkbox" name="latest_news" value="Yes" <?php echo (isset($_POST['latest_news']) && $_POST['latest_news'] === 'Yes') ? 'checked' : ''; ?>>
+                      Breaking news — show in homepage top list (latest 5)
+                    </label>
+                    <p class="nm-form-hint">Add-on only. Story still belongs to the category above.</p>
                   </div>
                 </div>
               </section>

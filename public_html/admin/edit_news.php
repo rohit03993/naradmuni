@@ -88,7 +88,8 @@ if (isset($_POST['update'])) {
     };
 
     $title = $post('title');
-    $latest_news = $post('latest_news', 'No');
+    $latest_news = (isset($_POST['latest_news']) && $_POST['latest_news'] === 'Yes') ? 'Yes' : 'No';
+    $latest_news = mysqli_real_escape_string($con, $latest_news);
     // Raw description before escape — never wipe a real body with an empty CKEditor shell
     $descriptionRaw = isset($_POST['description']) ? (string) $_POST['description'] : '';
     $existingDesc = isset($rs['description']) ? (string) $rs['description'] : '';
@@ -341,12 +342,14 @@ if (isset($_POST['update'])) {
         </div>
 
         <div class="col-md-4 form-group">
-          <label class="control-label">Latest News</label>
-          <select class="custom-select" id="latest_news" name="latest_news">
-            <option><?php echo nm_h(isset($rs['latest_news']) ? $rs['latest_news'] : 'No'); ?></option>
-            <option>No</option>
-            <option>Yes</option>
-          </select>
+          <label class="control-label">Breaking news</label>
+          <div style="padding-top:6px;">
+            <label class="checkbox-inline" style="font-weight:600;">
+              <input type="checkbox" name="latest_news" value="Yes" <?php echo (!empty($rs['latest_news']) && $rs['latest_news'] === 'Yes') ? 'checked' : ''; ?>>
+              Show in homepage top list (latest 5)
+            </label>
+            <p class="nm-form-hint" style="margin:6px 0 0;">Add-on only — keep a real Home Category above.</p>
+          </div>
         </div>
 
         <div class="col-md-4 form-group">

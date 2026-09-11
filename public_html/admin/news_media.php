@@ -224,9 +224,11 @@ function nm_format_media_badge($analysis) {
 
 /**
  * Delete one news article + related rows + media files on disk.
+ * @param mixed $knownViews null = count views; int = use this count; true skip_view_check via $opts
+ * @param array $opts skip_view_check=true for intentional admin trash (fast; cleanup tool keeps protection)
  * @return array{ok:bool, message:string, files_removed:int, newsid:int}
  */
-function nm_delete_news_article($con, $newsid, $knownViews = null) {
+function nm_delete_news_article($con, $newsid, $knownViews = null, $opts = array()) {
     $newsid = (int) $newsid;
     if ($newsid <= 0) {
         return array("ok" => false, "message" => "Invalid id", "files_removed" => 0, "bytes_freed" => 0, "newsid" => 0);
@@ -238,16 +240,19 @@ function nm_delete_news_article($con, $newsid, $knownViews = null) {
         return array("ok" => false, "message" => "Not found", "files_removed" => 0, "bytes_freed" => 0, "newsid" => $newsid);
     }
 
-    // Hard rule: 3000+ views → never delete (any age)
-    $views = ($knownViews !== null) ? (int) $knownViews : nm_news_view_count($con, $newsid);
-    if ($views >= nm_min_views_keep()) {
-        return array(
-            "ok" => false,
-            "message" => "Protected: news #$newsid has $views views (keep ≥ " . nm_min_views_keep() . ")",
-            "files_removed" => 0,
-            "bytes_freed" => 0,
-            "newsid" => $newsid,
-        );
+    $skipViewCheck = !empty($opts["skip_view_check"]);
+    if (!$skipViewCheck) {
+        // Hard rule for bulk cleanup: 3000+ views → never delete
+        $views = ($knownViews !== null) ? (int) $knownViews : nm_news_view_count($con, $newsid);
+        if ($views >= nm_min_views_keep()) {
+            return array(
+                "ok" => false,
+                "message" => "Protected: news #$newsid has $views views (keep ≥ " . nm_min_views_keep() . ")",
+                "files_removed" => 0,
+                "bytes_freed" => 0,
+                "newsid" => $newsid,
+            );
+        }
     }
 
     // Fast path: featured image + video only (skip parsing huge HTML bodies)

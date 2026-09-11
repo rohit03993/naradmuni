@@ -41,7 +41,7 @@ $perPage = new PerPage();
 		}
 	}
 $orderby = " ORDER BY newsid desc";
-$sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `category`, `date`, `time`, `status` from news" . $queryCondition;
+$sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `category`, `date`, `time`, `status`, `latest_news` from news" . $queryCondition;
 $paginationlink = "desp_news.php?page=";
 $pagination_setting = isset($_GET["pagination_setting"]) ? $_GET["pagination_setting"] : "";
 
@@ -115,7 +115,11 @@ $output = '';
                             <tr>
 							<td><?php echo $i+$k; ?></td>
 							<td>
-                              <div class="nm-title-cell"><?php echo htmlspecialchars((string) $faq[$k]["title"]); ?></div>
+                              <div class="nm-title-cell"><?php echo htmlspecialchars((string) $faq[$k]["title"]); ?>
+                              <?php if (!empty($faq[$k]["latest_news"]) && $faq[$k]["latest_news"] === "Yes") { ?>
+                                <span class="badge badge-danger" style="font-size:10px;vertical-align:middle;">Breaking</span>
+                              <?php } ?>
+                              </div>
                               <code class="nm-url-cell" title="<?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?>"><?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?></code>
                             </td>
                             <td><?php echo htmlspecialchars($catName); ?></td>
