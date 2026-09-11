@@ -138,7 +138,7 @@ $output = '';
                             </td>
                              <td class="nm-actions-cell">
                                  <a class="btn btn-info" href="<?php echo $publicroot.'news/'.$faq[$k]["newsurl"]; ?>" target="_blank" title="View on public site"><i class="fas fa-eye"></i></a>
-                                <a class="btn btn-warning text-white" href="edit_news.php?eid=<?php echo $faq[$k]["newsid"]; ?>"><i class="fas fa-edit"></i></a>
+                                <a class="btn btn-warning text-white" href="edit_news.php?eid=<?php echo (int) $faq[$k]["newsid"]; ?>"><i class="fas fa-edit"></i></a>
                                 <a type="button" class="delete btn btn-danger text-white" name="delete" id="<?php echo $faq[$k]["newsid"]; ?>"><i class="delete fas fa-trash-alt"></i></a>
                               </td>
 						  </tr>

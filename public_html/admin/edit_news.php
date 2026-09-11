@@ -89,7 +89,15 @@ if (isset($_POST['update'])) {
 
     $title = $post('title');
     $latest_news = $post('latest_news', 'No');
-    $description = $post('description');
+    // Raw description before escape — never wipe a real body with an empty CKEditor shell
+    $descriptionRaw = isset($_POST['description']) ? (string) $_POST['description'] : '';
+    $existingDesc = isset($rs['description']) ? (string) $rs['description'] : '';
+    $postedHasText = trim(strip_tags(str_replace('&nbsp;', ' ', $descriptionRaw))) !== '';
+    $existingHasText = trim(strip_tags(str_replace('&nbsp;', ' ', $existingDesc))) !== '';
+    if (!$postedHasText && $existingHasText) {
+        $descriptionRaw = $existingDesc;
+    }
+    $description = mysqli_real_escape_string($con, $descriptionRaw);
     $newsurl = $post('newsurl');
     $metat = $post('metat');
     $metad = $post('metad');
@@ -175,6 +183,9 @@ if (isset($_POST['update'])) {
     }
     if ($category === '' || $category === '0') {
         array_push($errors, 'Kindly fill category');
+    }
+    if (!$postedHasText && !$existingHasText) {
+        array_push($errors, 'Kindly fill the full article Description (CKEditor). Click Update after the text appears.');
     }
 
     if (count($errors) == 0) {
@@ -446,14 +457,23 @@ if (isset($_POST['update'])) {
 <?php include "footer.php"; ?>
 <script type="text/javascript" src="ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
-  // Relative connectors — works even if config $urlroot is wrong on production
   CKEDITOR.replace('description', {
+    width: '100%',
+    extraPlugins: '',
     filebrowserBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Connector=ckeditor/filemanager/connectors/php/connector.php',
     filebrowserImageBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Type=Image&Connector=ckeditor/filemanager/connectors/php/connector.php',
     filebrowserFlashBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Type=Flash&Connector=ckeditor/filemanager/connectors/php/connector.php',
     filebrowserUploadUrl: 'ckeditor/filemanager/connectors/php/upload.php?Type=File',
     filebrowserImageUploadUrl: 'ckeditor/filemanager/connectors/php/upload.php?Type=Image',
     filebrowserFlashUploadUrl: 'ckeditor/filemanager/connectors/php/upload.php?Type=Flash'
+  });
+  // Critical: push CKEditor HTML into <textarea> before PHP receives the POST
+  document.getElementById('SubmitForm').addEventListener('submit', function () {
+    for (var name in CKEDITOR.instances) {
+      if (CKEDITOR.instances.hasOwnProperty(name)) {
+        CKEDITOR.instances[name].updateElement();
+      }
+    }
   });
 </script>
 <script type="text/javascript">

@@ -280,6 +280,13 @@ if(isset($_POST['add']))
 <script type="text/javascript" src="ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
 <?php echo nm_ckeditor_js('description'); ?>
+document.getElementById('SubmitForm').addEventListener('submit', function () {
+  for (var name in CKEDITOR.instances) {
+    if (CKEDITOR.instances.hasOwnProperty(name)) {
+      CKEDITOR.instances[name].updateElement();
+    }
+  }
+});
 </script>
 <script type="text/javascript">
         $(document).ready(function () {
