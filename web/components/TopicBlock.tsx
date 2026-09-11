@@ -49,7 +49,9 @@ export default function TopicBlock({ section }: { section: TopicSection }) {
             ))}
           </div>
         </div>
-      ) : null}
+      ) : (
+        <p className="topic-empty">जल्द आ रही हैं खबरें — टीम जल्द अपडेट करेगी।</p>
+      )}
 
       {more.length ? (
         <div className="cards cards--home cards--more">

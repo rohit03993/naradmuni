@@ -361,10 +361,27 @@ export async function getLatest(limit = 20, exclude: number[] = []): Promise<New
   return [...preferred, ...filler];
 }
 
-export async function getNewsByCategory(catId: number, page = 1, perPage = 20): Promise<NewsCard[]> {
+export async function getNewsByCategory(
+  catId: number,
+  page = 1,
+  perPage = 20,
+  opts?: { primaryOnly?: boolean }
+): Promise<NewsCard[]> {
   const offset = (Math.max(1, page) - 1) * perPage;
   const take = Math.min(Math.max(perPage, 1), 40);
   const cat = String(catId);
+  // primaryOnly = Home Category only (avoids same story in multiple topic blocks via news_cat tags)
+  if (opts?.primaryOnly) {
+    return query<NewsCard>(
+      `SELECT ${CARD_COLS}
+       FROM news n
+       LEFT JOIN categories c ON c.id = n.category
+       WHERE n.status = ? AND CAST(n.category AS CHAR) = ? AND ${NOT_VIDEO}
+       ORDER BY n.newsid DESC
+       LIMIT ${take} OFFSET ${offset}`,
+      [PUB, cat]
+    );
+  }
   return query<NewsCard>(
     `SELECT ${CARD_COLS}
      FROM news n
@@ -433,30 +450,30 @@ function isNaradKahinCategory(cat: Category): boolean {
 }
 
 /**
- * Homepage topic rows from real menu=Yes top-level categories.
- * Empty sections (no Published matches) are omitted.
+ * Homepage topic rows from the fixed main categories (बिग ब्रेकिंग, नारद कहिन, …).
+ * Sections stay visible even with zero news so the team can fill them later.
  */
-export async function getTopicSections(limit = 12): Promise<TopicSection[]> {
-  const take = Math.min(Math.max(limit, 1), 16);
-  const cats = await getNavCategories();
-  const capped = cats.slice(0, take);
+export async function getTopicSections(_limit = 12): Promise<TopicSection[]> {
+  const cats = await getMainNavCategories();
   const stateIds = new Set(await getStateParentIds());
 
-  const pairs = await Promise.all(
-    capped.map(async (cat) => {
-      const items = await getNewsByCategory(cat.id, 1, 8);
-      if (!items.length) return null;
+  return Promise.all(
+    cats.map(async (cat) => {
+      const items = await getNewsByCategory(cat.id, 1, 16, { primaryOnly: true });
       const districts = stateIds.has(String(cat.id)) ? await getChildCategories(cat.id) : [];
       return { cat, items, districts };
     })
   );
-  return pairs.filter((p): p is TopicSection => !!p);
 }
 
-/** Pin नारद कहिन under Shorts — resolve even if not in the first N menu topics. */
+/** Pin नारद कहिन under Shorts — always show the block if the category exists. */
 export async function getNaradKahinSection(): Promise<TopicSection | null> {
-  const fromNav = (await getNavCategories()).find(isNaradKahinCategory);
-  let cat = fromNav || null;
+  const mains = await getMainNavCategories();
+  let cat = mains.find(isNaradKahinCategory) || null;
+  if (!cat) {
+    const fromNav = (await getNavCategories()).find(isNaradKahinCategory);
+    cat = fromNav || null;
+  }
   if (!cat) {
     const rows = await query<Category>(
       `SELECT ${CAT_COLS}
@@ -471,7 +488,6 @@ export async function getNaradKahinSection(): Promise<TopicSection | null> {
     cat = rows[0] || null;
   }
   if (!cat) return null;
-  const items = await getNewsByCategory(cat.id, 1, 8);
-  if (!items.length) return null;
+  const items = await getNewsByCategory(cat.id, 1, 16, { primaryOnly: true });
   return { cat, items, districts: [] };
 }

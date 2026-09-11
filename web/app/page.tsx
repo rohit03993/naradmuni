@@ -3,8 +3,34 @@ import NewsListItem from "@/components/NewsListItem";
 import TopicBlock from "@/components/TopicBlock";
 import YoutubeShortsRail from "@/components/YoutubeShortsRail";
 import { newsImage } from "@/lib/images";
-import { getLatest, getLead, getNaradKahinSection, getTopicSections } from "@/lib/queries";
+import {
+  getLatest,
+  getLead,
+  getNaradKahinSection,
+  getTopicSections,
+  type TopicSection,
+} from "@/lib/queries";
+import type { NewsCard } from "@/lib/types";
 import { getHomepageShorts } from "@/lib/youtube";
+
+/** Keep first N cards not already shown elsewhere on the homepage. */
+function takeUnique(pool: NewsCard[], seen: Set<number>, limit: number): NewsCard[] {
+  const out: NewsCard[] = [];
+  for (const item of pool) {
+    const id = Number(item.newsid);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(item);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+function dedupeSection(section: TopicSection, seen: Set<number>, limit = 8): TopicSection {
+  // Keep the section even if every story was already shown (or none yet)
+  const items = takeUnique(section.items, seen, limit);
+  return { ...section, items };
+}
 
 export default async function HomePage() {
   let lead = null;
@@ -17,7 +43,7 @@ export default async function HomePage() {
   try {
     [lead, latest, topics, naradKahin, shorts] = await Promise.all([
       getLead(),
-      getLatest(20),
+      getLatest(40),
       getTopicSections(8),
       getNaradKahinSection(),
       getHomepageShorts(),
@@ -26,13 +52,21 @@ export default async function HomePage() {
     err = e instanceof Error ? e.message : String(e);
   }
 
-  const rest = latest.filter((n) => n.newsid !== lead?.newsid);
-  const secondaries = rest.slice(0, 5);
-  const gridNews = rest.slice(0, 8);
-  const leadSrc = newsImage(lead?.image);
-  const otherTopics = naradKahin
+  const seen = new Set<number>();
+  if (lead?.newsid) seen.add(Number(lead.newsid));
+
+  const pool = latest.filter((n) => n.newsid != null);
+  const secondaries = takeUnique(pool, seen, 5);
+
+  // Dedupe in the same order sections appear on the page
+  const otherTopicsRaw = naradKahin
     ? topics.filter((t) => t.cat.id !== naradKahin.cat.id)
     : topics;
+  const naradBlock = naradKahin ? dedupeSection(naradKahin, seen, 8) : null;
+  const gridNews = takeUnique(pool, seen, 8);
+  const otherTopics = otherTopicsRaw.map((section) => dedupeSection(section, seen, 8));
+
+  const leadSrc = newsImage(lead?.image);
 
   if (err) {
     return (
@@ -48,7 +82,6 @@ export default async function HomePage() {
 
   return (
     <div className="home">
-      {/* Lead — MP style: big photo + compact side stories */}
       <div className="hero">
         {lead ? (
           <a className="hero-lead" href={`/news/${lead.newsurl}`}>
@@ -71,10 +104,8 @@ export default async function HomePage() {
 
       <YoutubeShortsRail items={shorts.items} />
 
-      {/* नारद कहिन — pinned directly under Shorts */}
-      {naradKahin ? <TopicBlock section={naradKahin} /> : null}
+      {naradBlock ? <TopicBlock section={naradBlock} /> : null}
 
-      {/* Dense photo grid — like MP “राज्य” / top cards */}
       <section className="topic-block">
         <div className="section-head">
           <h2>ताज़ा समाचार</h2>
@@ -89,7 +120,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Other category blocks */}
       {otherTopics.map((section) => (
         <TopicBlock key={section.cat.id} section={section} />
       ))}
