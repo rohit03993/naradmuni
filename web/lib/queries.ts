@@ -135,36 +135,26 @@ export async function getDistricts(): Promise<Category[]> {
 }
 
 /**
- * Cities that have at least one Published news item.
- * Single EXISTS query (no N+1) — keeps chrome load fast.
+ * Cities that have at least one Published news item (primary category).
+ * INNER JOIN is much faster than nested EXISTS for layout chrome.
  */
 export async function getDistrictsWithNews(): Promise<Category[]> {
   const parents = await getStateParentIds();
   if (!parents.length) return [];
   const ph = parents.map(() => "?").join(",");
+  const cols = CAT_COLS.split(", ").map((c) => `c.${c}`).join(", ");
   const rows = await query<Category>(
-    `SELECT ${CAT_COLS}
+    `SELECT DISTINCT ${cols}
      FROM categories c
+     INNER JOIN news n
+       ON n.status = ?
+      AND ${NOT_VIDEO}
+      AND (n.category = CAST(c.id AS CHAR) OR n.category = c.id)
      WHERE c.parent IN (${ph})
        AND c.cat_url IS NOT NULL AND c.cat_url != ''
        AND c.hindi_name IS NOT NULL AND c.hindi_name != ''
-       AND EXISTS (
-         SELECT 1 FROM news n
-         WHERE n.status = ?
-           AND (n.newstype IS NULL OR n.newstype != 'Video')
-           AND (
-             n.category = CAST(c.id AS CHAR)
-             OR n.category = c.id
-             OR EXISTS (
-               SELECT 1 FROM news_cat nc
-               WHERE nc.news_id = n.newsid
-                 AND (nc.category = CAST(c.id AS CHAR) OR nc.category = c.id)
-             )
-           )
-         LIMIT 1
-       )
      ORDER BY c.latter ASC, c.hindi_name ASC`,
-    [...parents, PUB]
+    [PUB, ...parents]
   );
   return rows.filter(isFilled);
 }

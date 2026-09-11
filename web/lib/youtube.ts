@@ -44,7 +44,10 @@ async function resolveChannelId(apiKey: string, channelInput: string): Promise<s
 
   const handle = encodeURIComponent(parsed.value);
   const url = `https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=${handle}&key=${encodeURIComponent(apiKey)}`;
-  const res = await fetch(url, { next: { revalidate: 600 } });
+  const res = await fetch(url, {
+    next: { revalidate: 600 },
+    signal: AbortSignal.timeout(2500),
+  });
   if (!res.ok) return null;
   const data = (await res.json()) as { items?: { id?: string }[] };
   return data.items?.[0]?.id || null;
@@ -74,7 +77,10 @@ async function fetchShortsUncached(): Promise<YoutubeShort[]> {
     `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${encodeURIComponent(channelId)}` +
     `&type=video&videoDuration=short&order=date&maxResults=${count}&key=${encodeURIComponent(apiKey)}`;
 
-  const res = await fetch(searchUrl, { next: { revalidate: 600 } });
+  const res = await fetch(searchUrl, {
+    next: { revalidate: 600 },
+    signal: AbortSignal.timeout(2500),
+  });
   if (!res.ok) return [];
   const data = (await res.json()) as {
     items?: {
@@ -123,13 +129,19 @@ export function getDemoShorts(): YoutubeShort[] {
   }));
 }
 
-/** Homepage Shorts — refresh ~every 10 minutes; demos if not configured yet */
+/** Homepage Shorts — refresh ~every 10 minutes; demos if not configured yet.
+ *  Hard cap so a slow YouTube API never keeps the homepage spinning. */
 export async function getHomepageShorts(): Promise<{ items: YoutubeShort[]; isDemo: boolean }> {
   const cached = unstable_cache(fetchShortsUncached, ["homepage-youtube-shorts"], {
     revalidate: 600,
   });
   try {
-    const items = await cached();
+    const items = await Promise.race([
+      cached(),
+      new Promise<YoutubeShort[]>((resolve) => {
+        setTimeout(() => resolve([]), 3000);
+      }),
+    ]);
     if (items.length) return { items, isDemo: false };
   } catch {
     // fall through to demos

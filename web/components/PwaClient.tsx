@@ -6,8 +6,8 @@ const TOKEN_URL = "/naradmuni/token.php";
 const LS_INSTALLED = "nm_pwa_installed";
 const LS_DISMISS_UNTIL = "nm_pwa_dismiss_until";
 const SS_SESSION_DISMISS = "nm_pwa_session_dismiss";
-const SHOW_DELAY_MS = 5_000;
-const REDISPLAY_AFTER_MS = 60 * 60 * 1000;
+const SHOW_DELAY_MS = 45_000; // don't fight first paint / menu taps
+const REDISPLAY_AFTER_MS = 24 * 60 * 60 * 1000;
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -225,7 +225,10 @@ export default function PwaClient() {
     void syncInstalled();
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/" }).catch(() => {});
+      navigator.serviceWorker
+        .register("/firebase-messaging-sw.js", { scope: "/" })
+        .then((reg) => reg.update())
+        .catch(() => {});
     }
 
     if ("Notification" in window && Notification.permission === "granted") {

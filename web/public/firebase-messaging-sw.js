@@ -54,10 +54,5 @@ self.addEventListener("install", function () {
 self.addEventListener("activate", function (event) {
   event.waitUntil(clients.claim());
 });
-self.addEventListener("fetch", function (event) {
-  event.respondWith(
-    fetch(event.request).catch(function () {
-      return caches.match(event.request);
-    })
-  );
-});
+/* Do NOT add a catch-all fetch handler — it keeps the browser tab
+   spinning and can delay hydration (mobile menu never becomes clickable). */
