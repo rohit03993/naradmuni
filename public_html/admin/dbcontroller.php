@@ -15,10 +15,17 @@ class DBController {
 			$this->conn = $con;
 			return;
 		}
-		// Fallback only if config was not included (should not happen in admin pages).
-		$this->conn = mysqli_connect("localhost", "thenaradmunicom_db", "RIzx63ZTUNeqx", "thenaradmunicom_db");
-		if ($this->conn) {
-			mysqli_set_charset($this->conn, "utf8");
+		// Fallback only if config was not included — never throw (PHP 8 mysqli can exception).
+		try {
+			mysqli_report(MYSQLI_REPORT_OFF);
+			$this->conn = @mysqli_connect("localhost", "thenaradmunicom_db", "RIzx63ZTUNeqx", "thenaradmunicom_db");
+			if ($this->conn instanceof mysqli) {
+				mysqli_set_charset($this->conn, "utf8");
+			} else {
+				$this->conn = null;
+			}
+		} catch (Throwable $e) {
+			$this->conn = null;
 		}
 	}
 

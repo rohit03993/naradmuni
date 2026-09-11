@@ -76,6 +76,9 @@ if(isset($_POST['add']))
                             }
 
                             if (empty($title)) { array_push($errors, "Kindly fill news title"); }
+                            if (empty($description) || trim(strip_tags($description)) === '') {
+                                array_push($errors, "Kindly fill the full article Description");
+                            }
                             if (empty($short_description)) { array_push($errors, "Kindly fill Short Description"); }
                             if (empty($newsurl)) { array_push($errors, "Kindly fill news url"); }
                             if (empty($metat)) { array_push($errors, "Kindly fill meta title"); }

@@ -1,4 +1,5 @@
 <?php
+include "config.php";
 require_once("dbcontroller.php");
 require_once("pagination.class.php");
 $db_handle = new DBController();

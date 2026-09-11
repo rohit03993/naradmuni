@@ -86,6 +86,11 @@ export function sanitizeArticleHtml(html: string): string {
     return lightSanitize(raw);
   }
 
+  // Empty CKEditor shells (e.g. <div style="text-align:justify"> </div>) → no body
+  if (isVisuallyEmpty(out)) {
+    return "";
+  }
+
   return out;
 }
 

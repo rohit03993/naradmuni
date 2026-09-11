@@ -52,7 +52,9 @@ export default async function NewsPage({ params }: Props) {
 
   const related = await getRelated(article.category, article.newsid);
   const src = newsImage(article.image);
-  const bodyHtml = sanitizeArticleHtml(asHtmlString(article.description)) || asHtmlString(article.description);
+  const rawBody = asHtmlString(article.description);
+  const bodyHtml = sanitizeArticleHtml(rawBody);
+  const summaryText = (article.short_description || "").trim();
   const url = `${getSiteUrl()}/news/${article.newsurl}`;
 
   return (
@@ -67,13 +69,16 @@ export default async function NewsPage({ params }: Props) {
         <ArticleByline author={article.author} place={article.hindi_name} />
         <ArticleActions title={article.title} url={url} />
       </div>
+      {summaryText && summaryText !== article.title ? (
+        <p className="summary">{summaryText}</p>
+      ) : null}
       {src ? (
         <figure className="article-lead">
           <img src={src} alt={article.title} />
           {article.img_abt ? <figcaption className="caption">{article.img_abt}</figcaption> : null}
         </figure>
       ) : null}
-      {bodyHtml.trim() ? (
+      {bodyHtml ? (
         <div className="body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
       ) : null}
       <YeBhiPadhein items={related} />
