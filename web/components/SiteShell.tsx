@@ -1,22 +1,20 @@
 import Header from "./Header";
 import Footer from "./Footer";
-import TazaKhabar from "./TazaKhabar";
+import CitiesRail from "./CitiesRail";
 import PwaClient from "./PwaClient";
 import InstallAppButton from "./InstallAppButton";
-import type { Ad, Category, NewsCard, SitePage } from "@/lib/types";
+import type { Ad, Category, SitePage } from "@/lib/types";
 
 export default function SiteShell({
   children,
   nav,
   cities,
-  taza,
   pages,
   dbError,
 }: {
   children: React.ReactNode;
   nav: Category[];
   cities: Category[];
-  taza: NewsCard[];
   ad?: Ad | null;
   pages: SitePage[];
   dbError?: string;
@@ -47,7 +45,7 @@ export default function SiteShell({
           {children}
         </div>
         <aside className="rail">
-          <TazaKhabar items={taza} />
+          <CitiesRail cities={cities} />
         </aside>
       </div>
       <Footer pages={pages} />

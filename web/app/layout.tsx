@@ -57,7 +57,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SiteShell
           nav={chrome.nav}
           cities={chrome.cities}
-          taza={chrome.taza}
           pages={chrome.pages}
           dbError={chrome.dbError}
         >

@@ -848,6 +848,8 @@ article .author-box {
   align-items: start;
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
+  color: inherit;
+  text-decoration: none;
 }
 .taza-item h4 { margin: 0; font-size: 13px; line-height: 1.35; font-weight: 600; }
 .taza-item img {
@@ -855,6 +857,46 @@ article .author-box {
   height: 64px;
   object-fit: cover;
   border-radius: 4px;
+}
+
+.cities-rail h3 {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 18px;
+  margin: 0 0 12px;
+  line-height: 1.25;
+}
+.cities-rail-note {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.cities-rail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+.cities-rail-list li + li {
+  border-top: 1px solid var(--border);
+}
+.cities-rail-list a {
+  display: block;
+  padding: 10px 12px;
+  color: inherit;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+.cities-rail-list a:hover {
+  background: #f8f8f8;
+  color: var(--accent);
 }
 
 .list-item {
