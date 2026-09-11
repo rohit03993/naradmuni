@@ -36,7 +36,11 @@ if(isset($_POST['add']))
 
                             $title = $post('title');
                             $latest_news = $post('latest_news', 'No');
-                            $description = $post('description');
+                            $descriptionRaw = isset($_POST['description']) ? (string) $_POST['description'] : '';
+                            if (function_exists('nm_clean_description_html')) {
+                                $descriptionRaw = nm_clean_description_html($descriptionRaw);
+                            }
+                            $description = mysqli_real_escape_string($con, $descriptionRaw);
                             $newsurl = $post('newsurl');
                             $metat = $post('metat');
                             $metad = $post('metad');

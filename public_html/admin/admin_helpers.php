@@ -49,6 +49,16 @@ if (!function_exists('nm_categories_result')) {
 	}
 }
 
+/** Strip CKEditor pastebin id so it never wraps a saved article as disposable markup. */
+if (!function_exists('nm_clean_description_html')) {
+	function nm_clean_description_html($html)
+	{
+		$html = (string) $html;
+		$html = preg_replace('/\s*\bid\s*=\s*(["\']?)cke_pastebin\1/i', '', $html);
+		return $html === null ? '' : $html;
+	}
+}
+
 /** Relative CKEditor filebrowser config (works when $urlroot is wrong on production). */
 if (!function_exists('nm_ckeditor_js')) {
 	function nm_ckeditor_js($fieldId = 'description')

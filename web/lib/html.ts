@@ -32,7 +32,8 @@ function isVisuallyEmpty(inner: string): boolean {
 
 function lightSanitize(html: string): string {
   let out = stripScripts(html || "");
-  out = out.replace(/<div[^>]*id=["']?cke_pastebin["']?[^>]*>[\s\S]*?<\/div>/gi, "");
+  // CKEditor paste helper often wraps the WHOLE article — unwrap, never delete inner HTML
+  out = out.replace(/<div([^>]*?)\s*\bid\s*=\s*(["']?)cke_pastebin\2([^>]*)>/gi, "<div$1$3>");
   out = out.replace(/&nbsp;/gi, " ");
   return out.trim();
 }

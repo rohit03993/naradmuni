@@ -97,6 +97,9 @@ if (isset($_POST['update'])) {
     if (!$postedHasText && $existingHasText) {
         $descriptionRaw = $existingDesc;
     }
+    if (function_exists('nm_clean_description_html')) {
+        $descriptionRaw = nm_clean_description_html($descriptionRaw);
+    }
     $description = mysqli_real_escape_string($con, $descriptionRaw);
     $newsurl = $post('newsurl');
     $metat = $post('metat');
