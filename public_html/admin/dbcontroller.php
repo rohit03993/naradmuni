@@ -3,6 +3,9 @@
  * Shared admin DB helper.
  * Reuses $con from config.php when available so production credentials stay in one place.
  */
+if (!function_exists('nm_h')) {
+	require_once __DIR__ . '/admin_helpers.php';
+}
 class DBController {
 	private $conn;
 

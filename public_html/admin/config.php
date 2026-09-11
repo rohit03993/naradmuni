@@ -34,5 +34,6 @@ if(isset($_SESSION['u_id'])){
     }
 }
  date_default_timezone_set("Asia/Kolkata");
- header( 'Content-Type: text/html; charset=utf-8' ); 
+ header( 'Content-Type: text/html; charset=utf-8' );
+ require_once __DIR__ . '/admin_helpers.php';
 ?>

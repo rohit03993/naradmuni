@@ -31,7 +31,7 @@ if(isset($_POST['add']))
                     {     
                             $title = mysqli_real_escape_string($con,$_POST['title']);
                             $latest_news=mysqli_real_escape_string($con,$_POST['latest_news']);
-                            $description = mysqli_real_escape_string($con,$_POST['description']);
+                            $description = mysqli_real_escape_string($con, isset($_POST['description']) ? $_POST['description'] : '');
                             $newsurl = mysqli_real_escape_string($con,$_POST['newsurl']);
                             $metat = mysqli_real_escape_string($con,$_POST['metat']);
                             $metad = mysqli_real_escape_string($con,$_POST['metad']);
@@ -206,16 +206,10 @@ if(!empty($name)){
                 <p><b>Select Categories: </b></p>
                <?php
                 
-                $query = $con->query("SELECT * FROM `categories` WHERE `cat_url` IS NOT NULL ORDER BY id ASC");
-    
-                //Count total number of rows
-                $rowCount = $query->num_rows;
-
-                //City option list
-                if($rowCount > 0){
-
-                    while($row = $query->fetch_assoc()){ 
-                        echo '<label style="margin-right: 10px;" class="checkbox-inline"><input type="checkbox" name="cat_id[]" value='.$row['id'].' '.$chk.'> '.$row['maincat'].' </label>';
+                $query = nm_categories_result($con, true);
+                if ($query instanceof mysqli_result && $query->num_rows > 0) {
+                    while($row = $query->fetch_assoc()){
+                        echo '<label style="margin-right: 10px;" class="checkbox-inline"><input type="checkbox" name="cat_id[]" value="'.(int)$row['id'].'"> '.nm_h(nm_cat_label($row)).' </label>';
                     }
                 }else{
                     echo '<option value="0">no data available</option>';
@@ -239,16 +233,10 @@ if(!empty($name)){
                 <option value="0">select</option>
             	<?php
                 
-                $query = $con->query("SELECT * FROM `categories` ORDER BY id ASC");
-    
-                //Count total number of rows
-                $rowCount = $query->num_rows;
-
-                //City option list
-                if($rowCount > 0){
-
-                    while($row = $query->fetch_assoc()){ 
-                        echo '<option value='.$row['id'].'>'.$row['maincat'].'</option>';
+                $query = nm_categories_result($con);
+                if ($query instanceof mysqli_result && $query->num_rows > 0) {
+                    while($row = $query->fetch_assoc()){
+                        echo '<option value="'.(int)$row['id'].'">'.nm_h(nm_cat_label($row)).'</option>';
                     }
                 }else{
                     echo '<option value="0">no data available</option>';
@@ -268,7 +256,7 @@ if(!empty($name)){
             
             <div class="col-md-3 form-group group">
               <label class="control-label">Slider Priority:</label>
-              <input class="form-control" type="number" name="slider_priority" value="<?php echo $_POST['slider_priority']; ?>">
+              <input class="form-control" type="number" name="slider_priority" value="<?php echo nm_h(isset($_POST['slider_priority']) ? $_POST['slider_priority'] : ''); ?>">
             </div>
                 
                 
@@ -282,7 +270,7 @@ if(!empty($name)){
             
             <div class="col-md-4 form-group group">
               <label class="control-label">Letest News Priority:</label>
-              <input class="form-control" type="number" name="latest_priority" value="<?php echo $_POST['latest_priority']; ?>">
+              <input class="form-control" type="number" name="latest_priority" value="<?php echo nm_h(isset($_POST['latest_priority']) ? $_POST['latest_priority'] : ''); ?>">
             </div>
                 
             <div class="col-md-4 form-group group">
@@ -295,44 +283,44 @@ if(!empty($name)){
             
             <div class="col-md-6 form-group group">
               <label class="control-label">About Image:</label>
-              <input class="form-control" type="text" name="img_abt" value="<?php echo $_POST['img_abt']; ?>">
+              <input class="form-control" type="text" name="img_abt" value="<?php echo nm_h(isset($_POST['img_abt']) ? $_POST['img_abt'] : ''); ?>">
             </div>
                
             <div class="col-md-6 form-group group">
               <label class="control-label">Image Source:</label>
-              <input class="form-control" type="text" name="img_source" value="<?php echo $_POST['img_source']; ?>">
+              <input class="form-control" type="text" name="img_source" value="<?php echo nm_h(isset($_POST['img_source']) ? $_POST['img_source'] : ''); ?>">
             </div>
                 
             <div class="col-md-6 form-group group">
               <label class="control-label">News URL:</label>
-              <input class="form-control" type="text" name="newsurl" value="<?php echo $_POST['newsurl']; ?>">
+              <input class="form-control" type="text" name="newsurl" value="<?php echo nm_h(isset($_POST['newsurl']) ? $_POST['newsurl'] : ''); ?>">
             </div>
                
             <div class="col-md-6 form-group group">
               <label class="control-label">Title:</label>
-              <input class="form-control" type="text" name="title" value="<?php echo $_POST['title']; ?>">
+              <input class="form-control" type="text" name="title" value="<?php echo nm_h(isset($_POST['title']) ? $_POST['title'] : ''); ?>">
             </div>
                 
             
                  
             <div class="col-md-12 form-group group">
               <label class="control-label">Meta Title:</label>
-              <input class="form-control" type="text" name="metat" value="<?php echo $_POST['metat']; ?>">
+              <input class="form-control" type="text" name="metat" value="<?php echo nm_h(isset($_POST['metat']) ? $_POST['metat'] : ''); ?>">
             </div>
                 
             <div class="col-md-12 form-group group">
               <label class="control-label">Meta Description:</label>
-             <textarea class="form-control" cols="20" rows="5" name="metad"><?php echo $_POST['metad']; ?></textarea>
+             <textarea class="form-control" cols="20" rows="5" name="metad"><?php echo nm_h(isset($_POST['metad']) ? $_POST['metad'] : ''); ?></textarea>
             </div>
             
             <div class="col-md-12 form-group group">
               <label class="control-label">Short Description:</label>
-             <textarea class="form-control" cols="20" rows="5" name="short_description"><?php echo $_POST['short_description']; ?></textarea>
+             <textarea class="form-control" cols="20" rows="5" name="short_description"><?php echo nm_h(isset($_POST['short_description']) ? $_POST['short_description'] : ''); ?></textarea>
             </div>
             
             <div class="col-md-12 form-group group">
               <label class="control-label">Description</label>
-              <textarea class="ckeditor form-control" id="description"  name="description"><?php echo $_POST['description']; ?></textarea>
+              <textarea class="ckeditor form-control" id="description"  name="description"><?php echo nm_h(isset($_POST['description']) ? $_POST['description'] : ''); ?></textarea>
             </div>
                 
             <div class="col-md-12 form-group group">
@@ -349,25 +337,7 @@ if(!empty($name)){
 <?php include"footer.php"; ?>
 <script type="text/javascript" src="ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
-			//<![CDATA[
-
-				// This call can be placed at any point after the
-				// <textarea>, or inside a <head><script> in a
-				// window.onload event handler.
-
-				// Replace the <textarea id="editor"> with an CKEditor
-				// instance, using default configurations.
-				CKEDITOR.replace( 'description',
-                {
-                    filebrowserBrowseUrl :'ckeditor/filemanager/browser/default/browser.html?Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-                    filebrowserImageBrowseUrl : 'ckeditor/filemanager/browser/default/browser.html?Type=Image&Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-                    filebrowserFlashBrowseUrl :'ckeditor/filemanager/browser/default/browser.html?Type=Flash&Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-					filebrowserUploadUrl  :'<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=File',
-					filebrowserImageUploadUrl : '<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=Image',
-					filebrowserFlashUploadUrl : '<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=Flash'
-				});
-
-			//]]>
+<?php echo nm_ckeditor_js('description'); ?>
 </script>
 <script type="text/javascript">
         $(document).ready(function () {

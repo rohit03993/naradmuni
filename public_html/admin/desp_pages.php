@@ -76,7 +76,7 @@ $output = '';
                                 $i=1;
                                 foreach($faq as $k=>$v) {
                                     
-                                    $q33 = mysqli_query($con,"SELECT `maincat` FROM `categories` WHERE `id`='".$faq[$k]["page"]."'");
+                                    $q33 = mysqli_query($con,"SELECT `hindi_name`, `maincat` FROM `categories` WHERE `id`='".mysqli_real_escape_string($con, (string)$faq[$k]["page"])."'");
                                     $cat = mysqli_fetch_array($q33);
                             ?>
                             <tr>

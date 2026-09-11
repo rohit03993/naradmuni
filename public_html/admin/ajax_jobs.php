@@ -57,22 +57,23 @@ if($_POST["actions"] =="Edit")
     $ex=mysqli_query($con,$qry);
     
     $rs=mysqli_fetch_array($ex);
+    if (!is_array($rs)) { $rs = array(); }
     
 ?>       
             <div class="col-md-4 form-group group">
               <label class="control-label">Post Name:</label>
-              <input class="form-control"  type="text" name="post_name" autocomplete="off" value="<?php echo $rs['post_name']; ?>">
+              <input class="form-control"  type="text" name="post_name" autocomplete="off" value="<?php echo nm_h(isset($rs['post_name']) ? $rs['post_name'] : ''); ?>">
             </div>
                 
             <div class="col-md-4 form-group group">
               <label class="control-label">Job Location:</label>
-              <input class="form-control"  type="text" name="location" autocomplete="off" value="<?php echo $rs['location']; ?>">
+              <input class="form-control"  type="text" name="location" autocomplete="off" value="<?php echo nm_h(isset($rs['location']) ? $rs['location'] : ''); ?>">
             </div>
             
             <div class="col-md-4 form-group group">
               <label class="control-label">Status:</label>
               <select class="custom-select" name="status" id="status">
-                <option><?php echo $rs['status']; ?></option>
+                <option><?php echo nm_h(isset($rs['status']) ? $rs['status'] : ''); ?></option>
                  <option>Active</option>
                  <option>Deactive</option>
               </select>
@@ -80,12 +81,12 @@ if($_POST["actions"] =="Edit")
                 
             <div class="col-md-12 form-group group">
               <label class="control-label">Job Description:</label>
-         <textarea class="form-control ckeditor" name="description" ><?php echo $rs['description']; ?></textarea>
+         <textarea class="form-control ckeditor" id="description" name="description"><?php echo nm_h(isset($rs['description']) ? $rs['description'] : ''); ?></textarea>
             </div>
                 
             <div class="col-md-12 form-group group">
-                <input type="text" name="image" value="<?php echo $usersession; ?>" class="hidden" hidden="true">
-                <input type="text" name="id" value="<?php echo $id; ?>" class="hidden" hidden="true">
+                <input type="text" name="image" value="<?php echo nm_h(isset($usersession) ? $usersession : ''); ?>" class="hidden" hidden="true">
+                <input type="text" name="id" value="<?php echo nm_h($id); ?>" class="hidden" hidden="true">
                 <input type="text" name="actions" id="actions" class="hidden" value="Edit_User" hidden>
                 <button type="submit" name="submit" class="btn btn-info">Edit Job <i class="fas fa-edit"></i></button>
             </div>

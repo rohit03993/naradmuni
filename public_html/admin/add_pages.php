@@ -30,7 +30,7 @@ $userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
 if(isset($_POST['add']))
                     {     
                             $page = mysqli_real_escape_string($con,$_POST['page']);
-                            $description = mysqli_real_escape_string($con,$_POST['description']);
+                            $description = mysqli_real_escape_string($con, isset($_POST['description']) ? $_POST['description'] : '');
                             $metat = mysqli_real_escape_string($con,$_POST['metat']);
                             $metad = mysqli_real_escape_string($con,$_POST['metad']);
                             $page_url = mysqli_real_escape_string($con,$_POST['page_url']);
@@ -119,29 +119,29 @@ if(isset($_POST['add']))
                
             <div class="col-md-6 form-group group">
               <label class="control-label">Page URL:</label>
-              <input class="form-control" type="text" name="page_url" value="<?php if(isset($_POST['add'])){ echo $_POST['page_url']; } ?>" >
+              <input class="form-control" type="text" name="page_url" value="<?php if(isset($_POST['add'])){ echo nm_h($_POST['page_url']); } ?>" >
             </div>
                
             <div class="col-md-6 form-group group">
               <label class="control-label">Page Name:</label>
-              <input class="form-control" type="text" name="page" value="<?php if(isset($_POST['add'])){ echo $_POST['page']; } ?>" >
+              <input class="form-control" type="text" name="page" value="<?php if(isset($_POST['add'])){ echo nm_h($_POST['page']); } ?>" >
             </div>
                 
             
                  
             <div class="col-md-12 form-group group">
               <label class="control-label">Meta Title:</label>
-              <input class="form-control" type="text" name="metat" value="<?php if(isset($_POST['add'])){ echo $_POST['metat']; } ?>" >
+              <input class="form-control" type="text" name="metat" value="<?php if(isset($_POST['add'])){ echo nm_h($_POST['metat']); } ?>" >
             </div>
                 
             <div class="col-md-12 form-group group">
               <label class="control-label">Meta Description:</label>
-             <textarea class="form-control" cols="20" rows="5" name="metad"><?php if(isset($_POST['add'])){ echo $_POST['metad']; } ?></textarea>
+             <textarea class="form-control" cols="20" rows="5" name="metad"><?php if(isset($_POST['add'])){ echo nm_h($_POST['metad']); } ?></textarea>
             </div>
                 
             <div class="col-md-12 form-group group">
               <label class="control-label">Description</label>
-              <textarea class="ckeditor form-control" id="description"  name="description"><?php if(isset($_POST['add'])){ echo $_POST['description']; } ?></textarea>
+              <textarea class="ckeditor form-control" id="description"  name="description"><?php if(isset($_POST['add'])){ echo nm_h(isset($_POST['description']) ? $_POST['description'] : ''); } ?></textarea>
             </div>
                 
             <div class="col-md-12 form-group group">
@@ -158,25 +158,7 @@ if(isset($_POST['add']))
 <?php include"footer.php"; ?>
 <script type="text/javascript" src="ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
-			//<![CDATA[
-
-				// This call can be placed at any point after the
-				// <textarea>, or inside a <head><script> in a
-				// window.onload event handler.
-
-				// Replace the <textarea id="editor"> with an CKEditor
-				// instance, using default configurations.
-				CKEDITOR.replace( 'description',
-                {
-                    filebrowserBrowseUrl :'ckeditor/filemanager/browser/default/browser.html?Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-                    filebrowserImageBrowseUrl : 'ckeditor/filemanager/browser/default/browser.html?Type=Image&Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-                    filebrowserFlashBrowseUrl :'ckeditor/filemanager/browser/default/browser.html?Type=Flash&Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-					filebrowserUploadUrl  :'<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=File',
-					filebrowserImageUploadUrl : '<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=Image',
-					filebrowserFlashUploadUrl : '<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=Flash'
-				});
-
-			//]]>
+<?php echo nm_ckeditor_js('description'); ?>
 </script>
 <script type="text/javascript">
         $(document).ready(function () {

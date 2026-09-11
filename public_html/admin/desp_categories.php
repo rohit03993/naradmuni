@@ -33,7 +33,7 @@ $perPage = new PerPage();
 		}
 	}
 $orderby = " ORDER BY id desc";
-$sql = "SELECT id, maincat, parent, cat_url, short, main_heading, menu from categories" . $queryCondition;
+$sql = "SELECT id, hindi_name, maincat, parent, cat_url, short, main_heading, menu from categories" . $queryCondition;
 $paginationlink = "desp_categories.php?page=";	
 $pagination_setting = isset($_GET["pagination_setting"]) ? $_GET["pagination_setting"] : "";
 				
@@ -85,13 +85,13 @@ $output = '';
                             ?>
                             <tr>
 							<td><?php echo $i+$k; ?></td>
-                            <td><?php echo htmlspecialchars($faq[$k]["maincat"]); ?></td>
+                            <td><?php echo nm_h(nm_cat_label($faq[$k])); ?></td>
                             <td><?php
                             $catid=$faq[$k]["parent"];
                                     if(isset($catid) && $catid !== "" && $catid !== null){
-                                        $qry12=mysqli_query($con,"SELECT maincat FROM `categories` WHERE id='".mysqli_real_escape_string($con, (string)$catid)."'");
+                                        $qry12=mysqli_query($con,"SELECT hindi_name, maincat FROM `categories` WHERE id='".mysqli_real_escape_string($con, (string)$catid)."'");
                             $rs99=mysqli_fetch_array($qry12);
-                            echo htmlspecialchars(isset($rs99["maincat"]) ? $rs99["maincat"] : "");
+                            echo nm_h(is_array($rs99) ? nm_cat_label($rs99) : '');
                                     }
                              ?></td>
                             <td><code class="nm-url-cell" title="<?php echo htmlspecialchars($faq[$k]["cat_url"]); ?>"><?php echo htmlspecialchars($faq[$k]["cat_url"]); ?></code></td>

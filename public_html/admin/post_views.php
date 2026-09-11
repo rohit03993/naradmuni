@@ -150,8 +150,12 @@ function getresult(url, forceRecount) {
 		$("#pagination-result").html(data);
 		setTimeout(function() {$("#overlay").hide(); },200);
 		},
-		error: function() 
-		{$("#overlay").hide();} 	        
+		error: function(xhr) {
+			$("#overlay").hide();
+			if ($("#pagination-result").length) {
+				$("#pagination-result").html('<div class="alert alert-danger">List failed to load'+(xhr&&xhr.status?' (HTTP '+xhr.status+')':'')+'. Refresh and try again.</div>');
+			}
+		} 
    });
 }
 function changePagination(option) {

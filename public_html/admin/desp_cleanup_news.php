@@ -102,9 +102,9 @@ if (typeof syncDeleteSummary === "function") syncDeleteSummary();
 <?php
 foreach ($faq as $row) {
 	$catName = "";
-	$cq = mysqli_query($con, "SELECT maincat FROM categories WHERE id='" . mysqli_real_escape_string($con, $row["category"]) . "' LIMIT 1");
+	$cq = mysqli_query($con, "SELECT hindi_name, maincat FROM categories WHERE id='" . mysqli_real_escape_string($con, $row["category"]) . "' LIMIT 1");
 	if ($cq && ($cr = mysqli_fetch_assoc($cq))) {
-		$catName = $cr["maincat"];
+		$catName = nm_cat_label($cr);
 	}
 	?>
     <tr>

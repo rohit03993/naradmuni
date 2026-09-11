@@ -26,13 +26,14 @@ $res=mysqli_query($con,"SELECT * FROM admin WHERE aemail='$productsession'");
 
 $userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
 
-    $id = $_GET['eid'];
+    $id = isset($_GET['eid']) ? $_GET['eid'] : (isset($_GET['id']) ? $_GET['id'] : '');
     
-    $qry="SELECT * FROM `jobs` WHERE `j_id`='$id'";
+    $qry="SELECT * FROM `jobs` WHERE `j_id`='".mysqli_real_escape_string($con, (string)$id)."'";
                             
     $ex=mysqli_query($con,$qry);
     
     $rs=mysqli_fetch_array($ex);
+    if (!is_array($rs)) { $rs = array(); }
 
 ?>
 <!DOCTYPE html>
@@ -80,18 +81,18 @@ $userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
                 
             <div class="col-md-4 form-group group">
               <label class="control-label">Post Name:</label>
-              <input class="form-control"  type="text" name="post_name" autocomplete="off" value="<?php echo $rs['post_name']; ?>">
+              <input class="form-control"  type="text" name="post_name" autocomplete="off" value="<?php echo nm_h(isset($rs['post_name']) ? $rs['post_name'] : ''); ?>">
             </div>
                 
             <div class="col-md-4 form-group group">
               <label class="control-label">Job Location:</label>
-              <input class="form-control"  type="text" name="location" autocomplete="off" value="<?php echo $rs['location']; ?>">
+              <input class="form-control"  type="text" name="location" autocomplete="off" value="<?php echo nm_h(isset($rs['location']) ? $rs['location'] : ''); ?>">
             </div>
             
             <div class="col-md-4 form-group group">
               <label class="control-label">Status:</label>
               <select class="custom-select" name="status" id="status">
-                <option><?php echo $rs['status']; ?></option>
+                <option><?php echo nm_h(isset($rs['status']) ? $rs['status'] : ''); ?></option>
                  <option>Active</option>
                  <option>Deactive</option>
               </select>
@@ -99,12 +100,12 @@ $userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
                 
             <div class="col-md-12 form-group group">
               <label class="control-label">Job Description:</label>
-         <textarea class="form-control ckeditor" name="description" ><?php echo $rs['description']; ?></textarea>
+         <textarea class="form-control ckeditor" id="description" name="description"><?php echo nm_h(isset($rs['description']) ? $rs['description'] : ''); ?></textarea>
             </div>
                 
             <div class="col-md-12 form-group group">
-                <input type="text" name="image" value="<?php echo $usersession; ?>" class="hidden" hidden="true">
-                <input type="text" name="id" value="<?php echo $id; ?>" class="hidden" hidden="true">
+                <input type="text" name="image" value="<?php echo nm_h(isset($usersession) ? $usersession : ''); ?>" class="hidden" hidden="true">
+                <input type="text" name="id" value="<?php echo nm_h($id); ?>" class="hidden" hidden="true">
                 <input type="text" name="actions" id="actions" class="hidden" value="Edit_User" hidden>
                 <button type="submit" name="submit" class="btn btn-info">Edit Job <i class="fas fa-edit"></i></button>
             </div>
@@ -148,25 +149,7 @@ $(document).ready(function(e){
 <?php include"footer.php"; ?>
 <script type="text/javascript" src="ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
-			//<![CDATA[
-
-				// This call can be placed at any point after the
-				// <textarea>, or inside a <head><script> in a
-				// window.onload event handler.
-
-				// Replace the <textarea id="editor"> with an CKEditor
-				// instance, using default configurations.
-				CKEDITOR.replace( 'description',
-                {
-                    filebrowserBrowseUrl :'ckeditor/filemanager/browser/default/browser.html?Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-                    filebrowserImageBrowseUrl : 'ckeditor/filemanager/browser/default/browser.html?Type=Image&Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-                    filebrowserFlashBrowseUrl :'ckeditor/filemanager/browser/default/browser.html?Type=Flash&Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-					filebrowserUploadUrl  :'<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=File',
-					filebrowserImageUploadUrl : '<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=Image',
-					filebrowserFlashUploadUrl : '<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=Flash'
-				});
-
-			//]]>
+<?php echo nm_ckeditor_js('description'); ?>
 </script>
 <script type="text/javascript">
         $(document).ready(function () {

@@ -26,10 +26,11 @@ $res=mysqli_query($con,"SELECT * FROM admin WHERE aemail='$productsession'");
 
 $userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
 
-$srid=$_GET['eid'];
-$qry="SELECT * FROM `rashifal` WHERE r_id='$srid'";
+$srid = isset($_GET['eid']) ? $_GET['eid'] : (isset($_GET['id']) ? $_GET['id'] : '');
+$qry="SELECT * FROM `rashifal` WHERE r_id='".mysqli_real_escape_string($con, (string)$srid)."'";
 $ex=mysqli_query($con,$qry);
 $rs=mysqli_fetch_array($ex);
+if (!is_array($rs)) { $rs = array(); }
 
 if(isset($_POST['update']))
                     {     
@@ -106,24 +107,24 @@ if(isset($_POST['update']))
      
             <div class="col-md-12 form-group group">
               <label class="control-label">Title:</label>
-              <input class="form-control" type="text" name="title" value="<?php echo $rs['title']; ?>">
+              <input class="form-control" type="text" name="title" value="<?php echo nm_h(isset($rs['title']) ? $rs['title'] : ''); ?>">
             </div>
                 
             
                  
             <div class="col-md-12 form-group group">
               <label class="control-label">Meta Title:</label>
-              <input class="form-control" type="text" name="metat" value="<?php echo $rs['metat']; ?>">
+              <input class="form-control" type="text" name="metat" value="<?php echo nm_h(isset($rs['metat']) ? $rs['metat'] : ''); ?>">
             </div>
                 
             <div class="col-md-12 form-group group">
               <label class="control-label">Meta Description:</label>
-             <textarea class="form-control" cols="20" rows="5" name="metad"><?php echo $rs['metad']; ?></textarea>
+             <textarea class="form-control" cols="20" rows="5" name="metad"><?php echo nm_h(isset($rs['metad']) ? $rs['metad'] : ''); ?></textarea>
             </div>
             
             <div class="col-md-12 form-group group">
               <label class="control-label">Description</label>
-              <textarea class="ckeditor form-control" id="description"  name="short_description"><?php echo $rs['short_description']; ?></textarea>
+              <textarea class="ckeditor form-control" id="description"  name="short_description"><?php echo nm_h(isset($rs['short_description']) ? $rs['short_description'] : ''); ?></textarea>
             </div>
                 
             <div class="col-md-12 form-group group">
@@ -141,25 +142,7 @@ if(isset($_POST['update']))
 <?php include"footer.php"; ?>
 <script type="text/javascript" src="ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
-			//<![CDATA[
-
-				// This call can be placed at any point after the
-				// <textarea>, or inside a <head><script> in a
-				// window.onload event handler.
-
-				// Replace the <textarea id="editor"> with an CKEditor
-				// instance, using default configurations.
-				CKEDITOR.replace( 'description',
-                {
-                    filebrowserBrowseUrl :'ckeditor/filemanager/browser/default/browser.html?Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-                    filebrowserImageBrowseUrl : 'ckeditor/filemanager/browser/default/browser.html?Type=Image&Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-                    filebrowserFlashBrowseUrl :'ckeditor/filemanager/browser/default/browser.html?Type=Flash&Connector=<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/connector.php',
-					filebrowserUploadUrl  :'<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=File',
-					filebrowserImageUploadUrl : '<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=Image',
-					filebrowserFlashUploadUrl : '<?php echo $urlroot; ?>admin/ckeditor/filemanager/connectors/php/upload.php?Type=Flash'
-				});
-
-			//]]>
+<?php echo nm_ckeditor_js('description'); ?>
 </script>
 <script type="text/javascript">
         $(document).ready(function () {

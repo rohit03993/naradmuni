@@ -1,9 +1,12 @@
 <?php
 date_default_timezone_set("Asia/Kolkata");
+if (!function_exists('nm_h')) {
+	require_once __DIR__ . '/admin_helpers.php';
+}
 $nmAdminName = !empty($userRow["aname"]) ? $userRow["aname"] : (!empty($userRow["aemail"]) ? $userRow["aemail"] : "Admin");
 if (!defined("NM_ADMIN_ASSETS")) {
 	define("NM_ADMIN_ASSETS", true);
-	echo '<link rel="stylesheet" href="css/admin-modern.css?v=15">' . "\n";
+	echo '<link rel="stylesheet" href="css/admin-modern.css?v=16">' . "\n";
 }
 ?>
 <nav class="navbar navbar-expand-lg navbar-light nm-topbar">

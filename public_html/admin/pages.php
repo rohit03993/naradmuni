@@ -139,16 +139,10 @@ if(isset($_POST['add']))
                 <option value="0">select</option>
             	<?php
                 
-                $query = $con->query("SELECT * FROM `categories` ORDER BY id ASC");
-    
-                //Count total number of rows
-                $rowCount = $query->num_rows;
-
-                //City option list
-                if($rowCount > 0){
-
-                    while($row = $query->fetch_assoc()){ 
-                        echo '<option value='.$row['id'].'>'.$row['maincat'].'</option>';
+                $query = nm_categories_result($con);
+                if ($query instanceof mysqli_result && $query->num_rows > 0) {
+                    while($row = $query->fetch_assoc()){
+                        echo '<option value="'.(int)$row['id'].'">'.nm_h(nm_cat_label($row)).'</option>';
                     }
                 }else{
                     echo '<option value="0">no data available</option>';
@@ -187,8 +181,12 @@ function getresult(url) {
 		$("#pagination-result").html(data);
 		$("#overlay").hide();
 		},
-		error: function() 
-		{} 	        
+		error: function(xhr) {
+			$("#overlay").hide();
+			if ($("#pagination-result").length) {
+				$("#pagination-result").html('<div class="alert alert-danger">List failed to load'+(xhr&&xhr.status?' (HTTP '+xhr.status+')':'')+'. Refresh and try again.</div>');
+			}
+		} 
    });
 }
 function changePagination(option) {

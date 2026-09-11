@@ -126,16 +126,10 @@ if(isset($_POST['update']))
                 <option><?php echo $rs["parent"]; ?></option>
             	<?php
                 
-                $query = $con->query("SELECT * FROM `categories` ORDER BY id ASC");
-    
-                //Count total number of rows
-                $rowCount = $query->num_rows;
-
-                //City option list
-                if($rowCount > 0){
-
-                    while($row = $query->fetch_assoc()){ 
-                        echo '<option value='.$row['id'].'>'.$row['maincat'].'</option>';
+                $query = nm_categories_result($con);
+                if ($query instanceof mysqli_result && $query->num_rows > 0) {
+                    while($row = $query->fetch_assoc()){
+                        echo '<option value="'.(int)$row['id'].'">'.nm_h(nm_cat_label($row)).'</option>';
                     }
                 }else{
                     echo '<option value="0">no data available</option>';
@@ -161,12 +155,12 @@ if(isset($_POST['update']))
                 
             <div class="col-md-3 form-group group">
               <label class="control-label">English Name:</label>
-              <input  type="text" class="form-control" name="category" value="<?php echo $rs["maincat"]; ?>">
+              <input  type="text" class="form-control" name="category" value="<?php echo nm_h(isset($rs["maincat"]) ? $rs["maincat"] : ''); ?>">
             </div>
                 
             <div class="col-md-3 form-group group">
               <label class="control-label">Hindi Name:</label>
-              <input  type="text" class="form-control" name="hindi_name" value="<?php echo $rs["hindi_name"]; ?>">
+              <input  type="text" class="form-control" name="hindi_name" value="<?php echo nm_h(isset($rs["hindi_name"]) ? $rs["hindi_name"] : ''); ?>">
             </div>
                 
             <div class="col-md-2 form-group group">

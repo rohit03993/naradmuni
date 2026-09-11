@@ -1,7 +1,10 @@
 <?php
+if (!function_exists('nm_h')) {
+	require_once __DIR__ . '/admin_helpers.php';
+}
 if (!defined("NM_ADMIN_ASSETS")) {
 	define("NM_ADMIN_ASSETS", true);
-	echo '<link rel="stylesheet" href="css/admin-modern.css?v=15">' . "\n";
+	echo '<link rel="stylesheet" href="css/admin-modern.css?v=16">' . "\n";
 }
 $nmPage = basename(isset($_SERVER["PHP_SELF"]) ? $_SERVER["PHP_SELF"] : "");
 $nmAvatar = "";
