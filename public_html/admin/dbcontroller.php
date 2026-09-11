@@ -1,38 +1,55 @@
 <?php
+/**
+ * Shared admin DB helper.
+ * Reuses $con from config.php when available so production credentials stay in one place.
+ */
 class DBController {
-	private $host = "localhost";
-	private $user = "thenaradmunicom_db";
-	private $password = "RIzx63ZTUNeqx";
-	private $database = "thenaradmunicom_db";
 	private $conn;
-	
+
 	function __construct() {
-		$this->conn = $this->connectDB();
+		global $con;
+		if (isset($con) && $con instanceof mysqli) {
+			$this->conn = $con;
+			return;
+		}
+		// Fallback only if config was not included (should not happen in admin pages).
+		$this->conn = mysqli_connect("localhost", "thenaradmunicom_db", "RIzx63ZTUNeqx", "thenaradmunicom_db");
+		if ($this->conn) {
+			mysqli_set_charset($this->conn, "utf8");
+		}
 	}
-	
-	function connectDB() {
-		$conn = mysqli_connect($this->host,$this->user,$this->password,$this->database);
-        mysqli_set_charset($conn,"utf8");
-		return $conn;
-	}
-	
+
 	function runQuery($query) {
-		$result = mysqli_query($this->conn,$query);
-		while($row=mysqli_fetch_assoc($result)) {
+		if (!$this->conn) {
+			return array();
+		}
+		$result = mysqli_query($this->conn, $query);
+		if (!$result) {
+			return array();
+		}
+		$resultset = array();
+		while ($row = mysqli_fetch_assoc($result)) {
 			$resultset[] = $row;
-		}		
-		if(!empty($resultset))
-			return $resultset;
+		}
+		return $resultset;
 	}
-	
+
 	function numRows($query) {
-		$result  = mysqli_query($this->conn,$query);
-		$rowcount = mysqli_num_rows($result);
-		return $rowcount;	
+		if (!$this->conn) {
+			return 0;
+		}
+		$result = mysqli_query($this->conn, $query);
+		if (!$result) {
+			return 0;
+		}
+		return (int) mysqli_num_rows($result);
 	}
 
 	function escape($value) {
-		return mysqli_real_escape_string($this->conn, $value);
+		if (!$this->conn) {
+			return addslashes((string) $value);
+		}
+		return mysqli_real_escape_string($this->conn, (string) $value);
 	}
 }
 ?>

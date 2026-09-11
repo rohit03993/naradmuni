@@ -145,16 +145,20 @@ if(isset($_POST['add']))
                 <option value="0">select</option>
             	<?php
                 
-                $query = $con->query("SELECT * FROM `categories` ORDER BY id ASC");
+                $query = $con->query("SELECT id, hindi_name FROM `categories` ORDER BY id ASC");
+                if (!$query) {
+                    $query = $con->query("SELECT id, maincat AS hindi_name FROM `categories` ORDER BY id ASC");
+                }
     
                 //Count total number of rows
-                $rowCount = $query->num_rows;
+                $rowCount = $query ? $query->num_rows : 0;
 
                 //City option list
                 if($rowCount > 0){
 
                     while($row = $query->fetch_assoc()){ 
-                        echo '<option value='.$row['id'].'>'.$row['maincat'].'</option>';
+                        $label = !empty($row['hindi_name']) ? $row['hindi_name'] : ('Cat #'.$row['id']);
+                        echo '<option value="'.htmlspecialchars((string)$row['id']).'">'.htmlspecialchars((string)$label).'</option>';
                     }
                 }else{
                     echo '<option value="0">no data available</option>';
@@ -186,10 +190,10 @@ if(isset($_POST['add']))
     </div>
     <hr>
 <script>
-x.style.display === "none";
 function myFunction() {
   var x = document.getElementById("SearchForm");
-  if (x.style.display === "none") {
+  if (!x) return;
+  if (x.style.display === "none" || x.style.display === "") {
     x.style.display = "block";
   } else {
     x.style.display = "none";
@@ -214,8 +218,14 @@ function getresult(url) {
 		$("#pagination-result").html(data);
 		$("#overlay").hide();
 		},
-		error: function() 
-		{} 	        
+		error: function(xhr) {
+			$("#overlay").hide();
+			$("#pagination-result").html(
+				'<div class="alert alert-danger">News list failed to load' +
+				(xhr && xhr.status ? ' (HTTP ' + xhr.status + ')' : '') +
+				'. Check admin DB config / PHP error log.</div>'
+			);
+		}
    });
 }
 function changePagination(option) {

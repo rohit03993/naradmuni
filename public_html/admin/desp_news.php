@@ -41,7 +41,7 @@ $perPage = new PerPage();
 		}
 	}
 $orderby = " ORDER BY newsid desc";
-$sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `video_file`, `newstype`, `category`, `team_id`, `latest_news`, `breaking`, `slider`, `latest_priority`, `slider_priority`, `date`, `time`, `status`, `pub_date_time` from news" . $queryCondition;
+$sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `category`, `date`, `time`, `status` from news" . $queryCondition;
 $paginationlink = "desp_news.php?page=";
 $pagination_setting = isset($_GET["pagination_setting"]) ? $_GET["pagination_setting"] : "";
 
@@ -68,6 +68,9 @@ if($pagination_setting == "prev-next") {
 	$perpageresult = $perPage->getAllPageLinks($_GET["rowcount"], $paginationlink,$pagination_setting);	
 }
 
+if(!isset($publicroot) || $publicroot === '') {
+    $publicroot = '/';
+}
 $output = '';
 
 ?>
@@ -90,16 +93,32 @@ $output = '';
                                 $i=1;
                                 foreach($faq as $k=>$v) {
                                     
-                                    $q33 = mysqli_query($con,"SELECT `maincat` FROM `categories` WHERE `id`='".$faq[$k]["category"]."'");
-                                    $cat = mysqli_fetch_array($q33);
+                                    $catId = mysqli_real_escape_string($con, (string) $faq[$k]["category"]);
+                                    $catName = "";
+                                    $q33 = mysqli_query($con, "SELECT hindi_name FROM `categories` WHERE `id`='".$catId."' LIMIT 1");
+                                    if ($q33 instanceof mysqli_result) {
+                                        $cat = mysqli_fetch_assoc($q33);
+                                        if (is_array($cat) && !empty($cat["hindi_name"])) {
+                                            $catName = $cat["hindi_name"];
+                                        }
+                                    }
+                                    if ($catName === "") {
+                                        $q34 = mysqli_query($con, "SELECT maincat FROM `categories` WHERE `id`='".$catId."' LIMIT 1");
+                                        if ($q34 instanceof mysqli_result) {
+                                            $cat2 = mysqli_fetch_assoc($q34);
+                                            if (is_array($cat2) && !empty($cat2["maincat"])) {
+                                                $catName = $cat2["maincat"];
+                                            }
+                                        }
+                                    }
                             ?>
                             <tr>
 							<td><?php echo $i+$k; ?></td>
 							<td>
-                              <div class="nm-title-cell"><?php echo htmlspecialchars($faq[$k]["title"]); ?></div>
-                              <code class="nm-url-cell" title="<?php echo htmlspecialchars($faq[$k]["newsurl"]); ?>"><?php echo htmlspecialchars($faq[$k]["newsurl"]); ?></code>
+                              <div class="nm-title-cell"><?php echo htmlspecialchars((string) $faq[$k]["title"]); ?></div>
+                              <code class="nm-url-cell" title="<?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?>"><?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?></code>
                             </td>
-                            <td><?php echo htmlspecialchars(isset($cat["maincat"]) ? $cat["maincat"] : ""); ?></td>
+                            <td><?php echo htmlspecialchars($catName); ?></td>
                             <td>
                                 <?php if (!empty($faq[$k]["image"])) { ?>
                                 <img src="../images/news/<?php echo htmlspecialchars($faq[$k]["image"]); ?>" width="72" height="54" class="img-thumbnail" alt="" loading="lazy" decoding="async">
