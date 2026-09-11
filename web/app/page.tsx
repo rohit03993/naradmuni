@@ -15,7 +15,7 @@ import { getHomepageShorts } from "@/lib/youtube";
 
 /**
  * Homepage rule: each newsid appears at most once on this page.
- * Order of claim: lead → नारद कहिन → Breaking hero-side → ताज़ा समाचार → other category blocks.
+ * Order of claim: Breaking hero (newest lead + next 5) → नारद कहिन → ताज़ा → other topics.
  * Does not affect /category, /news, or admin.
  */
 function takeUnique(pool: NewsCard[], seen: Set<number>, limit: number): NewsCard[] {
@@ -35,7 +35,7 @@ function dedupeSection<T extends { items: NewsCard[] }>(section: T, seen: Set<nu
 }
 
 export default async function HomePage() {
-  let lead = null;
+  let sliderLead = null;
   let breaking: Awaited<ReturnType<typeof getBreaking>> = [];
   let latest: Awaited<ReturnType<typeof getLatest>> = [];
   let topics: Awaited<ReturnType<typeof getTopicSections>> = [];
@@ -44,9 +44,9 @@ export default async function HomePage() {
   let err = "";
 
   try {
-    [lead, breaking, latest, topics, naradKahin, shorts] = await Promise.all([
+    [sliderLead, breaking, latest, topics, naradKahin, shorts] = await Promise.all([
       getLead(),
-      getBreaking(5),
+      getBreaking(6),
       getLatest(40),
       getTopicSections(8),
       getNaradKahinSection(),
@@ -57,21 +57,32 @@ export default async function HomePage() {
   }
 
   const seen = new Set<number>();
-  if (lead?.newsid) seen.add(Number(lead.newsid));
+
+  // Top hero = Breaking only (newest = big lead, next up to 5 = right list). No old fillers.
+  let lead: NewsCard | null = null;
+  let secondaries: NewsCard[] = [];
+  if (breaking.length > 0) {
+    lead = breaking[0] ?? null;
+    secondaries = breaking.slice(1, 6);
+    if (lead?.newsid) seen.add(Number(lead.newsid));
+    for (const n of secondaries) {
+      if (n.newsid) seen.add(Number(n.newsid));
+    }
+  } else {
+    lead = sliderLead;
+    if (lead?.newsid) seen.add(Number(lead.newsid));
+    secondaries = takeUnique(
+      latest.filter((n) => n.newsid != null),
+      seen,
+      5
+    );
+  }
 
   const pool = latest.filter((n) => n.newsid != null);
 
-  // Claim नारद कहिन stories BEFORE hero side / ताज़ा so they are not stolen
   const naradFromDb = naradKahin?.items.length ?? 0;
   const naradBlock = naradKahin ? dedupeSection(naradKahin, seen, 8) : null;
 
-  // Hero side: Breaking first (newest), fill to 5 with other latest if needed
-  const secondaries = [
-    ...takeUnique(breaking, seen, 5),
-  ];
-  if (secondaries.length < 5) {
-    secondaries.push(...takeUnique(pool, seen, 5 - secondaries.length));
-  }
   const gridNews = takeUnique(pool, seen, 8);
 
   const otherTopicsRaw = naradKahin
