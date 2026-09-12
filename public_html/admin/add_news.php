@@ -60,11 +60,13 @@ if(isset($_POST['add']))
                             $v_link = $post('videolink');
                             $team_id = $post('team_id', '0');
                             $hashtags = $post('hashtags');
-                            $pub_date_time = $post('pub_date_time');
-                            if ($pub_date_time === '') {
-                                $pub_date_time = date("Y-m-d H:i");
+                            $pub_date_time = isset($_POST['pub_date_time']) ? trim((string) $_POST['pub_date_time']) : '';
+                            $sched = nm_resolve_publish_schedule($_POST, $pub_date_time);
+                            if ($sched['error']) {
+                                array_push($errors, $sched['error']);
                             }
-                            $status = 'Published';
+                            $status = $sched['status'];
+                            $pub_date_time = mysqli_real_escape_string($con, $sched['pub_date_time']);
                             $name = (isset($_FILES['video_file']['name']) ? $_FILES['video_file']['name'] : '');
                             $video_id = '';
                             $post_image = '';
@@ -168,7 +170,7 @@ if(isset($_POST['add']))
                               mysqli_query($con, "INSERT INTO `news_cat`(`category`, `news_id`) VALUES('$category','$lastInsertId')");
                             }
                                    echo("<script language='javascript'>
-                                  window.alert('Published successfully')
+                                  window.alert('" . ($status === 'Scheduled' ? 'Scheduled successfully' : 'Published successfully') . "')
                                   window.location.href='news.php';
                                   </script>");
                               }
@@ -277,8 +279,30 @@ if(isset($_POST['add']))
                 </div>
               </section>
 
+              <section class="nm-form-section">
+                <h2 class="nm-form-section__title">Publish</h2>
+                <div class="nm-form-grid">
+                  <div class="nm-form-field nm-form-field--full">
+                    <label class="control-label">When to publish</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:6px;">
+                      <label class="checkbox-inline" style="font-weight:600;margin:0;">
+                        <input type="radio" name="publish_mode" value="now" checked> Publish now
+                      </label>
+                      <label class="checkbox-inline" style="font-weight:600;margin:0;">
+                        <input type="radio" name="publish_mode" value="schedule" id="nm-publish-schedule"> Schedule for later
+                      </label>
+                    </div>
+                  </div>
+                  <div class="nm-form-field nm-form-field--full" id="nm-schedule-wrap" style="display:none;">
+                    <label class="control-label" for="pub_date_time">Go live at (IST)</label>
+                    <input class="form-control" type="datetime-local" id="pub_date_time" name="pub_date_time" value="">
+                    <p class="nm-form-hint">Story stays hidden until this time, then goes live automatically.</p>
+                  </div>
+                </div>
+              </section>
+
               <div class="nm-form-actions">
-                <button type="submit" name="add" class="btn btn-info">Publish</button>
+                <button type="submit" name="add" class="btn btn-info" id="nm-publish-btn">Publish</button>
                 <a class="btn btn-outline-secondary" href="news.php">Cancel</a>
               </div>
         </form>
@@ -299,6 +323,22 @@ document.getElementById('SubmitForm').addEventListener('submit', function () {
     }
   }
 });
+(function () {
+  var wrap = document.getElementById('nm-schedule-wrap');
+  var btn = document.getElementById('nm-publish-btn');
+  var input = document.getElementById('pub_date_time');
+  function sync() {
+    var schedule = document.getElementById('nm-publish-schedule').checked;
+    wrap.style.display = schedule ? 'block' : 'none';
+    if (btn) btn.textContent = schedule ? 'Schedule' : 'Publish';
+    if (input) input.required = schedule;
+  }
+  var radios = document.querySelectorAll('input[name="publish_mode"]');
+  for (var i = 0; i < radios.length; i++) {
+    radios[i].addEventListener('change', sync);
+  }
+  sync();
+})();
 </script>
 <script type="text/javascript">
         $(document).ready(function () {

@@ -119,6 +119,9 @@ $output = '';
                               <?php if (!empty($faq[$k]["latest_news"]) && $faq[$k]["latest_news"] === "Yes") { ?>
                                 <span class="badge badge-danger" style="font-size:10px;vertical-align:middle;">Breaking</span>
                               <?php } ?>
+                              <?php if (!empty($faq[$k]["status"]) && $faq[$k]["status"] === "Scheduled") { ?>
+                                <span class="badge badge-info" style="font-size:10px;vertical-align:middle;">Scheduled</span>
+                              <?php } ?>
                               </div>
                               <code class="nm-url-cell" title="<?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?>"><?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?></code>
                             </td>
@@ -131,9 +134,10 @@ $output = '';
                             <td>
                                    <form id="SubmitForm<?php echo $faq[$k]["newsid"]; ?>">
                                     <select name="status" class="status custom-select" id="<?php echo $faq[$k]["newsid"]; ?>">
-                                        <option value="<?php echo $faq[$k]["status"]; ?>"><?php echo $faq[$k]["status"]; ?></option>
-                                        <option value="Unpublished">Unpublished</option>
+                                        <option value="<?php echo htmlspecialchars((string) $faq[$k]["status"]); ?>"><?php echo htmlspecialchars((string) $faq[$k]["status"]); ?></option>
                                         <option value="Published">Published</option>
+                                        <option value="Scheduled">Scheduled</option>
+                                        <option value="Unpublished">Unpublished</option>
                                       </select>
                                     </form>
                             </td>

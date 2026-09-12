@@ -59,6 +59,65 @@ if (!function_exists('nm_clean_description_html')) {
 	}
 }
 
+/**
+ * Resolve publish mode from POST: now | schedule.
+ * Returns array(status, pub_date_time, error|null)
+ */
+if (!function_exists('nm_resolve_publish_schedule')) {
+	function nm_resolve_publish_schedule($post, $defaultPub = '')
+	{
+		$mode = isset($post['publish_mode']) ? trim((string) $post['publish_mode']) : 'now';
+		if ($mode !== 'schedule') {
+			$mode = 'now';
+		}
+		$raw = isset($post['pub_date_time']) ? trim((string) $post['pub_date_time']) : '';
+		if ($raw === '' && $defaultPub !== '') {
+			$raw = $defaultPub;
+		}
+
+		if ($mode === 'now') {
+			$when = $raw !== '' ? $raw : date('Y-m-d H:i');
+			$ts = strtotime(str_replace('T', ' ', $when));
+			if ($ts === false) {
+				$ts = time();
+			}
+			return array(
+				'status' => 'Published',
+				'pub_date_time' => date('Y-m-d H:i', $ts),
+				'error' => null,
+			);
+		}
+
+		if ($raw === '') {
+			return array(
+				'status' => 'Scheduled',
+				'pub_date_time' => '',
+				'error' => 'Choose a schedule date and time.',
+			);
+		}
+		$ts = strtotime(str_replace('T', ' ', $raw));
+		if ($ts === false) {
+			return array(
+				'status' => 'Scheduled',
+				'pub_date_time' => '',
+				'error' => 'Invalid schedule date/time.',
+			);
+		}
+		if ($ts <= time()) {
+			return array(
+				'status' => 'Published',
+				'pub_date_time' => date('Y-m-d H:i', $ts),
+				'error' => null,
+			);
+		}
+		return array(
+			'status' => 'Scheduled',
+			'pub_date_time' => date('Y-m-d H:i', $ts),
+			'error' => null,
+		);
+	}
+}
+
 /** Relative CKEditor filebrowser config (works when $urlroot is wrong on production). */
 if (!function_exists('nm_ckeditor_js')) {
 	function nm_ckeditor_js($fieldId = 'description')

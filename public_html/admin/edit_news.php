@@ -114,7 +114,14 @@ if (isset($_POST['update'])) {
     $short_description = $post('short_description');
     $img_source = $post('img_source');
     $img_abt = $post('img_abt');
-    $pub_date_time = $post('pub_date_time');
+    $pub_date_time = isset($_POST['pub_date_time']) ? trim((string) $_POST['pub_date_time']) : '';
+    $existingPub = isset($rs['pub_date_time']) ? (string) $rs['pub_date_time'] : '';
+    $sched = nm_resolve_publish_schedule($_POST, $pub_date_time !== '' ? $pub_date_time : $existingPub);
+    if ($sched['error']) {
+        array_push($errors, $sched['error']);
+    }
+    $status = mysqli_real_escape_string($con, $sched['status']);
+    $pub_date_time = mysqli_real_escape_string($con, $sched['pub_date_time']);
     $show_home = $post('show_home', isset($rs['show_home']) ? $rs['show_home'] : 'No');
     $newstype = $post('newstype', isset($rs['newstype']) ? $rs['newstype'] : 'Content');
     $v_link = $post('videolink');
@@ -127,9 +134,6 @@ if (isset($_POST['update'])) {
     }
     if ($metad === '' && $title !== '') {
         $metad = $title;
-    }
-    if ($pub_date_time === '') {
-        $pub_date_time = isset($rs['pub_date_time']) ? $rs['pub_date_time'] : date('Y-m-d H:i');
     }
 
     $video_id = isset($rs['videoid']) ? $rs['videoid'] : '';
@@ -205,10 +209,18 @@ if (isset($_POST['update'])) {
 
         mysqli_query($con, "UPDATE `news` SET `latest_priority`='0' WHERE `latest_priority`='$latest_priority'");
 
-        $up = "UPDATE `news` SET `newsurl`='$linkname',`latest_news`='$latest_news',`folder`='$foldername',`seolink`='$link',`metat`='$metat',`metad`='$metad',`slider`='$slider',`title`='$title',`short_description`='$short_description',`description`='$description',`image`='$post_image',`img_abt`='$img_abt',`img_source`='$img_source',`newstype`='$newstype',`category`='$category',`video_file`='$name',`videoid`='$video_id', `show_home`='$show_home', `slider_priority`='$slider_priority', `latest_priority`='$latest_priority', `team_id`='$team_id', `hashtags`='$hashtags', `pub_date_time`='$pub_date_time' WHERE newsid='$srid'";
+        $up = "UPDATE `news` SET `newsurl`='$linkname',`latest_news`='$latest_news',`folder`='$foldername',`seolink`='$link',`metat`='$metat',`metad`='$metad',`slider`='$slider',`title`='$title',`short_description`='$short_description',`description`='$description',`image`='$post_image',`img_abt`='$img_abt',`img_source`='$img_source',`newstype`='$newstype',`category`='$category',`video_file`='$name',`videoid`='$video_id', `show_home`='$show_home', `slider_priority`='$slider_priority', `latest_priority`='$latest_priority', `team_id`='$team_id', `hashtags`='$hashtags', `pub_date_time`='$pub_date_time', `status`='$status' WHERE newsid='$srid'";
         $exUp = mysqli_query($con, $up);
 
         if ($exUp) {
+            // If moved to Published from Scheduled/Unpublished, send push (same as status AJAX)
+            $oldStatus = isset($rs['status']) ? (string) $rs['status'] : '';
+            if ($sched['status'] === 'Published' && $oldStatus !== 'Published') {
+                include_once __DIR__ . '/push_news.php';
+                if (function_exists('naradmuni_send_news_push')) {
+                    naradmuni_send_news_push($con, $title, $short_description, $post_image, $linkname);
+                }
+            }
             mysqli_query($con, "DELETE FROM `news_cat` WHERE `news_id`='$srid'");
             if (!empty($_POST['cat_id']) && is_array($_POST['cat_id'])) {
                 foreach ($_POST['cat_id'] as $cid) {
@@ -337,8 +349,32 @@ if (isset($_POST['update'])) {
         </div>
 
         <div class="col-md-3 form-group">
-          <label class="control-label">Publish Date Time:</label>
-          <input class="form-control" id="datetimepicker" type="text" name="pub_date_time" value="<?php echo nm_h(isset($rs['pub_date_time']) ? $rs['pub_date_time'] : ''); ?>">
+          <label class="control-label">When to publish</label>
+          <?php
+          $curStatus = isset($rs['status']) ? (string) $rs['status'] : 'Published';
+          $isScheduled = ($curStatus === 'Scheduled');
+          $pubVal = isset($rs['pub_date_time']) ? (string) $rs['pub_date_time'] : '';
+          $pubLocal = '';
+          if ($pubVal !== '') {
+              $pts = strtotime(str_replace('T', ' ', $pubVal));
+              if ($pts) {
+                  $pubLocal = date('Y-m-d\TH:i', $pts);
+              }
+          }
+          ?>
+          <div style="padding-top:6px;">
+            <label class="checkbox-inline" style="font-weight:600;margin-right:12px;">
+              <input type="radio" name="publish_mode" value="now" <?php echo $isScheduled ? '' : 'checked'; ?>> Publish now
+            </label>
+            <label class="checkbox-inline" style="font-weight:600;">
+              <input type="radio" name="publish_mode" value="schedule" id="nm-publish-schedule" <?php echo $isScheduled ? 'checked' : ''; ?>> Schedule
+            </label>
+          </div>
+          <div id="nm-schedule-wrap" style="<?php echo $isScheduled ? '' : 'display:none;'; ?>margin-top:8px;">
+            <label class="control-label" for="pub_date_time">Go live at (IST)</label>
+            <input class="form-control" id="pub_date_time" type="datetime-local" name="pub_date_time" value="<?php echo nm_h($pubLocal); ?>">
+            <p class="nm-form-hint" style="margin:6px 0 0;">Hidden until this time, then auto-published.</p>
+          </div>
         </div>
 
         <div class="col-md-4 form-group">
@@ -481,6 +517,22 @@ if (isset($_POST['update'])) {
       }
     }
   });
+  (function () {
+    var wrap = document.getElementById('nm-schedule-wrap');
+    var input = document.getElementById('pub_date_time');
+    var scheduleRadio = document.getElementById('nm-publish-schedule');
+    if (!wrap || !scheduleRadio) return;
+    function sync() {
+      var schedule = scheduleRadio.checked;
+      wrap.style.display = schedule ? 'block' : 'none';
+      if (input) input.required = schedule;
+    }
+    var radios = document.querySelectorAll('input[name="publish_mode"]');
+    for (var i = 0; i < radios.length; i++) {
+      radios[i].addEventListener('change', sync);
+    }
+    sync();
+  })();
 </script>
 <script type="text/javascript">
   $(document).ready(function () {
