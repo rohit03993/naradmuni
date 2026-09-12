@@ -48,18 +48,37 @@ async function saveToken(token: string) {
   localStorage.setItem("nm_fcm_token_saved", token);
 }
 
-function isPwaInstalled(): boolean {
+function isStandaloneDisplay(): boolean {
   if (typeof window === "undefined") return false;
-  try {
-    if (localStorage.getItem(LS_INSTALLED) === "1") return true;
-  } catch {
-    /* ignore */
-  }
   if (window.matchMedia("(display-mode: standalone)").matches) return true;
   if (window.matchMedia("(display-mode: fullscreen)").matches) return true;
   if (window.matchMedia("(display-mode: minimal-ui)").matches) return true;
   const nav = navigator as Navigator & { standalone?: boolean };
   return nav.standalone === true;
+}
+
+function isPwaInstalled(): boolean {
+  if (typeof window === "undefined") return false;
+  if (isStandaloneDisplay()) return true;
+  try {
+    if (localStorage.getItem(LS_INSTALLED) === "1") return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+/** True only when the app is really running as installed — not a sticky localStorage flag */
+function isReallyInstalled(): boolean {
+  return isStandaloneDisplay();
+}
+
+function clearInstalledFlag() {
+  try {
+    localStorage.removeItem(LS_INSTALLED);
+  } catch {
+    /* ignore */
+  }
 }
 
 function markInstalled() {
@@ -90,11 +109,10 @@ async function detectInstalledRelatedApp(): Promise<boolean> {
 }
 
 async function shouldAutoShowInstall(): Promise<boolean> {
-  if (isPwaInstalled()) {
+  if (isReallyInstalled()) {
     markInstalled();
     return false;
   }
-  if (await detectInstalledRelatedApp()) return false;
   try {
     if (sessionStorage.getItem(SS_SESSION_DISMISS) === "1") return false;
     const until = Number(localStorage.getItem(LS_DISMISS_UNTIL) || "0");
@@ -126,12 +144,19 @@ export function requestNaradmuniNotifications() {
   }
 }
 
-export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?: string }) {
+export default function PwaClient({
+  iconUrl = "/icons/nm-192.png",
+  storeUrl = "https://onelink.to/kqnpym",
+}: {
+  iconUrl?: string;
+  storeUrl?: string;
+}) {
   const deferredRef = useRef<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [iosTip, setIosTip] = useState(false);
+  const [manualTip, setManualTip] = useState(false);
   const [notifState, setNotifState] = useState<"idle" | "on" | "denied" | "unsupported">("idle");
+  const [canNativeInstall, setCanNativeInstall] = useState(false);
 
   const enableNotifications = useCallback(async () => {
     if (typeof window === "undefined") return;
@@ -205,11 +230,18 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
   }, [iconUrl]);
 
   const openInstallModal = useCallback(() => {
-    if (isPwaInstalled()) {
+    // Sticky localStorage often blocked the modal with a silent no-op
+    if (isReallyInstalled()) {
       setInstalled(true);
+      setShowModal(true);
+      setManualTip(false);
       return;
     }
-    setIosTip(false);
+    if (localStorage.getItem(LS_INSTALLED) === "1" && !isReallyInstalled()) {
+      clearInstalledFlag();
+    }
+    setInstalled(false);
+    setManualTip(false);
     setShowModal(true);
   }, []);
 
@@ -217,10 +249,13 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
     if (typeof window === "undefined") return;
 
     const syncInstalled = async () => {
-      if (isPwaInstalled() || (await detectInstalledRelatedApp())) {
+      if (isReallyInstalled()) {
         markInstalled();
         setInstalled(true);
+        return;
       }
+      // Related Play app ≠ PWA; don't block install UI
+      void detectInstalledRelatedApp();
     };
     void syncInstalled();
 
@@ -241,12 +276,14 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
     const onBip = (e: Event) => {
       e.preventDefault();
       deferredRef.current = e as BeforeInstallPromptEvent;
+      setCanNativeInstall(true);
     };
     const onInstalled = () => {
       markInstalled();
       setInstalled(true);
       setShowModal(false);
-      setIosTip(false);
+      setManualTip(false);
+      setCanNativeInstall(false);
     };
 
     window.addEventListener("beforeinstallprompt", onBip);
@@ -259,7 +296,7 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
 
     const timer = window.setTimeout(() => {
       void shouldAutoShowInstall().then((ok) => {
-        if (ok && !isPwaInstalled()) setShowModal(true);
+        if (ok && !isReallyInstalled()) setShowModal(true);
       });
     }, SHOW_DELAY_MS);
 
@@ -280,27 +317,32 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
   const onInstall = async () => {
     const ev = deferredRef.current;
     if (ev) {
-      await ev.prompt();
-      const choice = await ev.userChoice;
-      deferredRef.current = null;
-      if (choice.outcome === "accepted") {
-        markInstalled();
-        setInstalled(true);
-        setShowModal(false);
-        void enableNotifications();
-      } else {
-        dismissInstallPrompt();
-        setShowModal(false);
+      try {
+        await ev.prompt();
+        const choice = await ev.userChoice;
+        deferredRef.current = null;
+        setCanNativeInstall(false);
+        if (choice.outcome === "accepted") {
+          markInstalled();
+          setInstalled(true);
+          setShowModal(false);
+          void enableNotifications();
+        } else {
+          dismissInstallPrompt();
+          setManualTip(true);
+        }
+      } catch {
+        setManualTip(true);
       }
       return;
     }
-    setIosTip(true);
+    setManualTip(true);
   };
 
   const dismissModal = () => {
     dismissInstallPrompt();
     setShowModal(false);
-    setIosTip(false);
+    setManualTip(false);
   };
 
   return (
@@ -312,31 +354,60 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
               ✕
             </button>
             <img className="pwa-card-icon" src={iconUrl} alt="" width={64} height={64} />
-            <h3>The Naradmuni ऐप इंस्टॉल करें</h3>
-            <p>होम स्क्रीन पर रखें — तेज़ खुलता है, और नई खबर आने पर सूचना मिलती है।</p>
+            <h3>The Naradmuni ऐप</h3>
+            {installed && isReallyInstalled() ? (
+              <p>ऐप पहले से होम स्क्रीन पर इंस्टॉल है।</p>
+            ) : (
+              <p>होम स्क्रीन पर रखें, या Play Store से ऐप डाउनलोड करें।</p>
+            )}
 
-            {iosTip ? (
+            {manualTip ? (
               <div className="pwa-ios-tip">
                 {isIos ? (
                   <p>
-                    <strong>Safari:</strong> Share (□↑) → <strong>Add to Home Screen</strong>
+                    <strong>iPhone Safari:</strong> Share (□↑) → <strong>Add to Home Screen</strong>
                   </p>
                 ) : (
                   <p>
-                    Chrome मेनू (⋮) → <strong>Install app</strong> / <strong>Add to Home screen</strong>
+                    Chrome में ऊपर दाएँ <strong>⋮</strong> → <strong>Install app</strong> /{" "}
+                    <strong>Add to Home screen</strong>
                     <br />
-                    <small>Note: Incognito में Install अक्सर काम नहीं करता — सामान्य Chrome विंडो खोलें।</small>
+                    <small>Incognito / Guest में Install नहीं चलता — सामान्य Chrome विंडो खोलें।</small>
                   </p>
                 )}
-                <button type="button" className="pwa-install-btn pwa-install-btn--block" onClick={dismissModal}>
-                  समझ गया
+                {storeUrl ? (
+                  <a
+                    className="pwa-install-btn pwa-install-btn--block"
+                    href={storeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ display: "block", textAlign: "center", textDecoration: "none", marginTop: 10 }}
+                  >
+                    Play Store / App डाउनलोड
+                  </a>
+                ) : null}
+                <button type="button" className="pwa-later-btn" onClick={dismissModal} style={{ marginTop: 8 }}>
+                  बंद करें
                 </button>
               </div>
             ) : (
               <div className="pwa-card-actions">
-                <button type="button" className="pwa-install-btn pwa-install-btn--block" onClick={() => void onInstall()}>
-                  अभी इंस्टॉल करें
-                </button>
+                {!isReallyInstalled() ? (
+                  <button type="button" className="pwa-install-btn pwa-install-btn--block" onClick={() => void onInstall()}>
+                    {canNativeInstall ? "होम स्क्रीन पर इंस्टॉल करें" : "इंस्टॉल कैसे करें"}
+                  </button>
+                ) : null}
+                {storeUrl ? (
+                  <a
+                    className="pwa-install-btn pwa-install-btn--block"
+                    href={storeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ display: "block", textAlign: "center", textDecoration: "none", background: "#111" }}
+                  >
+                    App डाउनलोड (Play Store)
+                  </a>
+                ) : null}
                 <button type="button" className="pwa-later-btn" onClick={dismissModal}>
                   बाद में
                 </button>

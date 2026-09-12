@@ -2,23 +2,25 @@
 
 import { useEffect, useState } from "react";
 
-function alreadyInstalled() {
-  try {
-    if (localStorage.getItem("nm_pwa_installed") === "1") return true;
-  } catch {
-    /* ignore */
-  }
+function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
   if (window.matchMedia("(display-mode: standalone)").matches) return true;
-  return false;
+  const nav = navigator as Navigator & { standalone?: boolean };
+  return nav.standalone === true;
 }
 
-/** Visible Install button for sidebar */
-export default function InstallAppButton({ iconUrl = "/icons/nm-192.png" }: { iconUrl?: string }) {
+/** Visible Install banner — always show unless already running as installed app */
+export default function InstallAppButton({
+  iconUrl = "/icons/nm-192.png",
+  storeUrl = "https://onelink.to/kqnpym",
+}: {
+  iconUrl?: string;
+  storeUrl?: string;
+}) {
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
-    setHidden(alreadyInstalled());
+    setHidden(isStandalone());
     const onInstalled = () => setHidden(true);
     window.addEventListener("appinstalled", onInstalled);
     return () => window.removeEventListener("appinstalled", onInstalled);
@@ -40,6 +42,17 @@ export default function InstallAppButton({ iconUrl = "/icons/nm-192.png" }: { ic
       >
         Install
       </button>
+      {storeUrl ? (
+        <a
+          href={storeUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="pwa-install-btn"
+          style={{ textDecoration: "none", background: "#111", marginLeft: 4 }}
+        >
+          Download
+        </a>
+      ) : null}
     </aside>
   );
 }

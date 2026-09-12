@@ -14,6 +14,7 @@ export default function SiteShell({
   dbError,
   logoUrl,
   iconUrl = "/icons/nm-192.png",
+  storeUrl = "https://onelink.to/kqnpym",
 }: {
   children: React.ReactNode;
   nav: Category[];
@@ -23,6 +24,7 @@ export default function SiteShell({
   dbError?: string;
   logoUrl?: string;
   iconUrl?: string;
+  storeUrl?: string;
 }) {
   const logo = logoUrl || logoSrc();
   return (
@@ -47,7 +49,7 @@ export default function SiteShell({
       ) : null}
       <div className="layout">
         <div>
-          <InstallAppButton iconUrl={iconUrl} />
+          <InstallAppButton iconUrl={iconUrl} storeUrl={storeUrl} />
           {children}
         </div>
         <aside className="rail">
@@ -55,7 +57,7 @@ export default function SiteShell({
         </aside>
       </div>
       <Footer pages={pages} logoUrl={logo} />
-      <PwaClient iconUrl={iconUrl} />
+      <PwaClient iconUrl={iconUrl} storeUrl={storeUrl} />
     </>
   );
 }
