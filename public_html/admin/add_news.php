@@ -25,8 +25,10 @@ $productsession=$_SESSION['aemail'];
 $res=mysqli_query($con,"SELECT * FROM admin WHERE aemail='$productsession'");
 
 $userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
-$nmIsAuthor = (nm_admin_role($con) === 'Author');
-$nmLinkedTeamId = nm_admin_team_id($con);
+if (!function_exists('nm_admin_team_id')) {
+	require_once __DIR__ . '/admin_helpers.php';
+}
+$nmLinkedTeamId = function_exists('nm_admin_team_id') ? (int) nm_admin_team_id($con) : 0;
 
 
 if(isset($_POST['add']))
@@ -61,7 +63,7 @@ if(isset($_POST['add']))
                             $img_abt = $post('img_abt');
                             $v_link = $post('videolink');
                             $team_id = $post('team_id', '0');
-                            if ($nmIsAuthor && $nmLinkedTeamId > 0) {
+                            if (($team_id === '' || $team_id === '0') && $nmLinkedTeamId > 0) {
                                 $team_id = (string) $nmLinkedTeamId;
                             }
                             $hashtags = $post('hashtags');
@@ -242,15 +244,7 @@ if(isset($_POST['add']))
                 <h2 class="nm-form-section__title">Author (byline)</h2>
                 <div class="nm-form-grid">
                   <div class="nm-form-field nm-form-field--full">
-                    <label class="control-label" for="team_id">Shows as “By … / The Naradmuni”</label>
-                    <?php if ($nmIsAuthor && $nmLinkedTeamId > 0) {
-                      $tn = mysqli_query($con, "SELECT `name` FROM `team` WHERE `t_id`='" . (int) $nmLinkedTeamId . "' LIMIT 1");
-                      $tnRow = $tn ? mysqli_fetch_assoc($tn) : null;
-                    ?>
-                      <input type="hidden" name="team_id" value="<?php echo (int) $nmLinkedTeamId; ?>">
-                      <p class="form-control-plaintext" style="margin:0;font-weight:600;"><?php echo nm_h($tnRow['name'] ?? ('Team #' . $nmLinkedTeamId)); ?></p>
-                      <p class="nm-form-hint">Your linked profile. Edit photo/name under <a href="my_profile.php">My profile</a>.</p>
-                    <?php } else { ?>
+                    <label class="control-label" for="team_id">Shows as By Name / The Naradmuni</label>
                     <select class="custom-select" id="team_id" name="team_id" required>
                       <option value="0">select author</option>
                       <?php
@@ -264,8 +258,7 @@ if(isset($_POST['add']))
                       }
                       ?>
                     </select>
-                    <p class="nm-form-hint">Pick the Team profile for the article byline.</p>
-                    <?php } ?>
+                    <p class="nm-form-hint">Defaults to your linked profile when set. Change anytime.</p>
                   </div>
                 </div>
               </section>

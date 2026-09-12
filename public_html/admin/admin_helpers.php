@@ -214,10 +214,18 @@ if (!function_exists('nm_admin_role')) {
 	}
 }
 
+/** All logged-in CMS users have full access (role is for label/byline only). */
+if (!function_exists('nm_require_admin')) {
+	function nm_require_admin($con)
+	{
+		return;
+	}
+}
+
 if (!function_exists('nm_is_admin')) {
 	function nm_is_admin($con, $email = null)
 	{
-		return nm_admin_role($con, $email) === 'Admin';
+		return true;
 	}
 }
 
@@ -226,18 +234,6 @@ if (!function_exists('nm_admin_team_id')) {
 	{
 		$row = nm_admin_row($con, $email);
 		return $row && isset($row['team_id']) ? (int) $row['team_id'] : 0;
-	}
-}
-
-/** Block Authors from Admin-only pages. */
-if (!function_exists('nm_require_admin')) {
-	function nm_require_admin($con)
-	{
-		if (nm_is_admin($con)) {
-			return;
-		}
-		header('Location: dashboard.php?denied=1');
-		exit;
 	}
 }
 
