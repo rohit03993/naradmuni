@@ -261,7 +261,6 @@ if (isset($_POST['update'])) {
   <link rel="stylesheet" href="../include/css/bootstrap.min.css">
   <link rel="stylesheet" href="css/all.min.css">
   <link rel="stylesheet" href="../include/css/style.css">
-  <link rel="stylesheet" href="../include/css/jquery-ui.css">
   <script src="../include/js/jquery.min.js"></script>
 </head>
 <body>
@@ -544,18 +543,7 @@ if (isset($_POST['update'])) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 <script src="../include/js/bootstrap.min.js"></script>
 <script src="js/all.js"></script>
-<script src="../include/js/jquery-ui.js"></script>
-<script src="https://unpkg.com/gijgo@1.9.13/js/gijgo.min.js" type="text/javascript"></script>
-<link href="https://unpkg.com/gijgo@1.9.13/css/gijgo.min.css" rel="stylesheet" type="text/css" />
 <script>
-  if ($('#datetimepicker').length) {
-    $('#datetimepicker').datetimepicker({
-      uiLibrary: 'bootstrap4',
-      modal: true,
-      footer: true,
-      format: 'yyyy-mm-dd HH:MM'
-    });
-  }
   $("#newstype").on('change', function () {
     $.ajax({
       type: "POST",

@@ -203,7 +203,6 @@ export default function Header({
               </span>
             </button>
 
-            <p className="mnav-label">श्रेणियाँ</p>
             <nav className="mnav-links">
               <a href="/" className={path === "/" ? "active" : ""} onClick={closeMenu}>
                 <span>होम</span>
