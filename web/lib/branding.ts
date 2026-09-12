@@ -4,8 +4,11 @@ import { getSiteSettings } from "@/lib/settings";
 export type Branding = {
   logoUrl: string;
   faviconUrl: string;
-  /** Best icon for PWA / install UI (custom favicon or default nm-192) */
+  /** UI / tab icon (may be JPEG from admin) */
   iconUrl: string;
+  /** PNG icons Chrome needs for reliable PWA install */
+  pwaIcon192: string;
+  pwaIcon512: string;
   logoFile: string;
   faviconFile: string;
 };
@@ -22,6 +25,11 @@ export function iconMimeType(url: string): string {
   return "image/png";
 }
 
+function isPwaSafeIcon(file: string): boolean {
+  const f = file.toLowerCase();
+  return f.endsWith(".png") || f.endsWith(".webp") || f.endsWith(".ico");
+}
+
 export async function getBranding(): Promise<Branding> {
   if (cache && Date.now() - cache.at < TTL) return cache.data;
 
@@ -30,12 +38,16 @@ export async function getBranding(): Promise<Branding> {
   const faviconFile = (settings.brand_favicon || "").trim();
   const faviconUrl = faviconSrc(faviconFile || null);
   const iconUrl = faviconFile ? faviconUrl : "/icons/nm-192.png";
+  // Chrome installability is unreliable with JPEG-only manifest icons
+  const pwaCustom = faviconFile && isPwaSafeIcon(faviconFile) ? faviconUrl : null;
   const data: Branding = {
     logoFile,
     faviconFile,
     logoUrl: logoSrc(logoFile || null),
     faviconUrl,
     iconUrl,
+    pwaIcon192: pwaCustom || "/icons/nm-192.png",
+    pwaIcon512: pwaCustom || "/icons/nm-512.png",
   };
   cache = { at: Date.now(), data };
   return data;

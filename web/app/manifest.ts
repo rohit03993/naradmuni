@@ -3,8 +3,8 @@ import { getBranding, iconMimeType } from "@/lib/branding";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const branding = await getBranding();
-  const icon = branding.iconUrl;
-  const type = iconMimeType(icon);
+  const icon192 = branding.pwaIcon192;
+  const icon512 = branding.pwaIcon512;
 
   return {
     name: "The Naradmuni",
@@ -20,9 +20,9 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     dir: "ltr",
     categories: ["news", "magazines"],
     icons: [
-      { src: icon, sizes: "192x192", type, purpose: "any" },
-      { src: icon, sizes: "512x512", type, purpose: "any" },
-      { src: icon, sizes: "512x512", type, purpose: "maskable" },
+      { src: icon192, sizes: "192x192", type: iconMimeType(icon192), purpose: "any" },
+      { src: icon512, sizes: "512x512", type: iconMimeType(icon512), purpose: "any" },
+      { src: icon512, sizes: "512x512", type: iconMimeType(icon512), purpose: "maskable" },
     ],
   };
 }

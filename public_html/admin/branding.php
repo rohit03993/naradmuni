@@ -172,7 +172,7 @@ $favPreview = $brandFavicon !== "" ? ("../images/logo/" . rawurlencode($brandFav
         <div class="form-group">
           <label for="brand_favicon">Favicon</label>
           <input type="file" class="form-control" id="brand_favicon" name="brand_favicon" accept=".png,.ico,.jpg,.jpeg,.webp,image/*">
-          <small class="form-text text-muted">PNG preferred for PWA (square 512×512). JPEG/ICO also work for the tab icon. Max 2 MB.</small>
+          <small class="form-text text-muted">Use a <strong>PNG</strong> square (512×512) for PWA Install to work reliably. JPEG is OK for the browser tab only. Max 2 MB.</small>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;">
           <button type="submit" name="save_branding" value="1" class="btn btn-danger">Save branding</button>
