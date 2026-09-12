@@ -994,14 +994,16 @@ article .author-box {
 }
 .shorts-card {
   flex: 0 0 auto;
-  width: 140px;
+  /* Desktop: ~4 cards visible in the rail */
+  width: calc((100% - 42px) / 4);
+  max-width: 200px;
   scroll-snap-align: start;
   display: block;
 }
 .shorts-thumb {
   position: relative;
   display: block;
-  width: 140px;
+  width: 100%;
   aspect-ratio: 9 / 16;
   border: 0;
   padding: 0;
@@ -1052,7 +1054,7 @@ article .author-box {
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin: 10px 2px 0;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.35;
   font-weight: 600;
   color: var(--text);
@@ -1256,6 +1258,18 @@ article .author-box {
   font-weight: 700;
   color: var(--text);
   word-break: break-word;
+}
+.topic-feature--solo {
+  display: block;
+  max-width: 720px;
+}
+.topic-feature--solo img,
+.topic-feature--solo .topic-feature-ph {
+  max-height: 420px;
+}
+.topic-feature--solo h3 {
+  font-size: 20px;
+  line-height: 1.45;
 }
 
 /* Category listing — image + title only (no date/time) */
@@ -1545,10 +1559,17 @@ article .author-box {
     color: var(--text);
   }
 
-  .shorts-card { width: 128px; }
-  .shorts-thumb { width: 128px; border-radius: 14px; }
+  .shorts-card {
+    /* Mobile: 2 shorts visible */
+    width: calc((100% - 14px) / 2);
+    max-width: none;
+  }
+  .shorts-thumb {
+    width: 100%;
+    border-radius: 14px;
+  }
   .shorts-play { width: 44px; height: 44px; }
-  .shorts-title { font-size: 11px; }
+  .shorts-title { font-size: 13px; }
   .shorts-modal {
     padding: max(8px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
   }

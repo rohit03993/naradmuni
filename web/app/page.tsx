@@ -84,7 +84,7 @@ export default async function HomePage() {
   const pool = recent.filter((n) => n.newsid != null);
 
   const naradFromDb = naradKahin?.items.length ?? 0;
-  const naradBlock = naradKahin ? dedupeSection(naradKahin, seen, 8) : null;
+  const naradBlock = naradKahin ? dedupeSection(naradKahin, seen, 1) : null;
 
   // After नारद कहिन: latest from every category, no repeats with hero / नारद
   const gridNews = takeUnique(pool, seen, HOME_MIXED_COUNT);
@@ -136,12 +136,12 @@ export default async function HomePage() {
       <YoutubeShortsRail items={shorts.items} />
 
       {naradBlock ? (
-        <TopicBlock section={naradBlock} showEmptyHint={naradFromDb === 0} />
+        <TopicBlock section={naradBlock} showEmptyHint={naradFromDb === 0} singleOnly />
       ) : null}
 
       <section className="topic-block">
         <div className="section-head">
-          <h2>ताज़ा समाचार</h2>
+          <h2>Latest news</h2>
           <a className="more" href="/latest">
             और देखें →
           </a>

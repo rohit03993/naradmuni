@@ -511,6 +511,6 @@ export async function getNaradKahinSection(): Promise<TopicSection | null> {
     cat = rows[0] || null;
   }
   if (!cat) return null;
-  const items = await getNewsByCategory(cat.id, 1, 16);
+  const items = await getNewsByCategory(cat.id, 1, 1);
   return { cat, items, districts: [] };
 }
