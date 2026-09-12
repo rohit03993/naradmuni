@@ -317,6 +317,23 @@ export async function getTaza(limit = 8): Promise<NewsCard[]> {
   return [...preferred, ...filler];
 }
 
+/**
+ * Newest published stories from every category (no Breaking preference).
+ * Used for homepage “ताज़ा समाचार” after नारद कहिन.
+ */
+export async function getRecentPublished(limit = 24): Promise<NewsCard[]> {
+  const n = Math.min(Math.max(Number(limit) || 24, 1), 60);
+  return query<NewsCard>(
+    `SELECT ${CARD_COLS}
+     FROM news n
+     LEFT JOIN categories c ON c.id = n.category
+     WHERE n.status = ? AND ${NOT_VIDEO}
+     ORDER BY n.newsid DESC
+     LIMIT ${n}`,
+    [PUB]
+  );
+}
+
 export async function getLead(): Promise<NewsCard | null> {
   const slider = await query<NewsCard>(
     `SELECT ${CARD_COLS}

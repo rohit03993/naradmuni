@@ -5,17 +5,20 @@ import YoutubeShortsRail from "@/components/YoutubeShortsRail";
 import { newsImage } from "@/lib/images";
 import {
   getBreaking,
-  getLatest,
   getLead,
   getNaradKahinSection,
+  getRecentPublished,
   getTopicSections,
 } from "@/lib/queries";
 import type { NewsCard } from "@/lib/types";
 import { getHomepageShorts } from "@/lib/youtube";
 
+/** How many mixed (all-category) stories under ताज़ा समाचार */
+const HOME_MIXED_COUNT = 24;
+
 /**
  * Homepage rule: each newsid appears at most once on this page.
- * Order of claim: Breaking hero (newest lead + next 5) → नारद कहिन → ताज़ा → other topics.
+ * Order: Breaking hero → नारद कहिन → ताज़ा (all categories) → other topic blocks.
  * Does not affect /category, /news, or admin.
  */
 function takeUnique(pool: NewsCard[], seen: Set<number>, limit: number): NewsCard[] {
@@ -37,17 +40,17 @@ function dedupeSection<T extends { items: NewsCard[] }>(section: T, seen: Set<nu
 export default async function HomePage() {
   let sliderLead = null;
   let breaking: Awaited<ReturnType<typeof getBreaking>> = [];
-  let latest: Awaited<ReturnType<typeof getLatest>> = [];
+  let recent: Awaited<ReturnType<typeof getRecentPublished>> = [];
   let topics: Awaited<ReturnType<typeof getTopicSections>> = [];
   let naradKahin: Awaited<ReturnType<typeof getNaradKahinSection>> = null;
   let shorts: Awaited<ReturnType<typeof getHomepageShorts>> = { items: [], isDemo: true };
   let err = "";
 
   try {
-    [sliderLead, breaking, latest, topics, naradKahin, shorts] = await Promise.all([
+    [sliderLead, breaking, recent, topics, naradKahin, shorts] = await Promise.all([
       getLead(),
       getBreaking(6),
-      getLatest(40),
+      getRecentPublished(60),
       getTopicSections(8),
       getNaradKahinSection(),
       getHomepageShorts(),
@@ -58,7 +61,7 @@ export default async function HomePage() {
 
   const seen = new Set<number>();
 
-  // Top hero = Breaking only (newest = big lead, next up to 5 = right list). No old fillers.
+  // Top hero = Breaking only (newest = big lead, next up to 5 = right list).
   let lead: NewsCard | null = null;
   let secondaries: NewsCard[] = [];
   if (breaking.length > 0) {
@@ -72,18 +75,19 @@ export default async function HomePage() {
     lead = sliderLead;
     if (lead?.newsid) seen.add(Number(lead.newsid));
     secondaries = takeUnique(
-      latest.filter((n) => n.newsid != null),
+      recent.filter((n) => n.newsid != null),
       seen,
       5
     );
   }
 
-  const pool = latest.filter((n) => n.newsid != null);
+  const pool = recent.filter((n) => n.newsid != null);
 
   const naradFromDb = naradKahin?.items.length ?? 0;
   const naradBlock = naradKahin ? dedupeSection(naradKahin, seen, 8) : null;
 
-  const gridNews = takeUnique(pool, seen, 8);
+  // After नारद कहिन: latest from every category, no repeats with hero / नारद
+  const gridNews = takeUnique(pool, seen, HOME_MIXED_COUNT);
 
   const otherTopicsRaw = naradKahin
     ? topics.filter((t) => t.cat.id !== naradKahin.cat.id)
