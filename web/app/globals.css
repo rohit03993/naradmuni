@@ -61,6 +61,17 @@ strong, b { font-weight: 700; }
   box-shadow: 0 1px 0 var(--border);
 }
 
+/*
+  AdSense Auto ads inject a body-level host + iframe at z-index 2147483647
+  (often 100vw×100vh, even when the creative is hidden). That layer eats
+  taps on the hamburger / header. Real in-article units are unaffected.
+*/
+ins.adsbygoogle[style*="2147483647"],
+div[id^="aswift_"][id$="_host"]:has(> iframe[style*="100vh"]),
+div[id^="aswift_"][id$="_host"]:has(> iframe[style*="100vw"]) {
+  pointer-events: none !important;
+}
+
 /* Header */
 .header {
   background: #fff;

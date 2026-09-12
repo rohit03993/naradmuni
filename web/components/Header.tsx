@@ -63,7 +63,11 @@ export default function Header({
                 className="hamburger"
                 aria-label="मेनू खोलें"
                 aria-expanded={menuOpen}
-                onClick={() => setMenuOpen(true)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMenuOpen(true);
+                }}
               >
                 <span />
                 <span />

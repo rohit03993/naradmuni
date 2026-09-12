@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
 import GoogleAdSense from "@/components/GoogleAdSense";
+import AdsClickGuard from "@/components/AdsClickGuard";
 import SiteShell from "@/components/SiteShell";
 import { getBranding, iconMimeType } from "@/lib/branding";
 import { getSiteChrome } from "@/lib/site";
@@ -61,6 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="hi">
       <body className={noto.variable}>
         <GoogleAdSense />
+        <AdsClickGuard />
         <SiteShell
           nav={chrome.nav}
           cities={chrome.cities}
