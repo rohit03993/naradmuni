@@ -120,7 +120,7 @@ if (!function_exists('nm_resolve_publish_schedule')) {
 
 /**
  * Ensure admin login accounts support role + linked public Team profile.
- * Adds columns safely if missing (no manual SQL required on deploy).
+ * Adds columns safely if missing. Never fatals if ALTER is denied.
  */
 if (!function_exists('nm_ensure_admin_accounts')) {
 	function nm_ensure_admin_accounts($con)
@@ -130,27 +130,50 @@ if (!function_exists('nm_ensure_admin_accounts')) {
 			return;
 		}
 		$done = true;
-		$cols = array();
-		$q = mysqli_query($con, "SHOW COLUMNS FROM `admin`");
-		if ($q) {
-			while ($row = mysqli_fetch_assoc($q)) {
-				$cols[strtolower((string) $row['Field'])] = true;
+
+		$cols = nm_admin_column_map($con);
+		try {
+			if (empty($cols['role'])) {
+				@mysqli_query(
+					$con,
+					"ALTER TABLE `admin` ADD COLUMN `role` VARCHAR(20) NOT NULL DEFAULT 'Admin'"
+				);
 			}
+			$cols = nm_admin_column_map($con);
+			if (empty($cols['team_id'])) {
+				@mysqli_query(
+					$con,
+					"ALTER TABLE `admin` ADD COLUMN `team_id` INT(11) NOT NULL DEFAULT 0"
+				);
+			}
+			$cols = nm_admin_column_map($con);
+			if (!empty($cols['role'])) {
+				@mysqli_query($con, "UPDATE `admin` SET `role`='Admin' WHERE `role`='' OR `role` IS NULL");
+			}
+		} catch (Throwable $e) {
+			// ALTER may be denied on some hosts — keep CMS up; treat as Admin-only.
 		}
-		if (empty($cols['role'])) {
-			mysqli_query(
-				$con,
-				"ALTER TABLE `admin` ADD COLUMN `role` VARCHAR(20) NOT NULL DEFAULT 'Admin' AFTER `apwd`"
-			);
+	}
+}
+
+if (!function_exists('nm_admin_column_map')) {
+	function nm_admin_column_map($con)
+	{
+		$cols = array();
+		if (!($con instanceof mysqli)) {
+			return $cols;
 		}
-		if (empty($cols['team_id'])) {
-			mysqli_query(
-				$con,
-				"ALTER TABLE `admin` ADD COLUMN `team_id` INT(11) NOT NULL DEFAULT 0 AFTER `role`"
-			);
+		try {
+			$q = @mysqli_query($con, "SHOW COLUMNS FROM `admin`");
+			if ($q) {
+				while ($row = mysqli_fetch_assoc($q)) {
+					$cols[strtolower((string) $row['Field'])] = true;
+				}
+			}
+		} catch (Throwable $e) {
+			return $cols;
 		}
-		// Existing single account stays Admin
-		mysqli_query($con, "UPDATE `admin` SET `role`='Admin' WHERE `role`='' OR `role` IS NULL");
+		return $cols;
 	}
 }
 
@@ -166,7 +189,11 @@ if (!function_exists('nm_admin_row')) {
 			return null;
 		}
 		$esc = mysqli_real_escape_string($con, $email);
-		$q = mysqli_query($con, "SELECT * FROM `admin` WHERE `aemail`='$esc' LIMIT 1");
+		try {
+			$q = @mysqli_query($con, "SELECT * FROM `admin` WHERE `aemail`='$esc' LIMIT 1");
+		} catch (Throwable $e) {
+			return null;
+		}
 		if (!$q) {
 			return null;
 		}

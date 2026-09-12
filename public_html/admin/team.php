@@ -2,12 +2,17 @@
 
     include"config.php";
 
-nm_require_admin($con);
+if (!function_exists('nm_require_admin')) {
+	require_once __DIR__ . '/admin_helpers.php';
+}
 
 	if (!isset($_SESSION['aemail'])) {
 		$_SESSION['msg'] = "You must log in first";
 		header('location: ../manage.php');
+		exit;
 	}
+
+nm_require_admin($con);
 
 	if (isset($_GET['logout'])) {
 		session_destroy();

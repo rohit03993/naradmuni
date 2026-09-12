@@ -5,6 +5,10 @@
  */
 include "config.php";
 
+if (!function_exists('nm_require_admin')) {
+	require_once __DIR__ . '/admin_helpers.php';
+}
+
 if (!isset($_SESSION["aemail"])) {
 	$_SESSION["msg"] = "You must log in first";
 	header("location: ../manage.php");
@@ -147,7 +151,12 @@ if ($editId > 0) {
 }
 
 $accounts = array();
-$aq = mysqli_query($con, "SELECT a.*, t.name AS team_name FROM `admin` a LEFT JOIN `team` t ON t.t_id = a.team_id ORDER BY a.id ASC");
+$cols = nm_admin_column_map($con);
+if (!empty($cols['team_id'])) {
+	$aq = @mysqli_query($con, "SELECT a.*, t.name AS team_name FROM `admin` a LEFT JOIN `team` t ON t.t_id = a.team_id ORDER BY a.id ASC");
+} else {
+	$aq = @mysqli_query($con, "SELECT a.*, '' AS team_name FROM `admin` a ORDER BY a.id ASC");
+}
 if ($aq) {
 	while ($r = mysqli_fetch_assoc($aq)) {
 		$accounts[] = $r;
