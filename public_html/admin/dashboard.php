@@ -73,6 +73,9 @@ function nm_dash_count(mysqli $con, string $sql): int {
     <div class="nm-dash-wrap">
         <h2>Dashboard</h2>
         <p class="nm-dash-sub">Overview of your CMS · live MySQL counts</p>
+        <?php if (!empty($_GET['denied'])) { ?>
+          <div class="alert alert-warning">That section is for Admins only. Authors can use News and My profile.</div>
+        <?php } ?>
 
         <div class="nm-dash-grid">
             <div class="nm-stat nm-stat--focus" style="--nm-stat-accent:#1565c0">

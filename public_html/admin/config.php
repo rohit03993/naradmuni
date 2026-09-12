@@ -36,4 +36,7 @@ if(isset($_SESSION['u_id'])){
  date_default_timezone_set("Asia/Kolkata");
  header( 'Content-Type: text/html; charset=utf-8' );
  require_once __DIR__ . '/admin_helpers.php';
+ if (isset($con) && $con instanceof mysqli) {
+	nm_ensure_admin_accounts($con);
+ }
 ?>

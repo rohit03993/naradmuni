@@ -11,6 +11,17 @@ $nmAvatar = "";
 if (!empty($userRow["image"])) {
 	$nmAvatar = "profile/" . $userRow["image"];
 }
+if (!isset($con) || !($con instanceof mysqli)) {
+	// sidebar included without $con — treat as Admin menu
+	$nmRole = "Admin";
+} else {
+	nm_ensure_admin_accounts($con);
+	if (empty($userRow) || !is_array($userRow)) {
+		$userRow = nm_admin_row($con);
+	}
+	$nmRole = nm_admin_role($con);
+}
+$nmIsAdmin = ($nmRole === "Admin");
 if (!function_exists("nm_nav_active")) {
 	function nm_nav_active($page, $files) {
 		$files = (array) $files;
@@ -27,7 +38,7 @@ if (!function_exists("nm_nav_active")) {
     <?php } ?>
     <a class="sidebar-brand" href="dashboard.php">
       Naradmuni
-      <span>Admin CMS</span>
+      <span><?php echo $nmIsAdmin ? "Admin CMS" : "Author CMS"; ?></span>
     </a>
   </div>
 
@@ -40,16 +51,19 @@ if (!function_exists("nm_nav_active")) {
     </li>
 
     <p class="nav-label">Content</p>
+    <?php if ($nmIsAdmin) { ?>
     <li>
       <a class="<?php echo nm_nav_active($nmPage, array("categories.php", "edit_category.php")); ?>" href="categories.php">
         <i class="fas fa-folder-open"></i> Categories
       </a>
     </li>
+    <?php } ?>
     <li>
       <a class="<?php echo nm_nav_active($nmPage, array("news.php", "add_news.php", "edit_news.php")); ?>" href="news.php">
         <i class="fas fa-newspaper"></i> News
       </a>
     </li>
+    <?php if ($nmIsAdmin) { ?>
     <li>
       <a class="<?php echo nm_nav_active($nmPage, "cleanup_news.php"); ?>" href="cleanup_news.php">
         <i class="fas fa-broom"></i> Cleanup old news
@@ -70,7 +84,16 @@ if (!function_exists("nm_nav_active")) {
         <i class="fas fa-video"></i> Upload video
       </a>
     </li>
+    <?php } ?>
 
+    <p class="nav-label">You</p>
+    <li>
+      <a class="<?php echo nm_nav_active($nmPage, "my_profile.php"); ?>" href="my_profile.php">
+        <i class="fas fa-user"></i> My profile
+      </a>
+    </li>
+
+    <?php if ($nmIsAdmin) { ?>
     <p class="nav-label">Engagement</p>
     <li>
       <a class="<?php echo nm_nav_active($nmPage, "notification.php"); ?>" href="notification.php">
@@ -119,5 +142,11 @@ if (!function_exists("nm_nav_active")) {
         <i class="fas fa-users"></i> Team
       </a>
     </li>
+    <li>
+      <a class="<?php echo nm_nav_active($nmPage, "admin_users.php"); ?>" href="admin_users.php">
+        <i class="fas fa-user-shield"></i> Admin users
+      </a>
+    </li>
+    <?php } ?>
   </ul>
 </nav>

@@ -118,6 +118,102 @@ if (!function_exists('nm_resolve_publish_schedule')) {
 	}
 }
 
+/**
+ * Ensure admin login accounts support role + linked public Team profile.
+ * Adds columns safely if missing (no manual SQL required on deploy).
+ */
+if (!function_exists('nm_ensure_admin_accounts')) {
+	function nm_ensure_admin_accounts($con)
+	{
+		static $done = false;
+		if ($done || !($con instanceof mysqli)) {
+			return;
+		}
+		$done = true;
+		$cols = array();
+		$q = mysqli_query($con, "SHOW COLUMNS FROM `admin`");
+		if ($q) {
+			while ($row = mysqli_fetch_assoc($q)) {
+				$cols[strtolower((string) $row['Field'])] = true;
+			}
+		}
+		if (empty($cols['role'])) {
+			mysqli_query(
+				$con,
+				"ALTER TABLE `admin` ADD COLUMN `role` VARCHAR(20) NOT NULL DEFAULT 'Admin' AFTER `apwd`"
+			);
+		}
+		if (empty($cols['team_id'])) {
+			mysqli_query(
+				$con,
+				"ALTER TABLE `admin` ADD COLUMN `team_id` INT(11) NOT NULL DEFAULT 0 AFTER `role`"
+			);
+		}
+		// Existing single account stays Admin
+		mysqli_query($con, "UPDATE `admin` SET `role`='Admin' WHERE `role`='' OR `role` IS NULL");
+	}
+}
+
+if (!function_exists('nm_admin_row')) {
+	function nm_admin_row($con, $email = null)
+	{
+		nm_ensure_admin_accounts($con);
+		if ($email === null) {
+			$email = isset($_SESSION['aemail']) ? (string) $_SESSION['aemail'] : '';
+		}
+		$email = trim($email);
+		if ($email === '') {
+			return null;
+		}
+		$esc = mysqli_real_escape_string($con, $email);
+		$q = mysqli_query($con, "SELECT * FROM `admin` WHERE `aemail`='$esc' LIMIT 1");
+		if (!$q) {
+			return null;
+		}
+		$row = mysqli_fetch_assoc($q);
+		return $row ? $row : null;
+	}
+}
+
+if (!function_exists('nm_admin_role')) {
+	function nm_admin_role($con, $email = null)
+	{
+		$row = nm_admin_row($con, $email);
+		if (!$row) {
+			return 'Admin';
+		}
+		$role = isset($row['role']) ? trim((string) $row['role']) : 'Admin';
+		return ($role === 'Author') ? 'Author' : 'Admin';
+	}
+}
+
+if (!function_exists('nm_is_admin')) {
+	function nm_is_admin($con, $email = null)
+	{
+		return nm_admin_role($con, $email) === 'Admin';
+	}
+}
+
+if (!function_exists('nm_admin_team_id')) {
+	function nm_admin_team_id($con, $email = null)
+	{
+		$row = nm_admin_row($con, $email);
+		return $row && isset($row['team_id']) ? (int) $row['team_id'] : 0;
+	}
+}
+
+/** Block Authors from Admin-only pages. */
+if (!function_exists('nm_require_admin')) {
+	function nm_require_admin($con)
+	{
+		if (nm_is_admin($con)) {
+			return;
+		}
+		header('Location: dashboard.php?denied=1');
+		exit;
+	}
+}
+
 /** Relative CKEditor filebrowser config (works when $urlroot is wrong on production). */
 if (!function_exists('nm_ckeditor_js')) {
 	function nm_ckeditor_js($fieldId = 'description')

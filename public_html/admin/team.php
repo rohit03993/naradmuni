@@ -1,7 +1,9 @@
 <?php
 
     include"config.php";
- 
+
+nm_require_admin($con);
+
 	if (!isset($_SESSION['aemail'])) {
 		$_SESSION['msg'] = "You must log in first";
 		header('location: ../manage.php');

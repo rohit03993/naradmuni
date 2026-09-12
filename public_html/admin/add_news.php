@@ -25,6 +25,8 @@ $productsession=$_SESSION['aemail'];
 $res=mysqli_query($con,"SELECT * FROM admin WHERE aemail='$productsession'");
 
 $userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
+$nmIsAuthor = (nm_admin_role($con) === 'Author');
+$nmLinkedTeamId = nm_admin_team_id($con);
 
 
 if(isset($_POST['add']))
@@ -59,6 +61,9 @@ if(isset($_POST['add']))
                             $img_abt = $post('img_abt');
                             $v_link = $post('videolink');
                             $team_id = $post('team_id', '0');
+                            if ($nmIsAuthor && $nmLinkedTeamId > 0) {
+                                $team_id = (string) $nmLinkedTeamId;
+                            }
                             $hashtags = $post('hashtags');
                             $pub_date_time = isset($_POST['pub_date_time']) ? trim((string) $_POST['pub_date_time']) : '';
                             $sched = nm_resolve_publish_schedule($_POST, $pub_date_time);
@@ -229,6 +234,38 @@ if(isset($_POST['add']))
                   <div class="nm-form-field nm-form-field--full">
                     <label class="control-label">Image (850×565)</label>
                     <input class="form-control" type="file" name="image" accept="image/*" required>
+                  </div>
+                </div>
+              </section>
+
+              <section class="nm-form-section">
+                <h2 class="nm-form-section__title">Author (byline)</h2>
+                <div class="nm-form-grid">
+                  <div class="nm-form-field nm-form-field--full">
+                    <label class="control-label" for="team_id">Shows as “By … / The Naradmuni”</label>
+                    <?php if ($nmIsAuthor && $nmLinkedTeamId > 0) {
+                      $tn = mysqli_query($con, "SELECT `name` FROM `team` WHERE `t_id`='" . (int) $nmLinkedTeamId . "' LIMIT 1");
+                      $tnRow = $tn ? mysqli_fetch_assoc($tn) : null;
+                    ?>
+                      <input type="hidden" name="team_id" value="<?php echo (int) $nmLinkedTeamId; ?>">
+                      <p class="form-control-plaintext" style="margin:0;font-weight:600;"><?php echo nm_h($tnRow['name'] ?? ('Team #' . $nmLinkedTeamId)); ?></p>
+                      <p class="nm-form-hint">Your linked profile. Edit photo/name under <a href="my_profile.php">My profile</a>.</p>
+                    <?php } else { ?>
+                    <select class="custom-select" id="team_id" name="team_id" required>
+                      <option value="0">select author</option>
+                      <?php
+                      $tq = $con->query("SELECT `t_id`,`name` FROM `team` ORDER BY `name` ASC");
+                      $selDefault = $nmLinkedTeamId > 0 ? $nmLinkedTeamId : 0;
+                      if ($tq) {
+                        while ($tr = $tq->fetch_assoc()) {
+                          $sel = ((int) $tr['t_id'] === (int) $selDefault) ? ' selected' : '';
+                          echo '<option value="' . (int) $tr['t_id'] . '"' . $sel . '>' . htmlspecialchars((string) $tr['name']) . '</option>';
+                        }
+                      }
+                      ?>
+                    </select>
+                    <p class="nm-form-hint">Pick the Team profile for the article byline.</p>
+                    <?php } ?>
                   </div>
                 </div>
               </section>

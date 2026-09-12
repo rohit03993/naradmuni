@@ -19,13 +19,18 @@ if (isset($_GET['logout'])) {
 $productsession = $_SESSION['aemail'];
 $res = mysqli_query($con, "SELECT * FROM admin WHERE aemail='" . mysqli_real_escape_string($con, $productsession) . "'");
 $userRow = $res ? mysqli_fetch_array($res, MYSQLI_ASSOC) : null;
+$nmIsAuthor = (nm_admin_role($con) === 'Author');
+$nmLinkedTeamId = nm_admin_team_id($con);
 
 /** Escape for HTML attributes / textarea (keeps </textarea> in body from breaking the form). */
+if (!function_exists('nm_h')) {
 function nm_h($v)
 {
     return htmlspecialchars((string) ($v ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
+}
 
+if (!function_exists('nm_cat_label')) {
 function nm_cat_label(array $row)
 {
     if (!empty($row['hindi_name'])) {
@@ -35,6 +40,7 @@ function nm_cat_label(array $row)
         return (string) $row['maincat'];
     }
     return 'Cat #' . (isset($row['id']) ? $row['id'] : '');
+}
 }
 
 // Accept eid (correct) or id (common mistake from bookmarks)
@@ -110,6 +116,9 @@ if (isset($_POST['update'])) {
     $latest_priority = $post('latest_priority', '0');
     $category = $post('category');
     $team_id = $post('team_id', '0');
+    if ($nmIsAuthor && $nmLinkedTeamId > 0) {
+        $team_id = (string) $nmLinkedTeamId;
+    }
     $hashtags = $post('hashtags');
     $short_description = $post('short_description');
     $img_source = $post('img_source');
@@ -429,6 +438,18 @@ if (isset($_POST['update'])) {
 
         <div class="col-md-4 form-group">
           <label class="control-label">Select Author:</label>
+          <?php if ($nmIsAuthor && $nmLinkedTeamId > 0) {
+            $lockName = isset($au['name']) ? $au['name'] : '';
+            if ($lockName === '') {
+              $lq = mysqli_query($con, "SELECT `name` FROM `team` WHERE `t_id`='" . (int) $nmLinkedTeamId . "' LIMIT 1");
+              if ($lq && ($lr = mysqli_fetch_assoc($lq))) {
+                $lockName = $lr['name'];
+              }
+            }
+          ?>
+            <input type="hidden" name="team_id" value="<?php echo (int) $nmLinkedTeamId; ?>">
+            <p style="margin:8px 0 0;font-weight:600;"><?php echo nm_h($lockName); ?></p>
+          <?php } else { ?>
           <select class="custom-select" id="team_id" name="team_id">
             <option value="<?php echo nm_h($teamId); ?>"><?php echo nm_h(isset($au['name']) ? $au['name'] : ''); ?></option>
             <?php
@@ -440,6 +461,7 @@ if (isset($_POST['update'])) {
             }
             ?>
           </select>
+          <?php } ?>
         </div>
 
         <div class="col-md-4 form-group">

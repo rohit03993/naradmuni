@@ -2,6 +2,8 @@
 include "config.php";
 require_once __DIR__ . "/site_settings_lib.php";
 
+nm_require_admin($con);
+
 if (!isset($_SESSION["aemail"])) {
 	$_SESSION["msg"] = "You must log in first";
 	header("location: ../manage.php");
