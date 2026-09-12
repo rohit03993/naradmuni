@@ -110,6 +110,11 @@ if (!function_exists("nm_nav_active")) {
       </a>
     </li>
     <li>
+      <a class="<?php echo nm_nav_active($nmPage, "whatsapp_share.php"); ?>" href="whatsapp_share.php">
+        <i class="fab fa-whatsapp"></i> WhatsApp share
+      </a>
+    </li>
+    <li>
       <a class="<?php echo nm_nav_active($nmPage, "team.php"); ?>" href="team.php">
         <i class="fas fa-users"></i> Team
       </a>

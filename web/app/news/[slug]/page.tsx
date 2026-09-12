@@ -8,6 +8,7 @@ import { asHtmlString, sanitizeArticleHtml } from "@/lib/html";
 import { newsImage, newsShareImage } from "@/lib/images";
 import { getArticleBySlug, getRelated } from "@/lib/queries";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { buildWhatsAppFooter, getWhatsAppShareSettings } from "@/lib/whatsappShare";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -56,6 +57,8 @@ export default async function NewsPage({ params }: Props) {
   const bodyHtml = sanitizeArticleHtml(rawBody);
   const summaryText = (article.short_description || "").trim();
   const url = `${getSiteUrl()}/news/${article.newsurl}`;
+  const waSettings = await getWhatsAppShareSettings();
+  const waFooter = buildWhatsAppFooter(waSettings);
 
   return (
     <article>
@@ -67,7 +70,7 @@ export default async function NewsPage({ params }: Props) {
       <h1 className="h1">{article.title}</h1>
       <div className="meta-row">
         <ArticleByline author={article.author} place={article.hindi_name} />
-        <ArticleActions title={article.title} url={url} />
+        <ArticleActions title={article.title} url={url} waFooter={waFooter} />
       </div>
       {summaryText && summaryText !== article.title ? (
         <p className="summary">{summaryText}</p>

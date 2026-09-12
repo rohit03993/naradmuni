@@ -1,8 +1,13 @@
 "use client";
 
-type Props = { title: string; url: string };
+type Props = {
+  title: string;
+  url: string;
+  /** Full footer after title + URL (from admin WhatsApp share settings) */
+  waFooter?: string;
+};
 
-const WA_FOOTER = `
+const FALLBACK_FOOTER = `
 मध्य प्रदेश एवं छत्तीसगढ़ समेत देश-विदेश की तमाम खबर पाने के लिए द नारदमुनि से अभी जुड़ें
 
 https://chat.whatsapp.com/BkZoIpOAGBS6YFMSn2xSoM
@@ -13,10 +18,11 @@ Download The TheNaradMuni App
 http://onelink.to/kqnpym
 `.trim();
 
-export default function ArticleActions({ title, url }: Props) {
+export default function ArticleActions({ title, url, waFooter }: Props) {
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
-  const waText = encodeURIComponent(`${title}\n${url}\n\n${WA_FOOTER}`);
+  const footer = (waFooter || "").trim() || FALLBACK_FOOTER;
+  const waText = encodeURIComponent(`${title}\n${url}\n\n${footer}`);
 
   return (
     <div className="actions share-actions" aria-label="Share">
