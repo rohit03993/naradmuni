@@ -1499,9 +1499,33 @@ article .author-box {
 
   .hero {
     margin-bottom: 18px;
-    gap: 0;
+    gap: 14px;
   }
-  .hero-side { display: none; }
+  /* Keep Breaking list on phone — stacked under the lead story */
+  .hero-side {
+    display: block;
+    border-top: 1px solid var(--border);
+    padding-top: 4px;
+  }
+  .hero-side .list-item {
+    padding: 12px 0;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-side .list-item:last-child {
+    border-bottom: none;
+  }
+  .hero-side .list-item h3 {
+    font-size: 15px;
+    line-height: 1.45;
+    font-weight: 600;
+  }
+  .hero-side .list-item img,
+  .hero-side .list-ph {
+    width: 88px;
+    height: 66px;
+    flex-shrink: 0;
+  }
   .hero-lead img,
   .hero-ph {
     width: 100%;
