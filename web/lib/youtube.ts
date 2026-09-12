@@ -96,12 +96,11 @@ async function fetchShortsUncached(): Promise<YoutubeShort[]> {
   for (const item of data.items || []) {
     const id = item.id?.videoId;
     if (!id) continue;
-    const thumbs = item.snippet?.thumbnails;
-    const thumb = thumbs?.medium?.url || thumbs?.high?.url || thumbs?.default?.url || "";
+    // hq720 is sharp enough for large Shorts cards; API "medium" blurs when upscaled
     out.push({
       id,
       title: item.snippet?.title || "Short",
-      thumb,
+      thumb: `https://i.ytimg.com/vi/${id}/hq720.jpg`,
       url: `https://www.youtube.com/shorts/${id}`,
     });
   }
@@ -124,7 +123,7 @@ export function getDemoShorts(): YoutubeShort[] {
   return demos.map((d) => ({
     id: d.id,
     title: d.title,
-    thumb: `https://i.ytimg.com/vi/${d.id}/hqdefault.jpg`,
+    thumb: `https://i.ytimg.com/vi/${d.id}/hq720.jpg`,
     url: `https://www.youtube.com/watch?v=${d.id}`,
   }));
 }
@@ -132,7 +131,7 @@ export function getDemoShorts(): YoutubeShort[] {
 /** Homepage Shorts — refresh ~every 10 minutes; demos if not configured yet.
  *  Hard cap so a slow YouTube API never keeps the homepage spinning. */
 export async function getHomepageShorts(): Promise<{ items: YoutubeShort[]; isDemo: boolean }> {
-  const cached = unstable_cache(fetchShortsUncached, ["homepage-youtube-shorts"], {
+  const cached = unstable_cache(fetchShortsUncached, ["homepage-youtube-shorts-hq720-v2"], {
     revalidate: 600,
   });
   try {

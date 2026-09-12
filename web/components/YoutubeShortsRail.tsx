@@ -54,7 +54,20 @@ export default function YoutubeShortsRail({ items }: { items: YoutubeShort[] }) 
                 aria-label={`Play ${s.title}`}
                 onClick={() => open(s.id)}
               >
-                {s.thumb ? <img src={s.thumb} alt="" loading="lazy" decoding="async" /> : null}
+                {s.thumb ? (
+                  <img
+                    src={s.thumb}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                      const el = e.currentTarget;
+                      if (el.dataset.fallback === "1") return;
+                      el.dataset.fallback = "1";
+                      el.src = `https://i.ytimg.com/vi/${s.id}/hqdefault.jpg`;
+                    }}
+                  />
+                ) : null}
                 <span className="shorts-play" aria-hidden="true">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5v14l11-7z" />
