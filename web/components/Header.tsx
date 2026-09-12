@@ -10,10 +10,12 @@ export default function Header({
   nav,
   cities,
   logoUrl,
+  iconUrl = "/icons/nm-192.png",
 }: {
   nav: Category[];
   cities: Category[];
   logoUrl?: string;
+  iconUrl?: string;
 }) {
   const path = usePathname() || "/";
   const active = path.startsWith("/category/") ? decodeURIComponent(path.split("/")[2] || "") : "";
@@ -102,7 +104,7 @@ export default function Header({
                   }
                 }}
               >
-                <img src="/icons/nm-192.png" alt="" width={22} height={22} style={{ borderRadius: 5 }} />
+                <img src={iconUrl} alt="" width={22} height={22} style={{ borderRadius: 5 }} />
               </button>
               <button
                 type="button"
@@ -194,7 +196,7 @@ export default function Header({
                 window.dispatchEvent(new Event("nm:open-install"));
               }}
             >
-              <img src="/icons/nm-192.png" alt="" width={28} height={28} />
+              <img src={iconUrl} alt="" width={28} height={28} />
               <span>
                 <strong>ऐप इंस्टॉल करें</strong>
                 <small>Install The Naradmuni</small>

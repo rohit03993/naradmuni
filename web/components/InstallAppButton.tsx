@@ -14,7 +14,7 @@ function alreadyInstalled() {
 }
 
 /** Visible Install button for sidebar */
-export default function InstallAppButton() {
+export default function InstallAppButton({ iconUrl = "/icons/nm-192.png" }: { iconUrl?: string }) {
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function InstallAppButton() {
 
   return (
     <aside className="pwa-promo" aria-label="Install app">
-      <img src="/icons/nm-192.png" alt="" width={48} height={48} />
+      <img src={iconUrl} alt="" width={48} height={48} />
       <div>
         <strong>The Naradmuni App</strong>
         <p>होम स्क्रीन पर इंस्टॉल करें</p>

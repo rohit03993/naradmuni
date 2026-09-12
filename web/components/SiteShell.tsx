@@ -13,6 +13,7 @@ export default function SiteShell({
   pages,
   dbError,
   logoUrl,
+  iconUrl = "/icons/nm-192.png",
 }: {
   children: React.ReactNode;
   nav: Category[];
@@ -21,11 +22,12 @@ export default function SiteShell({
   pages: SitePage[];
   dbError?: string;
   logoUrl?: string;
+  iconUrl?: string;
 }) {
   const logo = logoUrl || logoSrc();
   return (
     <>
-      <Header nav={nav} cities={cities} logoUrl={logo} />
+      <Header nav={nav} cities={cities} logoUrl={logo} iconUrl={iconUrl} />
       {dbError ? (
         <div
           style={{
@@ -45,7 +47,7 @@ export default function SiteShell({
       ) : null}
       <div className="layout">
         <div>
-          <InstallAppButton />
+          <InstallAppButton iconUrl={iconUrl} />
           {children}
         </div>
         <aside className="rail">
@@ -53,7 +55,7 @@ export default function SiteShell({
         </aside>
       </div>
       <Footer pages={pages} logoUrl={logo} />
-      <PwaClient />
+      <PwaClient iconUrl={iconUrl} />
     </>
   );
 }

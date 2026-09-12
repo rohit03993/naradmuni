@@ -3,7 +3,7 @@ import { Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
 import GoogleAdSense from "@/components/GoogleAdSense";
 import SiteShell from "@/components/SiteShell";
-import { getBranding } from "@/lib/branding";
+import { getBranding, iconMimeType } from "@/lib/branding";
 import { getSiteChrome } from "@/lib/site";
 import { getSiteUrl } from "@/lib/siteUrl";
 
@@ -17,6 +17,8 @@ const noto = Noto_Sans_Devanagari({
 export async function generateMetadata(): Promise<Metadata> {
   const branding = await getBranding();
   const fav = branding.faviconUrl;
+  const icon = branding.iconUrl;
+  const type = iconMimeType(icon);
   return {
     metadataBase: new URL(getSiteUrl()),
     title: "The Naradmuni | हिंदी न्यूज़ मध्य प्रदेश",
@@ -34,11 +36,11 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     icons: {
       icon: [
-        { url: fav, type: fav.endsWith(".ico") ? "image/x-icon" : "image/png" },
-        { url: "/icons/nm-192.png", sizes: "192x192", type: "image/png" },
-        { url: "/icons/nm-512.png", sizes: "512x512", type: "image/png" },
+        { url: fav, type: iconMimeType(fav) },
+        { url: icon, sizes: "192x192", type },
+        { url: icon, sizes: "512x512", type },
       ],
-      apple: [{ url: fav.startsWith("http") || fav.startsWith("/") ? fav : "/icons/nm-192.png", sizes: "180x180" }],
+      apple: [{ url: icon, sizes: "180x180" }],
       shortcut: [fav],
     },
   };
@@ -65,6 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           pages={chrome.pages}
           dbError={chrome.dbError}
           logoUrl={branding.logoUrl}
+          iconUrl={branding.iconUrl}
         >
           {children}
         </SiteShell>

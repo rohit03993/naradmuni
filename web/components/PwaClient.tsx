@@ -126,7 +126,7 @@ export function requestNaradmuniNotifications() {
   }
 }
 
-export default function PwaClient() {
+export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?: string }) {
   const deferredRef = useRef<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -188,7 +188,7 @@ export default function PwaClient() {
         const body = data.body || payload.notification?.body || "";
         const n = new Notification(title, {
           body,
-          icon: data.icon || "/icons/nm-192.png",
+          icon: data.icon || iconUrl,
           // @ts-expect-error Chromium image
           image: data.image,
         });
@@ -202,7 +202,7 @@ export default function PwaClient() {
       console.warn("Naradmuni notifications:", err);
       setNotifState("denied");
     }
-  }, []);
+  }, [iconUrl]);
 
   const openInstallModal = useCallback(() => {
     if (isPwaInstalled()) {
@@ -311,7 +311,7 @@ export default function PwaClient() {
             <button type="button" className="pwa-card-close" onClick={dismissModal} aria-label="बाद में">
               ✕
             </button>
-            <img className="pwa-card-icon" src="/icons/nm-192.png" alt="" width={64} height={64} />
+            <img className="pwa-card-icon" src={iconUrl} alt="" width={64} height={64} />
             <h3>The Naradmuni ऐप इंस्टॉल करें</h3>
             <p>होम स्क्रीन पर रखें — तेज़ खुलता है, और नई खबर आने पर सूचना मिलती है।</p>
 
