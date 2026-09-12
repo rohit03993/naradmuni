@@ -25,11 +25,6 @@ export function iconMimeType(url: string): string {
   return "image/png";
 }
 
-function isPwaSafeIcon(file: string): boolean {
-  const f = file.toLowerCase();
-  return f.endsWith(".png") || f.endsWith(".webp") || f.endsWith(".ico");
-}
-
 export async function getBranding(): Promise<Branding> {
   if (cache && Date.now() - cache.at < TTL) return cache.data;
 
@@ -38,16 +33,15 @@ export async function getBranding(): Promise<Branding> {
   const faviconFile = (settings.brand_favicon || "").trim();
   const faviconUrl = faviconSrc(faviconFile || null);
   const iconUrl = faviconFile ? faviconUrl : "/icons/nm-192.png";
-  // Chrome installability is unreliable with JPEG-only manifest icons
-  const pwaCustom = faviconFile && isPwaSafeIcon(faviconFile) ? faviconUrl : null;
+  // Same icon as favicon for PWA home-screen when set (PNG preferred; JPEG still used if that is what admin uploaded)
   const data: Branding = {
     logoFile,
     faviconFile,
     logoUrl: logoSrc(logoFile || null),
     faviconUrl,
     iconUrl,
-    pwaIcon192: pwaCustom || "/icons/nm-192.png",
-    pwaIcon512: pwaCustom || "/icons/nm-512.png",
+    pwaIcon192: iconUrl,
+    pwaIcon512: iconUrl,
   };
   cache = { at: Date.now(), data };
   return data;

@@ -11,14 +11,14 @@ export default function InstallPwaButton() {
         background: "#111",
         color: "#fff",
         fontWeight: 700,
+        fontSize: 16,
         padding: "14px 16px",
         borderRadius: 8,
         border: 0,
         cursor: "pointer",
-        marginBottom: 16,
       }}
     >
-      होम स्क्रीन पर इंस्टॉल (PWA)
+      Install App now
     </button>
   );
 }

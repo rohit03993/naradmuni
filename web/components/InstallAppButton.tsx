@@ -9,14 +9,8 @@ function isStandalone(): boolean {
   return nav.standalone === true;
 }
 
-/** Visible Install banner — always show unless already running as installed app */
-export default function InstallAppButton({
-  iconUrl = "/icons/nm-192.png",
-  storeUrl = "https://onelink.to/kqnpym",
-}: {
-  iconUrl?: string;
-  storeUrl?: string;
-}) {
+/** Homepage install banner — PWA only */
+export default function InstallAppButton({ iconUrl = "/icons/nm-192.png" }: { iconUrl?: string }) {
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
@@ -33,26 +27,15 @@ export default function InstallAppButton({
       <img src={iconUrl} alt="" width={48} height={48} />
       <div>
         <strong>The Naradmuni App</strong>
-        <p>होम स्क्रीन पर इंस्टॉल करें</p>
+        <p>Install on your home screen</p>
       </div>
       <button
         type="button"
         className="pwa-install-btn"
         onClick={() => window.dispatchEvent(new Event("nm:open-install"))}
       >
-        Install
+        Install App now
       </button>
-      {storeUrl ? (
-        <a
-          href={storeUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="pwa-install-btn"
-          style={{ textDecoration: "none", background: "#111", marginLeft: 4 }}
-        >
-          Download
-        </a>
-      ) : null}
     </aside>
   );
 }

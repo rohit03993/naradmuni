@@ -6,7 +6,6 @@ import SiteShell from "@/components/SiteShell";
 import { getBranding, iconMimeType } from "@/lib/branding";
 import { getSiteChrome } from "@/lib/site";
 import { getSiteUrl } from "@/lib/siteUrl";
-import { getWhatsAppShareSettings } from "@/lib/whatsappShare";
 
 const noto = Noto_Sans_Devanagari({
   subsets: ["devanagari"],
@@ -57,11 +56,7 @@ export const viewport: Viewport = {
 export const revalidate = 60;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [chrome, branding, waShare] = await Promise.all([
-    getSiteChrome(),
-    getBranding(),
-    getWhatsAppShareSettings(),
-  ]);
+  const [chrome, branding] = await Promise.all([getSiteChrome(), getBranding()]);
   return (
     <html lang="hi">
       <body className={noto.variable}>
@@ -73,7 +68,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           dbError={chrome.dbError}
           logoUrl={branding.logoUrl}
           iconUrl={branding.iconUrl}
-          storeUrl={waShare.appLink || "https://onelink.to/kqnpym"}
         >
           {children}
         </SiteShell>

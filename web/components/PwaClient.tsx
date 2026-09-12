@@ -144,13 +144,7 @@ export function requestNaradmuniNotifications() {
   }
 }
 
-export default function PwaClient({
-  iconUrl = "/icons/nm-192.png",
-  storeUrl = "https://onelink.to/kqnpym",
-}: {
-  iconUrl?: string;
-  storeUrl?: string;
-}) {
+export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?: string }) {
   const deferredRef = useRef<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -350,15 +344,15 @@ export default function PwaClient({
       {showModal ? (
         <div className="pwa-overlay" role="dialog" aria-modal="true" aria-label="Install Naradmuni app">
           <div className="pwa-card">
-            <button type="button" className="pwa-card-close" onClick={dismissModal} aria-label="बाद में">
+            <button type="button" className="pwa-card-close" onClick={dismissModal} aria-label="Close">
               ✕
             </button>
             <img className="pwa-card-icon" src={iconUrl} alt="" width={64} height={64} />
-            <h3>The Naradmuni ऐप</h3>
+            <h3>The Naradmuni</h3>
             {installed && isReallyInstalled() ? (
-              <p>ऐप पहले से होम स्क्रीन पर इंस्टॉल है।</p>
+              <p>App is already installed on your home screen.</p>
             ) : (
-              <p>होम स्क्रीन पर रखें, या Play Store से ऐप डाउनलोड करें।</p>
+              <p>Install the app on your home screen for faster access.</p>
             )}
 
             {manualTip ? (
@@ -369,47 +363,24 @@ export default function PwaClient({
                   </p>
                 ) : (
                   <p>
-                    Chrome में ऊपर दाएँ <strong>⋮</strong> → <strong>Install app</strong> /{" "}
-                    <strong>Add to Home screen</strong>
+                    Chrome menu <strong>⋮</strong> → <strong>Install app</strong> / <strong>Add to Home screen</strong>
                     <br />
-                    <small>Incognito / Guest में Install नहीं चलता — सामान्य Chrome विंडो खोलें।</small>
+                    <small>Does not work in Incognito — use a normal Chrome window.</small>
                   </p>
                 )}
-                {storeUrl ? (
-                  <a
-                    className="pwa-install-btn pwa-install-btn--block"
-                    href={storeUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ display: "block", textAlign: "center", textDecoration: "none", marginTop: 10 }}
-                  >
-                    Play Store / App डाउनलोड
-                  </a>
-                ) : null}
                 <button type="button" className="pwa-later-btn" onClick={dismissModal} style={{ marginTop: 8 }}>
-                  बंद करें
+                  Close
                 </button>
               </div>
             ) : (
               <div className="pwa-card-actions">
                 {!isReallyInstalled() ? (
                   <button type="button" className="pwa-install-btn pwa-install-btn--block" onClick={() => void onInstall()}>
-                    {canNativeInstall ? "होम स्क्रीन पर इंस्टॉल करें" : "इंस्टॉल कैसे करें"}
+                    Install App now
                   </button>
                 ) : null}
-                {storeUrl ? (
-                  <a
-                    className="pwa-install-btn pwa-install-btn--block"
-                    href={storeUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ display: "block", textAlign: "center", textDecoration: "none", background: "#111" }}
-                  >
-                    App डाउनलोड (Play Store)
-                  </a>
-                ) : null}
                 <button type="button" className="pwa-later-btn" onClick={dismissModal}>
-                  बाद में
+                  Later
                 </button>
               </div>
             )}
