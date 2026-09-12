@@ -1,11 +1,18 @@
 import type { Category, SitePage } from "@/lib/types";
 import { logoSrc } from "@/lib/images";
 
-export default function Footer({ pages }: { pages: SitePage[]; nav?: Category[] }) {
+export default function Footer({
+  pages,
+  logoUrl,
+}: {
+  pages: SitePage[];
+  nav?: Category[];
+  logoUrl?: string;
+}) {
   return (
     <footer className="footer">
       <div className="shell">
-        <img src={logoSrc()} alt="The Naradmuni" style={{ height: 48, margin: "0 auto 16px" }} />
+        <img src={logoUrl || logoSrc()} alt="The Naradmuni" style={{ height: 48, margin: "0 auto 16px" }} />
         <div className="footer-links">
           {pages.map((p) => (
             <a key={p.page_url} href={`/page/${p.page_url}`}>

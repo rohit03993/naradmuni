@@ -105,6 +105,11 @@ if (!function_exists("nm_nav_active")) {
       </a>
     </li>
     <li>
+      <a class="<?php echo nm_nav_active($nmPage, "branding.php"); ?>" href="branding.php">
+        <i class="fas fa-image"></i> Branding
+      </a>
+    </li>
+    <li>
       <a class="<?php echo nm_nav_active($nmPage, "team.php"); ?>" href="team.php">
         <i class="fas fa-users"></i> Team
       </a>

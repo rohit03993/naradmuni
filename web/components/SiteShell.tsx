@@ -4,6 +4,7 @@ import CitiesRail from "./CitiesRail";
 import PwaClient from "./PwaClient";
 import InstallAppButton from "./InstallAppButton";
 import type { Ad, Category, SitePage } from "@/lib/types";
+import { logoSrc } from "@/lib/images";
 
 export default function SiteShell({
   children,
@@ -11,6 +12,7 @@ export default function SiteShell({
   cities,
   pages,
   dbError,
+  logoUrl,
 }: {
   children: React.ReactNode;
   nav: Category[];
@@ -18,10 +20,12 @@ export default function SiteShell({
   ad?: Ad | null;
   pages: SitePage[];
   dbError?: string;
+  logoUrl?: string;
 }) {
+  const logo = logoUrl || logoSrc();
   return (
     <>
-      <Header nav={nav} cities={cities} />
+      <Header nav={nav} cities={cities} logoUrl={logo} />
       {dbError ? (
         <div
           style={{
@@ -48,7 +52,7 @@ export default function SiteShell({
           <CitiesRail cities={cities} />
         </aside>
       </div>
-      <Footer pages={pages} />
+      <Footer pages={pages} logoUrl={logo} />
       <PwaClient />
     </>
   );

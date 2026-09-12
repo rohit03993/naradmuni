@@ -9,9 +9,11 @@ import CityModal from "./CityModal";
 export default function Header({
   nav,
   cities,
+  logoUrl,
 }: {
   nav: Category[];
   cities: Category[];
+  logoUrl?: string;
 }) {
   const path = usePathname() || "/";
   const active = path.startsWith("/category/") ? decodeURIComponent(path.split("/")[2] || "") : "";
@@ -19,6 +21,7 @@ export default function Header({
   const [cityOpen, setCityOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [logoOk, setLogoOk] = useState(true);
+  const logo = logoUrl || logoSrc();
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -32,6 +35,10 @@ export default function Header({
   useEffect(() => {
     setMenuOpen(false);
   }, [path]);
+
+  useEffect(() => {
+    setLogoOk(true);
+  }, [logo]);
 
   const closeMenu = () => setMenuOpen(false);
   const openCity = () => {
@@ -62,7 +69,7 @@ export default function Header({
               </button>
               <a href="/" className="logo">
                 {logoOk ? (
-                  <img src={logoSrc()} alt="The Naradmuni" onError={() => setLogoOk(false)} />
+                  <img src={logo} alt="The Naradmuni" onError={() => setLogoOk(false)} />
                 ) : (
                   <div className="logo-fallback">
                     <span>NM</span>
@@ -156,7 +163,7 @@ export default function Header({
             <div className="mnav-head">
               <a href="/" className="mnav-brand" onClick={closeMenu}>
                 {logoOk ? (
-                  <img src={logoSrc()} alt="The Naradmuni" />
+                  <img src={logo} alt="The Naradmuni" />
                 ) : (
                   <strong>The Naradmuni</strong>
                 )}
