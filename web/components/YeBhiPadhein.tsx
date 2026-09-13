@@ -1,5 +1,6 @@
 import type { NewsCard } from "@/lib/types";
 import { newsImage } from "@/lib/images";
+import NewsDate from "@/components/NewsDate";
 
 export default function YeBhiPadhein({ items }: { items: NewsCard[] }) {
   if (!items.length) return null;
@@ -13,7 +14,10 @@ export default function YeBhiPadhein({ items }: { items: NewsCard[] }) {
           return (
             <a key={n.newsid} className="related-item" href={`/news/${n.newsurl}`}>
               <span className="num">{i + 1}</span>
-              <h3>{n.title}</h3>
+              <div className="related-item-text">
+                <h3>{n.title}</h3>
+                <NewsDate date={n.date} />
+              </div>
               {src ? (
                 <img src={src} alt={n.title} />
               ) : (

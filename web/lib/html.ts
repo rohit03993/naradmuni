@@ -126,9 +126,8 @@ export function plainText(html: string, max = 4000): string {
     .slice(0, max);
 }
 
-export function formatStamp(date?: string | null, time?: string | null): string {
+/** Public display stamp: date only (no time). DB still stores time for admin/scheduling. */
+export function formatStamp(date?: string | null, _time?: string | null): string {
   const d = (date || "").trim();
-  const t = (time || "").trim();
-  if (!d && !t) return "";
-  return `${d}${t ? ` ${t}` : ""} IST`;
+  return d;
 }

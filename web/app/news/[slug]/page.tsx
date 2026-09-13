@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import ArticleActions from "@/components/ArticleActions";
 import ArticleByline from "@/components/ArticleByline";
 import AuthorBox from "@/components/AuthorBox";
+import NewsDate from "@/components/NewsDate";
 import YeBhiPadhein from "@/components/YeBhiPadhein";
 import { asHtmlString, sanitizeArticleHtml } from "@/lib/html";
 import { newsImage, newsShareImage } from "@/lib/images";
@@ -69,7 +70,10 @@ export default async function NewsPage({ params }: Props) {
       ) : null}
       <h1 className="h1">{article.title}</h1>
       <div className="meta-row">
-        <ArticleByline author={article.author} place={article.hindi_name} />
+        <div className="meta-left">
+          <ArticleByline author={article.author} place={article.hindi_name} />
+          <NewsDate date={article.date} className="news-date news-date--article" />
+        </div>
         <ArticleActions title={article.title} url={url} waFooter={waFooter} />
       </div>
       {summaryText && summaryText !== article.title ? (

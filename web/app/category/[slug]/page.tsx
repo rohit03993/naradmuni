@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import NewsDate from "@/components/NewsDate";
 import { newsImage } from "@/lib/images";
 import { getCategoryByUrl, getChildCategories, countNewsByCategory, getNewsByCategory } from "@/lib/queries";
 
@@ -61,6 +62,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                   <div className="ph cat-tile-ph" />
                 )}
                 <h3>{n.title}</h3>
+                <NewsDate date={n.date} />
               </a>
             );
           })}

@@ -1,5 +1,6 @@
 import type { NewsCard } from "@/lib/types";
 import { newsImage } from "@/lib/images";
+import NewsDate from "@/components/NewsDate";
 
 /** MP Breaking–style tile: image on top, title below */
 export default function NewsCardTile({
@@ -26,6 +27,7 @@ export default function NewsCardTile({
         <div className="ph card-ph" />
       )}
       <h3>{item.title}</h3>
+      <NewsDate date={item.date} />
     </a>
   );
 }
