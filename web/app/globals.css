@@ -1770,6 +1770,7 @@ article .author-box {
   }
   .cat-tile-text {
     min-width: 0;
+    grid-column: 2;
   }
   .cat-tile-text .news-date {
     margin-top: 4px;
@@ -1789,7 +1790,6 @@ article .author-box {
     min-height: 0;
   }
   .cat-tile h3 {
-    grid-column: 2;
     font-size: 14px;
     line-height: 1.45;
     font-weight: 600;
