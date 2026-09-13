@@ -26,8 +26,10 @@ export default function NewsCardTile({
       ) : (
         <div className="ph card-ph" />
       )}
-      <h3>{item.title}</h3>
-      <NewsDate date={item.date} />
+      <div className="card-text">
+        <h3>{item.title}</h3>
+        <NewsDate date={item.date} />
+      </div>
     </a>
   );
 }

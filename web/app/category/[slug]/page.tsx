@@ -61,8 +61,10 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                 ) : (
                   <div className="ph cat-tile-ph" />
                 )}
-                <h3>{n.title}</h3>
-                <NewsDate date={n.date} />
+                <div className="cat-tile-text">
+                  <h3>{n.title}</h3>
+                  <NewsDate date={n.date} />
+                </div>
               </a>
             );
           })}

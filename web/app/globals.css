@@ -593,10 +593,16 @@ strong, b { font-weight: 700; }
 .list-item-text .news-date {
   margin-top: 4px;
 }
+.card-text,
+.cat-tile-text {
+  min-width: 0;
+}
 .card .news-date,
+.card-text .news-date,
 .topic-feature .news-date,
 .hero-lead .news-date,
-.cat-tile .news-date {
+.cat-tile .news-date,
+.cat-tile-text .news-date {
   margin-top: 6px;
 }
 .byline { font-size: 14px; color: var(--muted); }
@@ -1657,16 +1663,38 @@ article .author-box {
     font-weight: 700;
     color: var(--text);
   }
+  .list-item {
+    grid-template-columns: 100px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+  }
+  .list-item-text {
+    order: 2;
+    min-width: 0;
+  }
+  .list-item h3 {
+    font-size: 14px;
+  }
+  .list-item img,
+  .list-ph {
+    order: 1;
+    width: 100px;
+    height: 75px;
+    object-fit: cover;
+  }
+
   .topic-side .list-item {
     padding: 10px 0;
     gap: 12px;
     grid-template-columns: 100px minmax(0, 1fr);
   }
+  .topic-side .list-item-text {
+    order: 2;
+  }
   .topic-side .list-item h3 {
     font-size: 14px;
     line-height: 1.45;
     font-weight: 600;
-    order: 2;
   }
   .topic-side .list-item img,
   .topic-side .list-ph {
@@ -1676,23 +1704,6 @@ article .author-box {
     object-position: center;
     background: var(--grey);
     order: 1;
-  }
-
-  .list-item {
-    grid-template-columns: 100px minmax(0, 1fr);
-    gap: 12px;
-    align-items: center;
-  }
-  .list-item h3 {
-    order: 2;
-    font-size: 14px;
-  }
-  .list-item img,
-  .list-ph {
-    order: 1;
-    width: 100px;
-    height: 75px;
-    object-fit: cover;
   }
 
   .cards,
@@ -1733,6 +1744,12 @@ article .author-box {
     color: var(--text);
     -webkit-line-clamp: 3;
   }
+  .card-text {
+    min-width: 0;
+  }
+  .card-text .news-date {
+    margin-top: 4px;
+  }
 
   .cat-tiles {
     display: flex;
@@ -1750,6 +1767,12 @@ article .author-box {
   }
   .cat-tile:last-child {
     border-bottom: 0;
+  }
+  .cat-tile-text {
+    min-width: 0;
+  }
+  .cat-tile-text .news-date {
+    margin-top: 4px;
   }
   .cat-tile img,
   .cat-tile-ph,
