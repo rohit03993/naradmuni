@@ -1,5 +1,4 @@
 import NewsCardTile from "@/components/NewsCardTile";
-import NewsDate from "@/components/NewsDate";
 import NewsListItem from "@/components/NewsListItem";
 import TopicBlock from "@/components/TopicBlock";
 import YoutubeShortsRail from "@/components/YoutubeShortsRail";
@@ -123,7 +122,6 @@ export default async function HomePage() {
               <div className="ph hero-ph" />
             )}
             <h2>{lead.title}</h2>
-            <NewsDate date={lead.date} />
           </a>
         ) : (
           <p>No published news found.</p>

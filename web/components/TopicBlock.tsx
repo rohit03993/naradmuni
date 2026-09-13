@@ -1,5 +1,4 @@
 import NewsCardTile from "@/components/NewsCardTile";
-import NewsDate from "@/components/NewsDate";
 import NewsListItem from "@/components/NewsListItem";
 import { newsImage } from "@/lib/images";
 import type { TopicSection } from "@/lib/queries";
@@ -53,7 +52,6 @@ export default function TopicBlock({
               <div className="ph topic-feature-ph" />
             )}
             <h3>{feature.title}</h3>
-            <NewsDate date={feature.date} />
           </a>
         ) : (
           <div className="topic-split">
@@ -64,7 +62,6 @@ export default function TopicBlock({
                 <div className="ph topic-feature-ph" />
               )}
               <h3>{feature.title}</h3>
-              <NewsDate date={feature.date} />
             </a>
             <div className="topic-side">
               {side.map((n) => (
