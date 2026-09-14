@@ -1,3 +1,4 @@
+import CopyGuard from "./CopyGuard";
 import Header from "./Header";
 import Footer from "./Footer";
 import CitiesRail from "./CitiesRail";
@@ -27,6 +28,7 @@ export default function SiteShell({
   const logo = logoUrl || logoSrc();
   return (
     <>
+      <CopyGuard />
       <Header nav={nav} cities={cities} logoUrl={logo} iconUrl={iconUrl} />
       {dbError ? (
         <div

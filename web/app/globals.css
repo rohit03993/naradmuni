@@ -26,6 +26,9 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
+  /* Public site only. Admin is a separate PHP app and is not affected. */
+  -webkit-user-select: none;
+  user-select: none;
   /* Hindi-first: Noto Sans Devanagari for the whole site */
   font-family: var(--font-noto), system-ui, sans-serif;
   font-size: 16px;
@@ -38,6 +41,10 @@ body {
 a { color: inherit; text-decoration: none; }
 img { max-width: 100%; height: auto; display: block; }
 button { font-family: inherit; cursor: pointer; font-weight: 500; }
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
 
 h1, h2, h3, h4, .h1, .section-head h2, .cat-h1 {
   font-family: inherit;
