@@ -5,7 +5,7 @@
  */
 include "config.php";
 
-if (!function_exists("nm_require_admin")) {
+if (!function_exists("nm_admin_row")) {
 	require_once __DIR__ . "/admin_helpers.php";
 }
 
@@ -14,8 +14,6 @@ if (!isset($_SESSION["aemail"])) {
 	header("location: ../manage.php");
 	exit;
 }
-
-nm_require_admin($con);
 
 $usersession = $_SESSION["aemail"];
 $userRow = nm_admin_row($con, $usersession);
