@@ -60,7 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const [chrome, branding] = await Promise.all([getSiteChrome(), getBranding()]);
   return (
     <html lang="hi">
-      <body className={noto.variable}>
+      <body className={`${noto.variable} nm-nocopy`}>
         <GoogleAdSense />
         <AdsClickGuard />
         <SiteShell
