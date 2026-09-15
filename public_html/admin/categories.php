@@ -1,6 +1,9 @@
 <?php
 
     include"config.php";
+    if (!function_exists('nm_h')) {
+        require_once __DIR__ . '/admin_helpers.php';
+    }
 
 	if (!isset($_SESSION['aemail'])) {
 		$_SESSION['msg'] = "You must log in first";

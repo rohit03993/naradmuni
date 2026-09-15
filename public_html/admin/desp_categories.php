@@ -87,10 +87,10 @@ $output = '';
 							<td><?php echo $i+$k; ?></td>
                             <td><?php echo nm_h(nm_cat_label($faq[$k])); ?></td>
                             <td><?php
-                            $catid=$faq[$k]["parent"];
-                                    if(isset($catid) && $catid !== "" && $catid !== null){
-                                        $qry12=mysqli_query($con,"SELECT hindi_name, maincat FROM `categories` WHERE id='".mysqli_real_escape_string($con, (string)$catid)."'");
-                            $rs99=mysqli_fetch_array($qry12);
+                            $catid=isset($faq[$k]["parent"]) ? $faq[$k]["parent"] : "";
+                                    if($catid !== "" && $catid !== null){
+                                        $qry12=@mysqli_query($con,"SELECT hindi_name, maincat FROM `categories` WHERE id='".mysqli_real_escape_string($con, (string)$catid)."'");
+                            $rs99 = ($qry12 instanceof mysqli_result) ? mysqli_fetch_array($qry12) : null;
                             echo nm_h(is_array($rs99) ? nm_cat_label($rs99) : '');
                                     }
                              ?></td>

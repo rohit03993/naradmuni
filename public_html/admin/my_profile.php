@@ -3,6 +3,9 @@
  * Author (or Admin) edits their linked Team public profile — byline photo/name/bio.
  */
 include "config.php";
+if (!function_exists("nm_admin_row")) {
+	require_once __DIR__ . "/admin_helpers.php";
+}
 
 if (!isset($_SESSION["aemail"])) {
 	$_SESSION["msg"] = "You must log in first";
@@ -11,13 +14,18 @@ if (!isset($_SESSION["aemail"])) {
 }
 
 $usersession = $_SESSION["aemail"];
-$userRow = nm_admin_row($con, $usersession);
+$userRow = function_exists("nm_admin_row") ? nm_admin_row($con, $usersession) : null;
+if (!$userRow) {
+	$esc = mysqli_real_escape_string($con, $usersession);
+	$res = @mysqli_query($con, "SELECT * FROM admin WHERE aemail='$esc' LIMIT 1");
+	$userRow = ($res instanceof mysqli_result) ? mysqli_fetch_array($res, MYSQLI_ASSOC) : null;
+}
 if (!$userRow) {
 	header("location: logout.php");
 	exit;
 }
 
-$teamId = (int) ($userRow["team_id"] ?? 0);
+$teamId = (isset($userRow["team_id"]) && $userRow["team_id"] !== "") ? (int) $userRow["team_id"] : 0;
 $err = "";
 $ok = "";
 $team = null;
@@ -65,7 +73,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["save_profile"])) {
 			);
 			$teamId = (int) mysqli_insert_id($con);
 			$aid = (int) $userRow["id"];
-			mysqli_query($con, "UPDATE `admin` SET `team_id`='$teamId' WHERE `id`='$aid' LIMIT 1");
+			$cols = function_exists("nm_admin_column_map") ? nm_admin_column_map($con) : array();
+			if (!empty($cols["team_id"])) {
+				@mysqli_query($con, "UPDATE `admin` SET `team_id`='$teamId' WHERE `id`='$aid' LIMIT 1");
+			}
 			$ok = "Profile created and linked to your login.";
 		}
 		$tq = mysqli_query($con, "SELECT * FROM `team` WHERE `t_id`='$teamId' LIMIT 1");
