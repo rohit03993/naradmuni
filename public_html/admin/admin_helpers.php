@@ -49,6 +49,44 @@ if (!function_exists('nm_categories_result')) {
 	}
 }
 
+/** English slug for /category/{slug}. Does not rename existing rows. */
+if (!function_exists('nm_category_slug')) {
+	function nm_category_slug($raw)
+	{
+		$replace = array(" ",",",".","'","&","-","_",":","(",")","+",";","#","!","*","{","}","[","]","?","/","\"","|","@","%","$");
+		$s = str_replace($replace, "-", trim((string) $raw));
+		while (strpos($s, "--") !== false) {
+			$s = str_replace("--", "-", $s);
+		}
+		return trim($s, "-");
+	}
+}
+
+if (!function_exists('nm_category_letter')) {
+	function nm_category_letter($slug)
+	{
+		$slug = (string) $slug;
+		if ($slug === "") {
+			return "";
+		}
+		return strtoupper(substr($slug, 0, 1));
+	}
+}
+
+if (!function_exists('nm_category_url_taken')) {
+	function nm_category_url_taken($con, $slug, $exceptId = 0)
+	{
+		$esc = mysqli_real_escape_string($con, $slug);
+		$sql = "SELECT id FROM categories WHERE LOWER(cat_url) = LOWER('$esc')";
+		if ((int) $exceptId > 0) {
+			$sql .= " AND id != " . (int) $exceptId;
+		}
+		$sql .= " LIMIT 1";
+		$q = @mysqli_query($con, $sql);
+		return ($q instanceof mysqli_result) && $q->num_rows > 0;
+	}
+}
+
 /** Strip CKEditor pastebin id so it never wraps a saved article as disposable markup. */
 if (!function_exists('nm_clean_description_html')) {
 	function nm_clean_description_html($html)

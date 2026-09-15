@@ -1,7 +1,7 @@
 <?php
 
     include"config.php";
-    if (!function_exists('nm_h')) {
+    if (!function_exists('nm_h') || !function_exists('nm_category_slug')) {
         require_once __DIR__ . '/admin_helpers.php';
     }
 
@@ -29,55 +29,49 @@ $res=mysqli_query($con,"SELECT * FROM admin WHERE aemail='$productsession'");
 
 $userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
 
-if(isset($_POST['add']))
-                    {       
-                            $category = mysqli_real_escape_string($con,$_POST['category']);
-                            $cat_url=mysqli_real_escape_string($con,$_POST['cat_url']);
-                            $short=mysqli_real_escape_string($con,$_POST['short']);
-                            $main_heading=mysqli_real_escape_string($con,$_POST['main_heading']);
-                            $menu=mysqli_real_escape_string($con,$_POST['menu']);
-                            $metat = mysqli_real_escape_string($con,$_POST['metat']);
-                            $metad = mysqli_real_escape_string($con,$_POST['metad']);
-                            $latter = mysqli_real_escape_string($con,$_POST['latter']);
-                            $hindi_name = mysqli_real_escape_string($con,$_POST['hindi_name']);
-                           /*   Linkname starts  */
-                            $replace = array(" ",",",".","'","&","-","_",":","(",")","+",";","#","!","*","{","}","[","]","?","/","\"","|","@","%","$");
-                    		$linkStr_Replace = str_replace($replace,"-",trim($cat_url));
-                    		$linkStr_Replace = str_replace("----","-",$linkStr_Replace);
-                    		$linkStr_Replace = str_replace("---","-",$linkStr_Replace);
-                    		$linkStr_Replace = str_replace("--","-",$linkStr_Replace);
-                    		$linkname =  $linkStr_Replace;
-                           
-                            $parent = mysqli_real_escape_string($con,$_POST['parent']);
-                                    
-                        if($parent==0){
-                                
-                                $qry="insert into categories (short,main_heading,menu,maincat,cat_url,metat,metad,hindi_name,latter) values('$short','$main_heading','$menu','$category','$linkname','$metat','$metad','$hindi_name','$latter')";
-                                
-                            }else{
-                                
-                               $qry="insert into categories (main_heading,short,menu,maincat,parent,cat_url,metat,metad,hindi_name,latter) values('$main_heading','$short','$menu','$category','$parent','$linkname','$metat','$metad','$hindi_name','$latter')";
-                            }
-                                
-                                    $ex=mysqli_query($con,$qry);
+if (isset($_POST['add'])) {
+	$hindi_name = trim((string) ($_POST['hindi_name'] ?? ''));
+	$linkname = nm_category_slug($_POST['cat_url'] ?? '');
+	$menu = (isset($_POST['menu']) && $_POST['menu'] === 'Yes') ? 'Yes' : 'No';
+	$parent = isset($_POST['parent']) ? (string) $_POST['parent'] : '0';
+	if (!ctype_digit($parent)) {
+		$parent = '0';
+	}
 
-                                 if($ex>0)
+	$flash = function ($msg) {
+		echo "<script language='javascript'>window.alert(" . json_encode($msg, JSON_UNESCAPED_UNICODE) . "); window.location.href='categories.php';</script>";
+		exit;
+	};
 
-                                    {echo 
-                                    ("<script language='javascript'>
-                                  window.alert('Added Successfully.') 
-                                  window.location.href='categories.php';
-                                  </script>");
+	if ($hindi_name === '' || $linkname === '') {
+		$flash('Hindi name and Category URL are required.');
+	}
+	if (nm_category_url_taken($con, $linkname)) {
+		$flash('That Category URL is already in use. Pick a different English slug so existing pages stay unchanged.');
+	}
 
+	$escH = mysqli_real_escape_string($con, $hindi_name);
+	$escU = mysqli_real_escape_string($con, $linkname);
+	$latter = mysqli_real_escape_string($con, nm_category_letter($linkname));
+	$short = '0';
+	$main_heading = 'No';
+	$metat = $escH;
+	$metad = '';
+	$maincat = $escH;
 
+	if ($parent === '0') {
+		$qry = "insert into categories (short,main_heading,menu,maincat,cat_url,metat,metad,hindi_name,latter) values('$short','$main_heading','$menu','$maincat','$escU','$metat','$metad','$escH','$latter')";
+	} else {
+		$escP = mysqli_real_escape_string($con, $parent);
+		$qry = "insert into categories (main_heading,short,menu,maincat,parent,cat_url,metat,metad,hindi_name,latter) values('$main_heading','$short','$menu','$maincat','$escP','$escU','$metat','$metad','$escH','$latter')";
+	}
 
-                                    } else {
-                                        echo ("<script language='javascript'>
-                                  window.alert('Sorry, there was an error uploading your file.') 
-                                  window.location.href='categories.php';
-                                  </script>");
-                                    }
-                            }
+	$ex = mysqli_query($con, $qry);
+	if ($ex) {
+		$flash('Added Successfully.');
+	}
+	$flash('Sorry, the category could not be saved. Try again.');
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -209,7 +203,7 @@ getresult("desp_categories.php");
 
  <!-- Add Modal -->
   <div class="modal fade" id="add212" role="dialog">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -217,86 +211,46 @@ getresult("desp_categories.php");
         </div>
         <div class="modal-body">
             <div class="statusMsg"></div>
-            <form id="SubmitForm" method="post" enctype="multipart/form-data"> 
-            
-                <div class="col-md-4 form-group group">
+            <form id="SubmitForm" method="post" autocomplete="off">
+
+            <div class="col-md-12 form-group group">
+              <label class="control-label">Hindi Name:</label>
+              <input type="text" class="form-control" name="hindi_name" required>
+            </div>
+
+            <div class="col-md-12 form-group group">
+              <label class="control-label">Category URL:</label>
+              <input type="text" class="form-control" name="cat_url" required placeholder="e.g. seoni">
+              <small class="form-text text-muted">English slug only. Becomes /category/seoni. Existing news and category URLs are not changed.</small>
+            </div>
+
+            <div class="col-md-6 form-group group">
               <label class="control-label">Parent Category:</label>
-        
-               <select  class="custom-select" id="maincat" name="parent">
-                <option value="0">select</option>
+               <select class="custom-select" id="maincat" name="parent">
+                <option value="0">None</option>
             	<?php
-                
                 $query = nm_categories_result($con);
                 if ($query instanceof mysqli_result && $query->num_rows > 0) {
                     while($row = $query->fetch_assoc()){
                         echo '<option value="'.(int)$row['id'].'">'.nm_h(nm_cat_label($row)).'</option>';
                     }
-                }else{
-                    echo '<option value="0">no data available</option>';
                 }
-                
                 ?>
             </select>
             </div>
-                
-            <div class="col-md-4 form-group group">
-              <label class="control-label">Sort Order:</label>
-              <input class="form-control" type="text" name="short">
-            </div>
-                
-            <div class="col-md-4 form-group group group">
+
+            <div class="col-md-6 form-group group">
             <label class="control-label">Show In Menu</label>
-            <select class="custom-select" id="breaking" name="menu">
-                <option>No</option>
-            	<option>Yes</option>
+            <select class="custom-select" name="menu">
+                <option value="No" selected>No</option>
+            	<option value="Yes">Yes</option>
             </select>
             </div>
-			
-			<div class="col-md-4 form-group group group">
-            <label class="control-label">Show In Child</label>
-            <select class="custom-select" id="main_heading" name="main_heading">
-                <option>No</option>
-            	<option>Yes</option>
-            </select>
-            </div>
-                
-            <div class="col-md-6 form-group group">
-              <label class="control-label">English Name:</label>
-              <input  type="text" class="form-control" name="category" >
-            </div>
-                
-            <div class="col-md-6 form-group group">
-              <label class="control-label">Hindi Name:</label>
-              <input  type="text" class="form-control" name="hindi_name">
-            </div>
-                
-            <div class="col-md-3 form-group group">
-              <label class="control-label">Starting Alphabate:</label>
-              <input  type="text" class="form-control" name="latter">
-            </div>
-                
-            <div class="col-md-9 form-group group">
-              <label class="control-label">Category URL:</label>
-              <input  type="text" class="form-control" name="cat_url">
-            </div>
-                
-            
-                 
-            <div class="col-md-12 form-group group">
-              <label class="control-label">Meta Title:</label>
-              <input class="form-control" type="text" name="metat">
-            </div>
-                
-            <div class="col-md-12 form-group group">
-              <label class="control-label">Meta Description:</label>
-             <textarea class="form-control" cols="20" rows="5" name="metad"></textarea>
-            </div>
-            
-                
+
             <div class="col-md-12 form-group group">
                 <button type="submit" name="add" class="btn btn-info">Add</button>
             </div>
-           
+
         </form>
           </div>
         <div class="modal-footer">

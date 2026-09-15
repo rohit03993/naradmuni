@@ -1,6 +1,9 @@
 <?php
     include"config.php";
- 
+    if (!function_exists('nm_h')) {
+        require_once __DIR__ . '/admin_helpers.php';
+    }
+
 	if (!isset($_SESSION['aemail'])) {
 		$_SESSION['msg'] = "You must log in first";
 		header('location: ../manage.php');
@@ -25,56 +28,59 @@ $res=mysqli_query($con,"SELECT * FROM admin WHERE aemail='$productsession'");
 
 $userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
 
-$srid=$_GET['eid'];
-$qry="SELECT * FROM `categories` WHERE id='$srid'";
+$srid=(int) (isset($_GET['eid']) ? $_GET['eid'] : 0);
+$qry="SELECT * FROM `categories` WHERE id='$srid' LIMIT 1";
 $ex=mysqli_query($con,$qry);
-$rs=mysqli_fetch_array($ex);
+$rs=($ex instanceof mysqli_result) ? mysqli_fetch_array($ex) : null;
+if (!$rs) {
+	header('location: categories.php');
+	exit;
+}
 
 if(isset($_POST['update']))
-                    {     
-                            $category = mysqli_real_escape_string($con,$_POST['category']);
-                            $cat_url=mysqli_real_escape_string($con,$_POST['cat_url']);
-                            $short=mysqli_real_escape_string($con,$_POST['short']);
-                            $menu=mysqli_real_escape_string($con,$_POST['menu']);
-                            $metat = mysqli_real_escape_string($con,$_POST['metat']);
-                            $metad = mysqli_real_escape_string($con,$_POST['metad']);
-                            $hindi_name = mysqli_real_escape_string($con,$_POST['hindi_name']);
-                           /*   Linkname starts  */
-                            $replace = array(" ",",",".","'","&","-","_",":","(",")","+",";","#","!","*","{","}","[","]","?","/","\"","|","@","%","$");
-                    		$linkStr_Replace = str_replace($replace,"-",trim($cat_url));
-                    		$linkStr_Replace = str_replace("----","-",$linkStr_Replace);
-                    		$linkStr_Replace = str_replace("---","-",$linkStr_Replace);
-                    		$linkStr_Replace = str_replace("--","-",$linkStr_Replace);
-                    		$linkname =  $linkStr_Replace;
-                            $parent = mysqli_real_escape_string($con,$_POST['parent']);
-                            $latter = mysqli_real_escape_string($con,$_POST['latter']);
-                            
-                             if($parent==0){
-                                
-                                $up="UPDATE `categories` SET `short`='$short',`menu`='$menu',`maincat`='$category',`cat_url`='$linkname',`metat`='$metat',`metad`='$metad',`hindi_name`='$hindi_name' WHERE `id`='$srid'";
-                                
-                            }else{
-                                 
-                               $up="UPDATE `categories` SET `short`='$short',`menu`='$menu',`maincat`='$category',`parent`='$parent',`cat_url`='$linkname',`metat`='$metat',`metad`='$metad',`hindi_name`='$hindi_name', `latter`='$latter' WHERE `id`='$srid'";
-                                
+                    {
+                            $category = mysqli_real_escape_string($con, (string) ($_POST['category'] ?? ($rs['maincat'] ?? '')));
+                            $short=mysqli_real_escape_string($con, (string) ($_POST['short'] ?? ($rs['short'] ?? '0')));
+                            $menu = (isset($_POST['menu']) && $_POST['menu'] === 'Yes') ? 'Yes' : 'No';
+                            $metat = mysqli_real_escape_string($con, (string) ($_POST['metat'] ?? ($rs['metat'] ?? '')));
+                            $metad = mysqli_real_escape_string($con, (string) ($_POST['metad'] ?? ($rs['metad'] ?? '')));
+                            $hindi_name = mysqli_real_escape_string($con, trim((string) ($_POST['hindi_name'] ?? '')));
+                            $linkname = mysqli_real_escape_string($con, (string) ($rs['cat_url'] ?? ''));
+                            $parent = isset($_POST['parent']) ? (string) $_POST['parent'] : '0';
+                            if (!ctype_digit($parent)) {
+                                $parent = '0';
                             }
-                            
+                            $latter = mysqli_real_escape_string($con, (string) ($_POST['latter'] ?? ($rs['latter'] ?? '')));
+
+                            if ($hindi_name === '') {
+                                echo "<script language='javascript'>window.alert('Hindi name is required.'); window.location.href='edit_category.php?eid=".(int)$srid."';</script>";
+                                exit;
+                            }
+
+                            $escP = mysqli_real_escape_string($con, $parent);
+                            $up="UPDATE `categories` SET `short`='$short',`menu`='$menu',`maincat`='$category',`parent`='$escP',`cat_url`='$linkname',`metat`='$metat',`metad`='$metad',`hindi_name`='$hindi_name',`latter`='$latter' WHERE `id`='$srid' LIMIT 1";
+
                             $ex= mysqli_query($con,$up);
-                            
-                              if($ex>0) {
-                                  
+
+                              if($ex) {
+
                                    echo("<script language='javascript'>
-                                  window.alert('added Successfully') 
+                                  window.alert('Updated Successfully')
                                   window.location.href='categories.php';
                                   </script>");
-                                  
-                                  array_push($sucs, "Updated Successfuly."); }
-                              else{ array_push($errors, "Sorry, there was an error."); }
-                            
-                             
-                        
-                                
- 
+                                  exit;
+
+                              } else {
+                                   echo("<script language='javascript'>
+                                  window.alert('Sorry, there was an error.')
+                                  window.location.href='edit_category.php?eid=".(int)$srid."';
+                                  </script>");
+                                  exit;
+                              }
+
+
+
+
                             }
 ?>
 <!DOCTYPE html>
@@ -116,81 +122,84 @@ if(isset($_POST['update']))
                 <li class="breadcrumb-item"><a href="dashboard.php">Home</a> <i class="fa fa-angle-right"></i> Edit Categories</li>
             </ol>
 <div class="container-fluid page-content">
+<?php
+$curParent = isset($rs["parent"]) ? (string) $rs["parent"] : "0";
+if ($curParent === "") {
+    $curParent = "0";
+}
+$curMenu = (isset($rs["menu"]) && $rs["menu"] === "Yes") ? "Yes" : "No";
+?>
+            <form id="SubmitForm" method="post">
 
-            <form id="SubmitForm" method="post" enctype="multipart/form-data"> 
-            
-                <div class="col-md-4 form-group group">
+            <div class="col-md-12 form-group group">
+              <label class="control-label">Hindi Name:</label>
+              <input type="text" class="form-control" name="hindi_name" required value="<?php echo nm_h(isset($rs["hindi_name"]) ? $rs["hindi_name"] : ""); ?>">
+            </div>
+
+            <div class="col-md-12 form-group group">
+              <label class="control-label">Category URL:</label>
+              <input type="text" class="form-control" value="<?php echo nm_h(isset($rs["cat_url"]) ? $rs["cat_url"] : ""); ?>" readonly>
+              <small class="form-text text-muted">Locked so existing /category/ and news links stay the same.</small>
+            </div>
+
+            <div class="col-md-6 form-group group">
               <label class="control-label">Parent Category:</label>
-        
-               <select  class="custom-select" id="maincat" name="parent">
-                <option><?php echo $rs["parent"]; ?></option>
+               <select class="custom-select" id="maincat" name="parent">
+                <option value="0"<?php echo $curParent === "0" ? " selected" : ""; ?>>None</option>
             	<?php
-                
                 $query = nm_categories_result($con);
                 if ($query instanceof mysqli_result && $query->num_rows > 0) {
                     while($row = $query->fetch_assoc()){
-                        echo '<option value="'.(int)$row['id'].'">'.nm_h(nm_cat_label($row)).'</option>';
+                        if ((int)$row["id"] === $srid) {
+                            continue;
+                        }
+                        $sel = ((string)$row["id"] === $curParent) ? " selected" : "";
+                        echo '<option value="'.(int)$row['id'].'"'.$sel.'>'.nm_h(nm_cat_label($row)).'</option>';
                     }
-                }else{
-                    echo '<option value="0">no data available</option>';
                 }
-                
                 ?>
             </select>
             </div>
-                
-            <div class="col-md-4 form-group group">
-              <label class="control-label">Sort Order:</label>
-              <input class="form-control" type="text" name="short" value="<?php echo $rs["short"]; ?>">
-            </div>
-                
-            <div class="col-md-4 form-group group group">
+
+            <div class="col-md-6 form-group group">
             <label class="control-label">Show In Menu</label>
-            <select class="custom-select" id="breaking" name="menu">
-                <option><?php echo $rs["menu"]; ?></option>
-                <option>No</option>
-            	<option>Yes</option>
+            <select class="custom-select" name="menu">
+                <option value="No"<?php echo $curMenu === "No" ? " selected" : ""; ?>>No</option>
+            	<option value="Yes"<?php echo $curMenu === "Yes" ? " selected" : ""; ?>>Yes</option>
             </select>
             </div>
-                
-            <div class="col-md-3 form-group group">
-              <label class="control-label">English Name:</label>
-              <input  type="text" class="form-control" name="category" value="<?php echo nm_h(isset($rs["maincat"]) ? $rs["maincat"] : ''); ?>">
-            </div>
-                
-            <div class="col-md-3 form-group group">
-              <label class="control-label">Hindi Name:</label>
-              <input  type="text" class="form-control" name="hindi_name" value="<?php echo nm_h(isset($rs["hindi_name"]) ? $rs["hindi_name"] : ''); ?>">
-            </div>
-                
-            <div class="col-md-2 form-group group">
-              <label class="control-label">Starting Alphabate:</label>
-              <input  type="text" class="form-control" name="latter" value="<?php echo $rs["latter"]; ?>">
-            </div>
-                
+
+            <div class="col-md-12 form-group group">
+            <details>
+              <summary style="cursor:pointer;font-weight:600;margin-bottom:12px;">Advanced (existing values, rarely needed)</summary>
             <div class="col-md-4 form-group group">
-              <label class="control-label">Category URL:</label>
-              <input  type="text" class="form-control" name="cat_url" value="<?php echo $rs["cat_url"]; ?>">
+              <label class="control-label">Sort Order:</label>
+              <input class="form-control" type="text" name="short" value="<?php echo nm_h(isset($rs["short"]) ? $rs["short"] : ""); ?>">
             </div>
-                
-            
-                 
+            <div class="col-md-4 form-group group">
+              <label class="control-label">English Name:</label>
+              <input type="text" class="form-control" name="category" value="<?php echo nm_h(isset($rs["maincat"]) ? $rs["maincat"] : ""); ?>">
+            </div>
+            <div class="col-md-4 form-group group">
+              <label class="control-label">Starting Alphabate:</label>
+              <input type="text" class="form-control" name="latter" value="<?php echo nm_h(isset($rs["latter"]) ? $rs["latter"] : ""); ?>">
+            </div>
             <div class="col-md-12 form-group group">
               <label class="control-label">Meta Title:</label>
-              <input class="form-control" type="text" name="metat" value="<?php echo $rs["metat"]; ?>">
+              <input class="form-control" type="text" name="metat" value="<?php echo nm_h(isset($rs["metat"]) ? $rs["metat"] : ""); ?>">
             </div>
-                
             <div class="col-md-12 form-group group">
               <label class="control-label">Meta Description:</label>
-             <textarea class="form-control" cols="20" rows="5" name="metad"><?php echo $rs["metad"]; ?></textarea>
+             <textarea class="form-control" cols="20" rows="5" name="metad"><?php echo nm_h(isset($rs["metad"]) ? $rs["metad"] : ""); ?></textarea>
             </div>
-            
-                
+            </details>
+            </div>
+
             <div class="col-md-12 form-group group">
                 <input type="text" name="update" id="actions" class="hidden" value="update" hidden>
                 <button type="submit" name="submit" class="btn btn-info">Update</button>
             </div>
-           
+
         </form>
 </div>
 </div>			
