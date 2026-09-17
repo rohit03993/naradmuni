@@ -53,4 +53,7 @@ export type Ad = {
 export type SitePage = {
   page: string;
   page_url: string;
+  description?: string | null;
+  metat?: string | null;
+  metad?: string | null;
 };

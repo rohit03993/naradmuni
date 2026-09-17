@@ -1367,6 +1367,21 @@ article .author-box {
 .cat-h1 { font-size: 40px; margin: 8px 0 8px; }
 .cat-intro { color: var(--muted); margin: 0 0 20px; font-size: 15px; }
 
+.static-page {
+  max-width: var(--article);
+  padding-bottom: 24px;
+}
+.static-page .h1 {
+  margin: 8px 0 16px;
+}
+.static-page .crumb span {
+  color: var(--muted);
+}
+.static-page-empty {
+  color: var(--muted);
+  margin: 0;
+}
+
 .district { margin: 0 0 16px; }
 .district > button {
   background: #111;
@@ -1791,8 +1806,8 @@ article .author-box {
     margin: 0;
   }
   .cat-h1 { font-size: 24px; line-height: 1.3; }
-
   .h1 { font-size: 20px; line-height: 1.4; }
+  .static-page { padding-bottom: 8px; }
   .summary { font-size: 15px; line-height: 1.5; }
   .meta-row {
     flex-wrap: nowrap;

@@ -460,6 +460,22 @@ export async function getPages(): Promise<SitePage[]> {
   return query<SitePage>(`SELECT page, page_url FROM pages ORDER BY p_id ASC`);
 }
 
+/** CMS static page (About / Terms / Contact) — exact page_url from MySQL. */
+export async function getPageBySlug(slug: string): Promise<SitePage | null> {
+  const key = decodeURIComponent((slug || "").trim());
+  if (!key) return null;
+  const rows = await query<SitePage>(
+    `SELECT page, page_url, description, metat, metad FROM pages WHERE page_url = ? LIMIT 1`,
+    [key]
+  );
+  const row = rows[0];
+  if (!row) return null;
+  if (row.description != null) {
+    row.description = asHtmlString(row.description);
+  }
+  return row;
+}
+
 export type TopicSection = {
   cat: Category;
   items: NewsCard[];
