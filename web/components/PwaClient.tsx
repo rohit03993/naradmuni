@@ -300,6 +300,8 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
 
     const timer = window.setTimeout(() => {
       void shouldAutoShowInstall().then((ok) => {
+        // Don't stack our install card on a Google vignette — wait for Close.
+        if (location.hash.includes("google_vignette")) return;
         if (ok && !isReallyInstalled()) setShowModal(true);
       });
     }, SHOW_DELAY_MS);
