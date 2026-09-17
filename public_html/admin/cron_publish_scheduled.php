@@ -40,13 +40,13 @@ if (!$isCli) {
 }
 
 $now = date('Y-m-d H:i:s');
-// pub_date_time is stored as Y-m-d H:i — compare as datetime
+$nowTs = time();
+// Compare in PHP (IST from config.php). Do not use MySQL NOW() — the VPS clock is often UTC.
 $sql = "SELECT `newsid`, `title`, `short_description`, `image`, `newsurl`, `status`, `pub_date_time`
 	FROM `news`
 	WHERE `status` = 'Scheduled'
 	  AND `pub_date_time` IS NOT NULL
 	  AND TRIM(`pub_date_time`) != ''
-	  AND STR_TO_DATE(REPLACE(`pub_date_time`, 'T', ' '), '%Y-%m-%d %H:%i') <= NOW()
 	ORDER BY `newsid` ASC
 	LIMIT 50";
 
@@ -61,6 +61,10 @@ $pushFile = __DIR__ . '/push_news.php';
 while ($row = mysqli_fetch_assoc($q)) {
 	$id = (int) $row['newsid'];
 	if ($id <= 0) {
+		continue;
+	}
+	$when = strtotime(str_replace('T', ' ', (string) $row['pub_date_time']));
+	if ($when === false || $when > $nowTs) {
 		continue;
 	}
 	$ok = mysqli_query(

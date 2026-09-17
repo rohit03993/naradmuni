@@ -41,7 +41,7 @@ $perPage = new PerPage();
 		}
 	}
 $orderby = " ORDER BY newsid desc";
-$sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `category`, `date`, `time`, `status`, `latest_news` from news" . $queryCondition;
+$sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `category`, `date`, `time`, `status`, `latest_news`, `pub_date_time` from news" . $queryCondition;
 $paginationlink = "desp_news.php?page=";
 $pagination_setting = isset($_GET["pagination_setting"]) ? $_GET["pagination_setting"] : "";
 
@@ -121,6 +121,14 @@ $output = '';
                               <?php } ?>
                               <?php if (!empty($faq[$k]["status"]) && $faq[$k]["status"] === "Scheduled") { ?>
                                 <span class="badge badge-info" style="font-size:10px;vertical-align:middle;">Scheduled</span>
+                                <?php
+                                $goLive = isset($faq[$k]["pub_date_time"]) ? trim((string) $faq[$k]["pub_date_time"]) : "";
+                                if ($goLive !== "") {
+                                    $goTs = strtotime(str_replace("T", " ", $goLive));
+                                    $goLabel = $goTs ? date("d-m-Y h:i A", $goTs) : $goLive;
+                                    echo ' <span class="nm-muted" style="font-size:11px;">Go live: ' . htmlspecialchars($goLabel) . ' IST</span>';
+                                }
+                                ?>
                               <?php } ?>
                               </div>
                               <code class="nm-url-cell" title="<?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?>"><?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?></code>
@@ -142,7 +150,18 @@ $output = '';
                                     </form>
                             </td>
                             <td class="nm-date-cell">
-                            <?php echo htmlspecialchars($faq[$k]["date"]); ?><br><span class="nm-muted"><?php echo htmlspecialchars($faq[$k]["time"]); ?></span>
+                            <?php
+                            echo htmlspecialchars($faq[$k]["date"]);
+                            echo '<br><span class="nm-muted">' . htmlspecialchars($faq[$k]["time"]) . '</span>';
+                            if (!empty($faq[$k]["status"]) && $faq[$k]["status"] === "Scheduled") {
+                                $goLive = isset($faq[$k]["pub_date_time"]) ? trim((string) $faq[$k]["pub_date_time"]) : "";
+                                if ($goLive !== "") {
+                                    $goTs = strtotime(str_replace("T", " ", $goLive));
+                                    $goLabel = $goTs ? date("d-m-Y h:i A", $goTs) : $goLive;
+                                    echo '<br><span class="badge badge-info" style="font-size:10px;font-weight:600;">Go live ' . htmlspecialchars($goLabel) . '</span>';
+                                }
+                            }
+                            ?>
                             </td>
                              <td class="nm-actions-cell">
                                  <a class="btn btn-info" href="<?php echo $publicroot.'news/'.$faq[$k]["newsurl"]; ?>" target="_blank" title="View on public site"><i class="fas fa-eye"></i></a>
