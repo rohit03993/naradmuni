@@ -1,9 +1,25 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import AuthorBox from "@/components/AuthorBox";
 import NewsCardTile from "@/components/NewsCardTile";
 import { getNewsByAuthor, getTeam } from "@/lib/queries";
+import { listingMeta } from "@/lib/seo";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 type Props = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const team = await getTeam(Number(id));
+  if (!team) return { title: "The Naradmuni" };
+
+  const title = team.name || "The Naradmuni";
+  const description = team.designation
+    ? `${team.name} — ${team.designation}`
+    : `${team.name} की खबरें | The Naradmuni`;
+
+  return listingMeta(title, description, `${getSiteUrl()}/author/${team.t_id}`);
+}
 
 export default async function AuthorPage({ params }: Props) {
   const { id } = await params;

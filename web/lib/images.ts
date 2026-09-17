@@ -1,3 +1,5 @@
+import { getSiteUrl } from "./siteUrl";
+
 const ASSET = (process.env.NEXT_PUBLIC_ASSET_BASE || "http://localhost:8080/naradmuni").replace(/\/$/, "");
 
 export const DEFAULT_LOGO_FILE = "Logo @2x.png";
@@ -10,7 +12,7 @@ export function newsImage(file?: string | null): string | null {
 /** Small JPEG for WhatsApp/Facebook link previews (full PNG often too big). */
 export function newsShareImage(file?: string | null, siteUrl?: string): string | null {
   if (!file) return null;
-  const site = (siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "https://news.paldigital.in").replace(/\/$/, "");
+  const site = (siteUrl || getSiteUrl()).replace(/\/$/, "");
   return `${site}/api/og-image?f=${encodeURIComponent(file)}`;
 }
 

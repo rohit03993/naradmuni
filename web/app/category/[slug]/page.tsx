@@ -1,12 +1,31 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import NewsDate from "@/components/NewsDate";
 import { newsImage } from "@/lib/images";
 import { getCategoryByUrl, getChildCategories, countNewsByCategory, getNewsByCategory } from "@/lib/queries";
+import { listingMeta } from "@/lib/seo";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ page?: string }>;
 };
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const page = Math.max(1, Number((await searchParams).page || 1));
+  const cat = await getCategoryByUrl(slug);
+  if (!cat) return { title: "The Naradmuni" };
+
+  const path = `/category/${cat.cat_url}`;
+  const site = getSiteUrl();
+  const url = page > 1 ? `${site}${path}?page=${page}` : `${site}${path}`;
+  const title = (cat.metat || cat.hindi_name || "").trim() || "The Naradmuni";
+  const description =
+    (cat.metad || "").trim() || `${cat.hindi_name} की ताज़ा खबरें | The Naradmuni`;
+
+  return listingMeta(title, description, url);
+}
 
 export default async function CategoryPage({ params, searchParams }: Props) {
   const { slug } = await params;

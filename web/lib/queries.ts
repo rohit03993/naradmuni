@@ -461,6 +461,38 @@ export async function getPages(): Promise<SitePage[]> {
   return rows.filter((p) => !isAdsTxtPage(p.page_url, p.page));
 }
 
+/** Published article slugs for /sitemap.xml — exact newsurl, no invented paths. */
+export async function getSitemapNews(): Promise<{ newsurl: string; date: string | null }[]> {
+  return query<{ newsurl: string; date: string | null }>(
+    `SELECT newsurl, date
+     FROM news
+     WHERE status = ?
+       AND newsurl IS NOT NULL AND newsurl != ''
+     ORDER BY newsid DESC`,
+    [PUB]
+  );
+}
+
+/** Category slugs for /sitemap.xml — exact cat_url from MySQL. */
+export async function getSitemapCategories(): Promise<{ cat_url: string }[]> {
+  return query<{ cat_url: string }>(
+    `SELECT cat_url FROM categories
+     WHERE cat_url IS NOT NULL AND cat_url != ''
+     ORDER BY short ASC, id ASC`
+  );
+}
+
+/** Author pages that already have Published news. */
+export async function getSitemapAuthorIds(): Promise<{ t_id: number }[]> {
+  return query<{ t_id: number }>(
+    `SELECT DISTINCT t.t_id
+     FROM team t
+     INNER JOIN news n ON n.team_id = t.t_id AND n.status = ?
+     ORDER BY t.t_id ASC`,
+    [PUB]
+  );
+}
+
 /** CMS “pages” row that is actually ads.txt content — not a public article. */
 export function isAdsTxtPage(url = "", title = ""): boolean {
   const s = `${url} ${title}`.toLowerCase().replace(/_/g, "-");

@@ -39,6 +39,8 @@ const nextConfig: NextConfig = {
       { source: "/admin/:path*", destination: "/naradmuni/admin/:path*", permanent: false },
       { source: "/login", destination: "/naradmuni/manage.php", permanent: false },
       { source: "/manage.php", destination: "/naradmuni/manage.php", permanent: false },
+      { source: "/sitemap.php", destination: "/sitemap.xml", permanent: true },
+      { source: "/news-sitemap.php", destination: "/sitemap.xml", permanent: true },
     ];
   },
   async rewrites() {

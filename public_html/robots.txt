@@ -1,2 +1,8 @@
 User-agent: *
-https://www.thenaradmuni.com/sitemap.xml
+Allow: /
+Disallow: /naradmuni/
+Disallow: /admin
+Disallow: /login
+Disallow: /manage.php
+
+Sitemap: https://www.thenaradmuni.com/sitemap.xml
