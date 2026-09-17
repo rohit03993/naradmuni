@@ -234,11 +234,15 @@ function changePagination(option) {
 	}
 }
 
-$(document).on('click', '.delete', function (e) {
+$(document).on('click', '.nm-news-delete', function (e) {
   e.preventDefault();
+  e.stopPropagation();
   var $btn = $(this);
-  var id = $btn.attr("id");
-  if (!id) return false;
+  var id = $btn.attr("data-newsid") || $btn.data("newsid");
+  if (!id) {
+    alert("Delete failed: missing article id.");
+    return false;
+  }
   if (!confirm("Delete this news and its photo from the server? This cannot be undone.")) {
     return false;
   }
