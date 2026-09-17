@@ -99,17 +99,17 @@ function nm_dash_count(mysqli $con, string $sql): int {
 
         <div class="nm-dash-grid">
             <?php if ($nmIsAdmin) { ?>
-            <a class="nm-stat nm-stat--focus" style="--nm-stat-accent:#1565c0" href="news.php">
+            <a class="nm-stat nm-stat--focus" style="--nm-stat-accent:#1565c0" href="news.php?status=Published">
                 <i class="dash-icon fas fa-check-circle"></i>
                 <h3>Published</h3>
                 <h4><?php echo number_format(nm_dash_count($con, "SELECT COUNT(*) AS c FROM news WHERE status='Published'")); ?></h4>
             </a>
-            <a class="nm-stat" style="--nm-stat-accent:#0b6bcb" href="news.php">
+            <a class="nm-stat" style="--nm-stat-accent:#0b6bcb" href="news.php?status=Scheduled">
                 <i class="dash-icon fas fa-clock"></i>
                 <h3>Scheduled</h3>
                 <h4><?php echo number_format(nm_dash_count($con, "SELECT COUNT(*) AS c FROM news WHERE status='Scheduled'")); ?></h4>
             </a>
-            <a class="nm-stat" style="--nm-stat-accent:#9a6700" href="news.php">
+            <a class="nm-stat" style="--nm-stat-accent:#9a6700" href="news.php?status=Unpublished">
                 <i class="dash-icon fas fa-eye-slash"></i>
                 <h3>Unpublished</h3>
                 <h4><?php echo number_format(nm_dash_count($con, "SELECT COUNT(*) AS c FROM news WHERE status='Unpublished'")); ?></h4>

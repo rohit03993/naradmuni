@@ -4,6 +4,7 @@ import Footer from "./Footer";
 import CitiesRail from "./CitiesRail";
 import PwaClient from "./PwaClient";
 import InstallAppButton from "./InstallAppButton";
+import type { SocialLinks } from "@/lib/branding";
 import type { Ad, Category, SitePage } from "@/lib/types";
 import { logoSrc } from "@/lib/images";
 
@@ -15,6 +16,7 @@ export default function SiteShell({
   dbError,
   logoUrl,
   iconUrl = "/icons/nm-192.png",
+  social,
 }: {
   children: React.ReactNode;
   nav: Category[];
@@ -24,6 +26,7 @@ export default function SiteShell({
   dbError?: string;
   logoUrl?: string;
   iconUrl?: string;
+  social?: SocialLinks;
 }) {
   const logo = logoUrl || logoSrc();
   return (
@@ -56,7 +59,7 @@ export default function SiteShell({
           <CitiesRail cities={cities} />
         </aside>
       </div>
-      <Footer pages={pages} logoUrl={logo} />
+      <Footer pages={pages} logoUrl={logo} social={social} />
       <PwaClient iconUrl={iconUrl} />
     </>
   );

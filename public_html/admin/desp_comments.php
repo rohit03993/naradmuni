@@ -34,7 +34,7 @@ $perPage = new PerPage();
 		}
 	}
 $orderby = " ORDER BY comments.c_id desc";
-$sql = "SELECT comments.*,news.title FROM comments INNER JOIN news ON comments.newsid=news.newsid" . $queryCondition;
+$sql = "SELECT comments.*, news.title FROM comments LEFT JOIN news ON comments.newsid=news.newsid" . $queryCondition;
 $paginationlink = "desp_comments.php?page=";
 $pagination_setting = isset($_GET["pagination_setting"]) ? $_GET["pagination_setting"] : "";
 
@@ -83,7 +83,7 @@ if($pagination_setting == "prev-next") {
                             ?>
                             <tr>
 							<td><?php echo $i++; ?></td>
-                            <td><div class="nm-title-cell" title="<?php echo htmlspecialchars($faq[$k]["title"]); ?>"><?php echo htmlspecialchars($faq[$k]["title"]); ?></div></td>
+                            <td><div class="nm-title-cell" title="<?php echo htmlspecialchars((string) (!empty($faq[$k]["title"]) ? $faq[$k]["title"] : "Deleted article")); ?>"><?php echo htmlspecialchars((string) (!empty($faq[$k]["title"]) ? $faq[$k]["title"] : "Deleted article")); ?></div></td>
                             <td><?php echo htmlspecialchars($faq[$k]["name"]); ?></td>
                             <td><span class="nm-email-cell"><?php echo htmlspecialchars($faq[$k]["u_id"]); ?></span></td>
                             <td><div class="nm-comment-cell"><?php echo htmlspecialchars($faq[$k]["comment"]); ?></div></td>
@@ -108,6 +108,9 @@ if($pagination_setting == "prev-next") {
                         </table>
                         </div>
                         <?php
+                        $shown = count($faq);
+                        $total = (int) $_GET["rowcount"];
+                        echo '<p class="nm-muted" style="margin:10px 0 0;">Showing ' . (int) $shown . ' of ' . number_format($total) . ' comments</p>';
                         if(!empty($perpageresult)) {
                           echo '<div id="pagination">' . $perpageresult . '</div>';
                         }
@@ -118,6 +121,7 @@ if($pagination_setting == "prev-next") {
            responsive: false,
            "bPaginate": false,
             "searching": false,
+            "info": false,
             "autoWidth": false,
             "scrollX": false,
             "ordering": false

@@ -457,7 +457,14 @@ export async function getAd(position = 3): Promise<Ad | null> {
 }
 
 export async function getPages(): Promise<SitePage[]> {
-  return query<SitePage>(`SELECT page, page_url FROM pages ORDER BY p_id ASC`);
+  const rows = await query<SitePage>(`SELECT page, page_url FROM pages ORDER BY p_id ASC`);
+  return rows.filter((p) => !isAdsTxtPage(p.page_url, p.page));
+}
+
+/** CMS “pages” row that is actually ads.txt content — not a public article. */
+export function isAdsTxtPage(url = "", title = ""): boolean {
+  const s = `${url} ${title}`.toLowerCase().replace(/_/g, "-");
+  return /ads[\s.-]*txt/.test(s);
 }
 
 /** CMS static page (About / Terms / Contact) — exact page_url from MySQL. */

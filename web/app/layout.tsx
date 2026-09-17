@@ -70,6 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           dbError={chrome.dbError}
           logoUrl={branding.logoUrl}
           iconUrl={branding.iconUrl}
+          social={branding.social}
         >
           {children}
         </SiteShell>

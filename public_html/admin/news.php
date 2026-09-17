@@ -31,6 +31,10 @@ if (!function_exists('nm_cms_identity')) {
 $nmMe = nm_cms_identity($con, $userRow);
 $nmIsAdmin = !empty($nmMe['is_admin']);
 $nmAuthorFilter = isset($_GET['author']) ? trim((string) $_GET['author']) : '';
+$nmStatusFilter = isset($_GET['status']) ? trim((string) $_GET['status']) : '';
+if (!in_array($nmStatusFilter, array('Published', 'Scheduled', 'Unpublished'), true)) {
+    $nmStatusFilter = '';
+}
 
 if(isset($_POST['add']))
                     {       
@@ -121,6 +125,9 @@ if(isset($_POST['add']))
         $tabOthers = $nmAuthorFilter === 'others';
         $tabId = ($nmAuthorFilter !== '' && ctype_digit($nmAuthorFilter));
         ?>
+        <?php if ($nmStatusFilter !== '') { ?>
+        <p class="text-muted" style="margin:0 0 10px;">Showing <strong><?php echo htmlspecialchars($nmStatusFilter); ?></strong> only. <a href="news.php<?php echo $nmAuthorFilter !== '' ? ('?author=' . rawurlencode($nmAuthorFilter)) : ''; ?>">Clear status</a></p>
+        <?php } ?>
         <?php if ($nmIsAdmin) { ?>
         <div class="nm-news-tabs">
           <a class="<?php echo $tabAll ? 'is-on' : ''; ?>" href="news.php">All news</a>
@@ -242,7 +249,8 @@ function getresult(url) {
                 "search[latest_news]":$("#latest_news").val(),
                 "search[slider]":$("#slider").val(),
                 "search[category]":$("#category").val(),
-                "author": <?php echo json_encode($nmAuthorFilter); ?>},
+                "author": <?php echo json_encode($nmAuthorFilter); ?>,
+                "status": <?php echo json_encode($nmStatusFilter); ?>},
 		beforeSend: function(){$("#overlay").show();},
 		success: function(data){
 		$("#pagination-result").html(data);

@@ -72,6 +72,27 @@ function nm_brand_upload($field, $prefix, $allowed, $logoDir, &$err) {
 	return $filename;
 }
 
+function nm_clean_social_url($raw) {
+	$u = trim((string) $raw);
+	if ($u === "") {
+		return "";
+	}
+	if (!preg_match('#^https?://#i', $u)) {
+		$u = "https://" . ltrim($u, "/");
+	}
+	if (!preg_match('#^https?://[^\s<>]+$#i', $u)) {
+		return "";
+	}
+	return $u;
+}
+
+$SOCIAL_DEFAULTS = array(
+	"social_facebook" => "https://www.facebook.com/The-Naradmuni-100115665387257",
+	"social_x" => "https://twitter.com/the_naradmuni",
+	"social_youtube" => "https://www.youtube.com/channel/UCFk1xW3Qt_THywQF-rtO9LQ",
+	"social_whatsapp" => "https://api.whatsapp.com/send?phone=+917415716541&text=" . rawurlencode("व्हाट्सप्प पर खबरें भेजें"),
+);
+
 if (isset($_POST["reset_branding"])) {
 	$ok = nm_setting_set($con, "brand_logo", "") && nm_setting_set($con, "brand_favicon", "");
 	$msg = $ok ? "Reset to default logo and favicon." : "Could not reset settings.";
@@ -99,11 +120,39 @@ if (isset($_POST["save_branding"])) {
 	}
 }
 
+if (isset($_POST["save_social"])) {
+	$ok = true;
+	foreach (array("social_facebook", "social_x", "social_youtube", "social_whatsapp") as $k) {
+		$ok = $ok && nm_setting_set($con, $k, nm_clean_social_url(isset($_POST[$k]) ? $_POST[$k] : ""));
+	}
+	if ($ok) {
+		$msg = "Social links saved. Footer icons update within about 1 minute (or after Next restart).";
+	} else {
+		$err = "Could not save social links. Check DB permissions.";
+	}
+}
+
 $brandLogo = nm_setting_get($con, "brand_logo", "");
 $brandFavicon = nm_setting_get($con, "brand_favicon", "");
 $activeLogo = $brandLogo !== "" ? $brandLogo : $DEFAULT_LOGO;
 $logoPreview = "../images/logo/" . rawurlencode($activeLogo);
 $favPreview = $brandFavicon !== "" ? ("../images/logo/" . rawurlencode($brandFavicon)) : "";
+$socialFacebook = nm_setting_get($con, "social_facebook", $SOCIAL_DEFAULTS["social_facebook"]);
+$socialX = nm_setting_get($con, "social_x", $SOCIAL_DEFAULTS["social_x"]);
+$socialYoutube = nm_setting_get($con, "social_youtube", $SOCIAL_DEFAULTS["social_youtube"]);
+$socialWhatsapp = nm_setting_get($con, "social_whatsapp", $SOCIAL_DEFAULTS["social_whatsapp"]);
+if ($socialFacebook === "") {
+	$socialFacebook = $SOCIAL_DEFAULTS["social_facebook"];
+}
+if ($socialX === "") {
+	$socialX = $SOCIAL_DEFAULTS["social_x"];
+}
+if ($socialYoutube === "") {
+	$socialYoutube = $SOCIAL_DEFAULTS["social_youtube"];
+}
+if ($socialWhatsapp === "") {
+	$socialWhatsapp = $SOCIAL_DEFAULTS["social_whatsapp"];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -178,6 +227,29 @@ $favPreview = $brandFavicon !== "" ? ("../images/logo/" . rawurlencode($brandFav
           <button type="submit" name="save_branding" value="1" class="btn btn-danger">Save branding</button>
           <button type="submit" name="reset_branding" value="1" class="btn btn-outline-secondary" data-nm-confirm="Reset to default logo and favicon?">Reset defaults</button>
         </div>
+      </form>
+
+      <form method="post" class="card" style="padding:20px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;margin-top:16px;">
+        <h3 style="margin-top:0;font-size:16px;">Social links</h3>
+        <p class="text-muted" style="margin-top:0;">These URLs sit behind the footer icons (Facebook, X, YouTube, WhatsApp). Leave a field as-is to keep the current handle.</p>
+        <div class="form-group">
+          <label for="social_facebook">Facebook URL</label>
+          <input class="form-control" id="social_facebook" name="social_facebook" type="url" value="<?php echo htmlspecialchars($socialFacebook); ?>">
+        </div>
+        <div class="form-group">
+          <label for="social_x">X (Twitter) URL</label>
+          <input class="form-control" id="social_x" name="social_x" type="url" value="<?php echo htmlspecialchars($socialX); ?>">
+        </div>
+        <div class="form-group">
+          <label for="social_youtube">YouTube URL</label>
+          <input class="form-control" id="social_youtube" name="social_youtube" type="url" value="<?php echo htmlspecialchars($socialYoutube); ?>">
+        </div>
+        <div class="form-group">
+          <label for="social_whatsapp">WhatsApp URL</label>
+          <input class="form-control" id="social_whatsapp" name="social_whatsapp" type="url" value="<?php echo htmlspecialchars($socialWhatsapp); ?>">
+          <small class="form-text text-muted">Use a <code>https://wa.me/...</code> or WhatsApp group/chat link.</small>
+        </div>
+        <button type="submit" name="save_social" value="1" class="btn btn-danger">Save social links</button>
       </form>
 
       <div class="alert alert-info" style="margin-top:16px;">

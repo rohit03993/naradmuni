@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { asHtmlString, plainText, sanitizeArticleHtml } from "@/lib/html";
-import { getPageBySlug } from "@/lib/queries";
+import { getPageBySlug, isAdsTxtPage } from "@/lib/queries";
 import { getSiteUrl } from "@/lib/siteUrl";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  if (isAdsTxtPage(slug)) {
+    return { title: "The Naradmuni" };
+  }
   const page = await getPageBySlug(slug);
   if (!page) return { title: "The Naradmuni" };
 
@@ -39,6 +42,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CmsPage({ params }: Props) {
   const { slug } = await params;
+  if (isAdsTxtPage(slug)) {
+    redirect("/app-ads.txt");
+  }
   const page = await getPageBySlug(slug);
   if (!page) notFound();
 

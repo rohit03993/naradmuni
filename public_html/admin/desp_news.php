@@ -44,6 +44,10 @@ $perPage = new PerPage();
 		}
 	}
 nm_sql_and($queryCondition, nm_news_scope_clause($con));
+$nmStatus = isset($_GET['status']) ? trim((string) $_GET['status']) : '';
+if (in_array($nmStatus, array('Published', 'Scheduled', 'Unpublished'), true)) {
+	nm_sql_and($queryCondition, "`status`='" . mysqli_real_escape_string($con, $nmStatus) . "'");
+}
 $orderby = " ORDER BY newsid desc";
 $sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `category`, `date`, `time`, `status`, `latest_news`, `pub_date_time`, `team_id` from news" . $queryCondition;
 $paginationlink = "desp_news.php?page=";
