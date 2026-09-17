@@ -89,16 +89,19 @@ if ($q33 instanceof mysqli_result) {
     }
 }
 
+if (!isset($errors) || !is_array($errors)) {
+    $errors = array();
+}
+
 if (isset($_POST['update'])) {
-    // Same pattern as add_news.php — optional Video fields may be absent
-    $post = function ($key, $default = '') use ($con) {
-        return mysqli_real_escape_string($con, isset($_POST[$key]) ? $_POST[$key] : $default);
+    $keep = function ($key, $default = '') use ($rs, $con) {
+        $v = isset($rs[$key]) ? (string) $rs[$key] : $default;
+        return mysqli_real_escape_string($con, $v);
     };
 
-    $title = $post('title');
+    $title = mysqli_real_escape_string($con, isset($_POST['title']) ? (string) $_POST['title'] : '');
     $latest_news = (isset($_POST['latest_news']) && $_POST['latest_news'] === 'Yes') ? 'Yes' : 'No';
     $latest_news = mysqli_real_escape_string($con, $latest_news);
-    // Raw description before escape — never wipe a real body with an empty CKEditor shell
     $descriptionRaw = isset($_POST['description']) ? (string) $_POST['description'] : '';
     $existingDesc = isset($rs['description']) ? (string) $rs['description'] : '';
     $postedHasText = trim(strip_tags(str_replace('&nbsp;', ' ', $descriptionRaw))) !== '';
@@ -110,33 +113,29 @@ if (isset($_POST['update'])) {
         $descriptionRaw = nm_clean_description_html($descriptionRaw);
     }
     $description = mysqli_real_escape_string($con, $descriptionRaw);
-    $newsurl = $post('newsurl');
-    $metat = $post('metat');
-    $metad = $post('metad');
-    $slider = $post('slider', 'No');
-    $slider_priority = $post('slider_priority', '0');
-    $latest_priority = $post('latest_priority', '0');
-    $category = $post('category');
-    $team_id = $post('team_id', '0');
+    $category = mysqli_real_escape_string($con, isset($_POST['category']) ? (string) $_POST['category'] : '');
+    $team_id = mysqli_real_escape_string($con, isset($_POST['team_id']) ? (string) $_POST['team_id'] : '0');
     if (($team_id === '' || $team_id === '0') && $nmLinkedTeamId > 0) {
         $team_id = (string) $nmLinkedTeamId;
     }
-    $hashtags = $post('hashtags');
-    $short_description = $post('short_description');
-    $img_source = $post('img_source');
-    $img_abt = $post('img_abt');
-    $pub_date_time = isset($_POST['pub_date_time']) ? trim((string) $_POST['pub_date_time']) : '';
-    $existingPub = isset($rs['pub_date_time']) ? (string) $rs['pub_date_time'] : '';
-    $sched = nm_resolve_publish_schedule($_POST, $pub_date_time !== '' ? $pub_date_time : $existingPub);
-    if ($sched['error']) {
-        array_push($errors, $sched['error']);
-    }
-    $status = mysqli_real_escape_string($con, $sched['status']);
-    $pub_date_time = mysqli_real_escape_string($con, $sched['pub_date_time']);
-    $show_home = $post('show_home', isset($rs['show_home']) ? $rs['show_home'] : 'No');
-    $newstype = $post('newstype', isset($rs['newstype']) ? $rs['newstype'] : 'Content');
-    $v_link = $post('videolink');
 
+    // Hidden Add-News leftovers: keep stored values so a lean form cannot blank them.
+    $linkname = $keep('newsurl');
+    $foldername = $keep('folder');
+    $link = $keep('seolink');
+    $metat = $keep('metat');
+    $metad = $keep('metad');
+    $short_description = $keep('short_description');
+    $hashtags = $keep('hashtags');
+    $img_abt = $keep('img_abt');
+    $img_source = $keep('img_source');
+    $slider = $keep('slider', 'No');
+    $slider_priority = $keep('slider_priority', '0');
+    $latest_priority = $keep('latest_priority', '0');
+    $show_home = $keep('show_home', 'No');
+    $newstype = $keep('newstype', 'Content');
+    $video_id = $keep('videoid');
+    $name = $keep('video_file');
     if ($short_description === '' && $title !== '') {
         $short_description = $title;
     }
@@ -147,32 +146,16 @@ if (isset($_POST['update'])) {
         $metad = $title;
     }
 
-    $video_id = isset($rs['videoid']) ? $rs['videoid'] : '';
-    if ($v_link !== '') {
-        $video_parts = explode('?v=', $v_link);
-        if (empty($video_parts[1])) {
-            $video_parts = explode('/v/', $v_link);
-        }
-        if (empty($video_parts[1])) {
-            $video_parts = explode('youtu.be/', $v_link);
-        }
-        if (!empty($video_parts[1])) {
-            $video_parts = explode('&', $video_parts[1]);
-            $video_id = $video_parts[0];
-        }
+    $pub_date_time = isset($_POST['pub_date_time']) ? trim((string) $_POST['pub_date_time']) : '';
+    $existingPub = isset($rs['pub_date_time']) ? (string) $rs['pub_date_time'] : '';
+    $sched = nm_resolve_publish_schedule($_POST, $pub_date_time !== '' ? $pub_date_time : $existingPub);
+    if ($sched['error']) {
+        array_push($errors, $sched['error']);
     }
+    $status = mysqli_real_escape_string($con, $sched['status']);
+    $pub_date_time = mysqli_real_escape_string($con, $sched['pub_date_time']);
 
-    $name = isset($rs['video_file']) ? $rs['video_file'] : '';
-    if (!empty($_FILES['video_file']['name']) && !empty($_FILES['video_file']['tmp_name'])) {
-        $name = $_FILES['video_file']['name'];
-        $target_dir = __DIR__ . '/../videos/';
-        if (!is_dir($target_dir)) {
-            @mkdir($target_dir, 0755, true);
-        }
-        move_uploaded_file($_FILES['video_file']['tmp_name'], $target_dir . $name);
-    }
-
-    $post_image = isset($rs['image']) ? $rs['image'] : '';
+    $post_image = $keep('image');
     if (!empty($_FILES['image']['tmp_name'])) {
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
         $post_image = md5(uniqid() . rand()) . '.' . $ext;
@@ -183,22 +166,11 @@ if (isset($_POST['update'])) {
         move_uploaded_file($_FILES['image']['tmp_name'], $news_img_dir . $post_image);
     }
 
-    $replace = array(' ', ',', '.', "'", '&', '-', '_', ':', '(', ')', '+', ';', '#', '!', '*', '{', '}', '[', ']', '?', '/', '"', '|', '@', '%', '$');
-    $linkname = str_replace($replace, '-', trim($newsurl));
-    $linkname = str_replace(array('----', '---', '--'), '-', $linkname);
-    $folderStr = str_replace($replace, '-', trim($category));
-    $folderStr = str_replace(array('----', '---', '--'), '-', $folderStr);
-    $foldername = $folderStr . '/';
-    $link = $foldername . $linkname . '/';
-
     if ($title === '') {
         array_push($errors, 'Kindly fill news title');
     }
-    if ($newsurl === '') {
-        array_push($errors, 'Kindly fill news url');
-    }
-    if ($metat === '') {
-        array_push($errors, 'Kindly fill meta title');
+    if ($linkname === '') {
+        array_push($errors, 'News URL is missing on this article.');
     }
     if ($category === '' || $category === '0') {
         array_push($errors, 'Kindly fill category');
@@ -208,23 +180,10 @@ if (isset($_POST['update'])) {
     }
 
     if (count($errors) == 0) {
-        if ($slider_priority !== '' && isset($rs['slider_priority']) && $slider_priority !== (string) $rs['slider_priority']) {
-            $pri = mysqli_query($con, "SELECT `slider_priority`,`newsid` FROM `news` WHERE `slider`='Yes' AND `slider_priority` >= '$slider_priority' ORDER BY `slider_priority` ASC");
-            if ($pri instanceof mysqli_result) {
-                while ($pr = mysqli_fetch_array($pri)) {
-                    $new_slider_priority = $pr['slider_priority'] + 1;
-                    mysqli_query($con, "UPDATE `news` SET `slider_priority`='$new_slider_priority' WHERE `newsid`='" . $pr['newsid'] . "'");
-                }
-            }
-        }
-
-        mysqli_query($con, "UPDATE `news` SET `latest_priority`='0' WHERE `latest_priority`='$latest_priority'");
-
-        $up = "UPDATE `news` SET `newsurl`='$linkname',`latest_news`='$latest_news',`folder`='$foldername',`seolink`='$link',`metat`='$metat',`metad`='$metad',`slider`='$slider',`title`='$title',`short_description`='$short_description',`description`='$description',`image`='$post_image',`img_abt`='$img_abt',`img_source`='$img_source',`newstype`='$newstype',`category`='$category',`video_file`='$name',`videoid`='$video_id', `show_home`='$show_home', `slider_priority`='$slider_priority', `latest_priority`='$latest_priority', `team_id`='$team_id', `hashtags`='$hashtags', `pub_date_time`='$pub_date_time', `status`='$status' WHERE newsid='$srid'";
+        $up = "UPDATE `news` SET `latest_news`='$latest_news',`metat`='$metat',`metad`='$metad',`slider`='$slider',`title`='$title',`short_description`='$short_description',`description`='$description',`image`='$post_image',`img_abt`='$img_abt',`img_source`='$img_source',`newstype`='$newstype',`category`='$category',`video_file`='$name',`videoid`='$video_id', `show_home`='$show_home', `slider_priority`='$slider_priority', `latest_priority`='$latest_priority', `team_id`='$team_id', `hashtags`='$hashtags', `pub_date_time`='$pub_date_time', `status`='$status' WHERE newsid='$srid'";
         $exUp = mysqli_query($con, $up);
 
         if ($exUp) {
-            // If moved to Published from Scheduled/Unpublished, send push (same as status AJAX)
             $oldStatus = isset($rs['status']) ? (string) $rs['status'] : '';
             if ($sched['status'] === 'Published' && $oldStatus !== 'Published') {
                 include_once __DIR__ . '/push_news.php';
@@ -232,35 +191,27 @@ if (isset($_POST['update'])) {
                     naradmuni_send_news_push($con, $title, $short_description, $post_image, $linkname);
                 }
             }
-            mysqli_query($con, "DELETE FROM `news_cat` WHERE `news_id`='$srid'");
-            if (!empty($_POST['cat_id']) && is_array($_POST['cat_id'])) {
-                foreach ($_POST['cat_id'] as $cid) {
-                    $cid = trim((string) $cid);
-                    if ($cid === '') {
-                        continue;
-                    }
-                    $cat_id = mysqli_real_escape_string($con, $cid);
-                    mysqli_query($con, "INSERT INTO `news_cat`(`category`, `news_id`) VALUES('$cat_id','$srid')");
+            if ($category !== '' && $category !== '0') {
+                $hasHome = mysqli_query($con, "SELECT news_id FROM `news_cat` WHERE `news_id`='$srid' AND `category`='$category' LIMIT 1");
+                if (!($hasHome instanceof mysqli_result) || !mysqli_fetch_assoc($hasHome)) {
+                    mysqli_query($con, "INSERT INTO `news_cat`(`category`, `news_id`) VALUES('$category','$srid')");
                 }
-            } elseif ($category !== '' && $category !== '0') {
-                // Keep home category mirrored if no checkboxes posted
-                mysqli_query($con, "INSERT INTO `news_cat`(`category`, `news_id`) VALUES('$category','$srid')");
             }
 
-            nm_js_notice('Updated successfully', 'news.php');
+            $okMsg = ($sched['status'] === 'Scheduled') ? 'Scheduled successfully' : 'Updated successfully';
+            nm_js_notice($okMsg, 'news.php');
             exit;
         }
         array_push($errors, 'Sorry, there was an error: ' . mysqli_error($con));
     }
 
-    // Refresh $rs after failed post so form still shows submitted values
     $rs['title'] = isset($_POST['title']) ? $_POST['title'] : $rs['title'];
-    $rs['newsurl'] = isset($_POST['newsurl']) ? $_POST['newsurl'] : $rs['newsurl'];
-    $rs['metat'] = isset($_POST['metat']) ? $_POST['metat'] : $rs['metat'];
-    $rs['metad'] = isset($_POST['metad']) ? $_POST['metad'] : $rs['metad'];
-    $rs['hashtags'] = isset($_POST['hashtags']) ? $_POST['hashtags'] : (isset($rs['hashtags']) ? $rs['hashtags'] : '');
-    $rs['short_description'] = isset($_POST['short_description']) ? $_POST['short_description'] : (isset($rs['short_description']) ? $rs['short_description'] : '');
-    $rs['description'] = isset($_POST['description']) ? $_POST['description'] : $rs['description'];
+    $rs['description'] = $postedHasText ? $descriptionRaw : $rs['description'];
+    $rs['category'] = isset($_POST['category']) ? $_POST['category'] : $rs['category'];
+    $rs['team_id'] = isset($_POST['team_id']) ? $_POST['team_id'] : $rs['team_id'];
+    $rs['latest_news'] = $latest_news === 'Yes' ? 'Yes' : 'No';
+    $teamId = isset($rs['team_id']) ? (string) $rs['team_id'] : $teamId;
+    $catIdHome = isset($rs['category']) ? (string) $rs['category'] : $catIdHome;
 }
 ?>
 <!DOCTYPE html>
@@ -289,217 +240,136 @@ if (isset($_POST['update'])) {
       <?php include 'errors.php'; ?>
       <?php include 'sucsess.php'; ?>
 
-      <form id="SubmitForm" method="post" enctype="multipart/form-data">
-        <div class="col-md-12 form-group">
-          <p><b>Select Categories:</b></p>
-          <?php
-          $query = $con->query("SELECT id, hindi_name, maincat, cat_url FROM `categories` WHERE `cat_url` IS NOT NULL AND `cat_url` != '' ORDER BY id ASC");
-          if (!$query) {
-              $query = $con->query("SELECT id, hindi_name, cat_url FROM `categories` WHERE `cat_url` IS NOT NULL AND `cat_url` != '' ORDER BY id ASC");
-          }
-          if (!$query) {
-              $query = $con->query("SELECT id, maincat, cat_url FROM `categories` WHERE `cat_url` IS NOT NULL AND `cat_url` != '' ORDER BY id ASC");
-          }
-          if ($query && $query->num_rows > 0) {
-              while ($row1 = $query->fetch_assoc()) {
-                  $id = (int) $row1['id'];
-                  $checked = '';
-                  $ex4 = mysqli_query($con, "SELECT category FROM `news_cat` WHERE `category`='$id' AND `news_id`='" . mysqli_real_escape_string($con, $srid) . "' LIMIT 1");
-                  if ($ex4 instanceof mysqli_result && mysqli_fetch_assoc($ex4)) {
-                      $checked = 'checked';
-                  }
-                  echo '<label style="margin-right:10px;" class="checkbox-inline"><input type="checkbox" name="cat_id[]" value="' . $id . '" ' . $checked . '> ' . nm_h(nm_cat_label($row1)) . '</label>';
-              }
-          }
-          ?>
-        </div>
-
-        <div class="col-md-2 form-group">
-          <label class="control-label">News Type</label>
-          <select class="custom-select" id="newstype" name="newstype">
-            <option><?php echo nm_h(isset($rs['newstype']) ? $rs['newstype'] : 'Content'); ?></option>
-            <option>Content</option>
-            <option>Video</option>
-          </select>
-        </div>
-
-        <div class="col-md-3 form-group">
-          <label class="control-label">Home Category:</label>
-          <select class="custom-select" id="category" name="category">
-            <option value="<?php echo nm_h($catIdHome); ?>"><?php echo nm_h($catLabel !== '' ? $catLabel : $catIdHome); ?></option>
-            <?php
-            $query = $con->query("SELECT id, hindi_name, maincat FROM `categories` ORDER BY id ASC");
-            if (!$query) {
-                $query = $con->query("SELECT id, hindi_name FROM `categories` ORDER BY id ASC");
-            }
-            if (!$query) {
-                $query = $con->query("SELECT id, maincat FROM `categories` ORDER BY id ASC");
-            }
-            if ($query && $query->num_rows > 0) {
-                while ($row = $query->fetch_assoc()) {
-                    echo '<option value="' . (int) $row['id'] . '">' . nm_h(nm_cat_label($row)) . '</option>';
-                }
-            }
-            ?>
-          </select>
-        </div>
-
-        <div class="col-md-2 form-group">
-          <label class="control-label">Show In Slider</label>
-          <select class="custom-select" id="slider" name="slider">
-            <option><?php echo nm_h(isset($rs['slider']) ? $rs['slider'] : 'No'); ?></option>
-            <option>No</option>
-            <option>Yes</option>
-          </select>
-        </div>
-
-        <div class="col-md-2 form-group">
-          <label class="control-label">Slider Priority:</label>
-          <input class="form-control" type="number" name="slider_priority" value="<?php echo nm_h(isset($rs['slider_priority']) ? $rs['slider_priority'] : '0'); ?>">
-        </div>
-
-        <div class="col-md-3 form-group">
-          <label class="control-label">When to publish</label>
-          <?php
-          $curStatus = isset($rs['status']) ? (string) $rs['status'] : 'Published';
-          $isScheduled = ($curStatus === 'Scheduled');
-          $pubVal = isset($rs['pub_date_time']) ? (string) $rs['pub_date_time'] : '';
-          $pubLocal = '';
-          if ($pubVal !== '') {
-              $pts = strtotime(str_replace('T', ' ', $pubVal));
-              if ($pts) {
-                  $pubLocal = date('Y-m-d\TH:i', $pts);
-              }
-          }
-          ?>
-          <div style="padding-top:6px;">
-            <label class="checkbox-inline" style="font-weight:600;margin-right:12px;">
-              <input type="radio" name="publish_mode" value="now" <?php echo $isScheduled ? '' : 'checked'; ?>> Publish now
-            </label>
-            <label class="checkbox-inline" style="font-weight:600;">
-              <input type="radio" name="publish_mode" value="schedule" id="nm-publish-schedule" <?php echo $isScheduled ? 'checked' : ''; ?>> Schedule
-            </label>
-          </div>
-          <div id="nm-schedule-wrap" style="<?php echo $isScheduled ? '' : 'display:none;'; ?>margin-top:8px;">
-            <label class="control-label" for="pub_date_time">Go live at (IST)</label>
-            <input class="form-control" id="pub_date_time" type="datetime-local" name="pub_date_time" value="<?php echo nm_h($pubLocal); ?>">
-            <p class="nm-form-hint" style="margin:6px 0 0;">Hidden until this time, then auto-published.</p>
-          </div>
-        </div>
-
-        <div class="col-md-4 form-group">
-          <label class="control-label">Breaking news</label>
-          <div style="padding-top:6px;">
-            <label class="checkbox-inline" style="font-weight:600;">
-              <input type="checkbox" name="latest_news" value="Yes" <?php echo (!empty($rs['latest_news']) && $rs['latest_news'] === 'Yes') ? 'checked' : ''; ?>>
-              Show in homepage top list (latest 5)
-            </label>
-            <p class="nm-form-hint" style="margin:6px 0 0;">Add-on only — keep a real Home Category above.</p>
-          </div>
-        </div>
-
-        <div class="col-md-4 form-group">
-          <label class="control-label">Latest News Priority:</label>
-          <input class="form-control" type="number" name="latest_priority" value="<?php echo nm_h(isset($rs['latest_priority']) ? $rs['latest_priority'] : '0'); ?>">
-        </div>
-
-        <div class="col-md-4 form-group">
-          <label class="control-label">Image (850X565 Pixels):</label>
-          <input class="form-control" type="file" name="image" accept="image/*">
-          <?php if (!empty($rs['image'])) { ?>
-            <p class="text-muted small mt-1">Current: <?php echo nm_h($rs['image']); ?></p>
-          <?php } ?>
-        </div>
-
+      <form id="SubmitForm" class="nm-news-form" method="post" enctype="multipart/form-data">
         <?php
-        if (isset($rs['newstype']) && $rs['newstype'] == 'Video') {
-            echo '<div class="col-md-6 form-group">
-            <label class="control-label">Home Page</label>
-            <select class="custom-select" id="show_home" name="show_home">
-                <option>' . nm_h(isset($rs['show_home']) ? $rs['show_home'] : 'No') . '</option>
-                <option>No</option>
-                <option>Yes</option>
-            </select>
-            </div>';
-
-            if (!empty($rs['video_file'])) {
-                echo '<div class="col-md-6 form-group">
-              <label class="control-label">Select Video:</label>
-                <input class="form-control" type="file" name="video_file">
-            </div>';
-            } else {
-                echo '<div class="col-md-6 form-group">
-              <label class="control-label">YouTube Link:</label>
-              <input class="form-control" type="text" name="videolink" value="https://www.youtube.com/watch?v=' . nm_h(isset($rs['videoid']) ? $rs['videoid'] : '') . '">
-            </div>';
+        $curStatus = isset($rs['status']) ? (string) $rs['status'] : 'Published';
+        $isScheduled = ($curStatus === 'Scheduled');
+        $pubVal = isset($rs['pub_date_time']) ? (string) $rs['pub_date_time'] : '';
+        $pubLocal = '';
+        if ($pubVal !== '') {
+            $pts = strtotime(str_replace('T', ' ', $pubVal));
+            if ($pts) {
+                $pubLocal = date('Y-m-d\TH:i', $pts);
             }
-        } else {
-            echo '<div id="vid"></div><div id="vid2"></div>';
         }
+        $selTeam = (int) $teamId;
+        $liveSlug = isset($rs['newsurl']) ? (string) $rs['newsurl'] : '';
         ?>
 
-        <div class="col-md-4 form-group">
-          <label class="control-label">Select Author:</label>
-          <select class="custom-select" id="team_id" name="team_id">
-            <option value="<?php echo nm_h($teamId); ?>"><?php echo nm_h(isset($au['name']) ? $au['name'] : ''); ?></option>
-            <?php
-            $query = $con->query("SELECT * FROM `team` ORDER BY t_id ASC");
-            if ($query && $query->num_rows > 0) {
-                while ($row = $query->fetch_assoc()) {
-                    echo '<option value="' . (int) $row['t_id'] . '">' . nm_h($row['name']) . '</option>';
+        <section class="nm-form-section">
+          <h2 class="nm-form-section__title">Story</h2>
+          <div class="nm-form-grid">
+            <div class="nm-form-field nm-form-field--full">
+              <label class="control-label" for="nm-title">Title</label>
+              <input class="form-control" id="nm-title" type="text" name="title" value="<?php echo nm_h(isset($rs['title']) ? $rs['title'] : ''); ?>" required>
+            </div>
+            <div class="nm-form-field nm-form-field--full">
+              <label class="control-label">News URL</label>
+              <input class="form-control" type="text" value="<?php echo nm_h($liveSlug); ?>" readonly>
+              <p class="nm-form-hint">Locked so the live page stays <code>/news/<?php echo nm_h($liveSlug); ?></code>. Changing it would break Google rankings.</p>
+            </div>
+            <div class="nm-form-field nm-form-field--full">
+              <label class="control-label">Image (850×565)</label>
+              <input class="form-control" type="file" name="image" accept="image/*">
+              <?php if (!empty($rs['image'])) { ?>
+                <div class="nm-current-img">
+                  <img src="../images/news/<?php echo nm_h($rs['image']); ?>" alt="">
+                  <span class="nm-form-hint" style="margin:0;">Leave empty to keep the current photo.</span>
+                </div>
+              <?php } ?>
+            </div>
+          </div>
+        </section>
+
+        <section class="nm-form-section">
+          <h2 class="nm-form-section__title">Author (byline)</h2>
+          <div class="nm-form-grid">
+            <div class="nm-form-field nm-form-field--full">
+              <label class="control-label" for="team_id">Shows as By Name / The Naradmuni</label>
+              <select class="custom-select" id="team_id" name="team_id" required>
+                <option value="0">select author</option>
+                <?php
+                $tq = $con->query("SELECT `t_id`,`name` FROM `team` ORDER BY `name` ASC");
+                if ($tq) {
+                    while ($tr = $tq->fetch_assoc()) {
+                        $sel = ((int) $tr['t_id'] === $selTeam) ? ' selected' : '';
+                        echo '<option value="' . (int) $tr['t_id'] . '"' . $sel . '>' . nm_h($tr['name']) . '</option>';
+                    }
                 }
-            }
-            ?>
-          </select>
-        </div>
+                ?>
+              </select>
+              <p class="nm-form-hint">Public story byline. Change anytime.</p>
+            </div>
+          </div>
+        </section>
 
-        <div class="col-md-4 form-group">
-          <label class="control-label">About Image:</label>
-          <input class="form-control" type="text" name="img_abt" value="<?php echo nm_h(isset($rs['img_abt']) ? $rs['img_abt'] : ''); ?>">
-        </div>
+        <section class="nm-form-section">
+          <h2 class="nm-form-section__title">Category</h2>
+          <div class="nm-form-grid">
+            <div class="nm-form-field nm-form-field--full">
+              <label class="control-label" for="category">Home Category</label>
+              <select class="custom-select" id="category" name="category" required>
+                <option value="0">select</option>
+                <?php
+                $query = $con->query("SELECT id, hindi_name, maincat FROM `categories` ORDER BY id ASC");
+                if (!$query) {
+                    $query = $con->query("SELECT id, hindi_name FROM `categories` ORDER BY id ASC");
+                }
+                if (!$query) {
+                    $query = $con->query("SELECT id, maincat FROM `categories` ORDER BY id ASC");
+                }
+                if ($query) {
+                    while ($row = $query->fetch_assoc()) {
+                        $sel = ((string) $row['id'] === (string) $catIdHome) ? ' selected' : '';
+                        echo '<option value="' . (int) $row['id'] . '"' . $sel . '>' . nm_h(nm_cat_label($row)) . '</option>';
+                    }
+                }
+                ?>
+              </select>
+              <p class="nm-form-hint">Pick the real place/topic (e.g. Indore, Bhopal, नीमच). Required.</p>
+            </div>
+            <div class="nm-form-field nm-form-field--full">
+              <label class="checkbox-inline" style="font-weight:600;">
+                <input type="checkbox" name="latest_news" value="Yes" <?php echo (!empty($rs['latest_news']) && $rs['latest_news'] === 'Yes') ? 'checked' : ''; ?>>
+                Breaking news — show in homepage top list (latest 5)
+              </label>
+              <p class="nm-form-hint">Add-on only. Story still belongs to the category above.</p>
+            </div>
+          </div>
+        </section>
 
-        <div class="col-md-4 form-group">
-          <label class="control-label">Image Source:</label>
-          <input class="form-control" type="text" name="img_source" value="<?php echo nm_h(isset($rs['img_source']) ? $rs['img_source'] : ''); ?>">
-        </div>
+        <section class="nm-form-section">
+          <h2 class="nm-form-section__title">Full article</h2>
+          <div class="nm-form-field nm-form-field--full">
+            <label class="control-label" for="description">Description</label>
+            <textarea class="ckeditor form-control" id="description" name="description"><?php echo nm_h(isset($rs['description']) ? $rs['description'] : ''); ?></textarea>
+          </div>
+        </section>
 
-        <div class="col-md-6 form-group">
-          <label class="control-label">News URL:</label>
-          <input class="form-control" type="text" name="newsurl" value="<?php echo nm_h(isset($rs['newsurl']) ? $rs['newsurl'] : ''); ?>">
-        </div>
+        <section class="nm-form-section">
+          <h2 class="nm-form-section__title">Publish</h2>
+          <div class="nm-form-grid">
+            <div class="nm-form-field nm-form-field--full">
+              <label class="control-label">When to publish</label>
+              <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:6px;">
+                <label class="checkbox-inline" style="font-weight:600;margin:0;">
+                  <input type="radio" name="publish_mode" value="now" <?php echo $isScheduled ? '' : 'checked'; ?>> Publish now
+                </label>
+                <label class="checkbox-inline" style="font-weight:600;margin:0;">
+                  <input type="radio" name="publish_mode" value="schedule" id="nm-publish-schedule" <?php echo $isScheduled ? 'checked' : ''; ?>> Schedule for later
+                </label>
+              </div>
+            </div>
+            <div class="nm-form-field nm-form-field--full" id="nm-schedule-wrap" style="<?php echo $isScheduled ? '' : 'display:none;'; ?>">
+              <label class="control-label" for="pub_date_time">Go live at (IST)</label>
+              <input class="form-control" type="datetime-local" id="pub_date_time" name="pub_date_time" value="<?php echo nm_h($pubLocal); ?>">
+              <p class="nm-form-hint">Story stays hidden until this time, then goes live automatically.</p>
+            </div>
+          </div>
+        </section>
 
-        <div class="col-md-6 form-group">
-          <label class="control-label">Title:</label>
-          <input class="form-control" type="text" name="title" value="<?php echo nm_h(isset($rs['title']) ? $rs['title'] : ''); ?>">
-        </div>
-
-        <div class="col-md-12 form-group">
-          <label class="control-label">Meta Title:</label>
-          <input class="form-control" type="text" name="metat" value="<?php echo nm_h(isset($rs['metat']) ? $rs['metat'] : ''); ?>">
-        </div>
-
-        <div class="col-md-12 form-group">
-          <label class="control-label">Meta Description:</label>
-          <textarea class="form-control" cols="20" rows="5" name="metad"><?php echo nm_h(isset($rs['metad']) ? $rs['metad'] : ''); ?></textarea>
-        </div>
-
-        <div class="col-md-12 form-group">
-          <label class="control-label">#Hashtags For Social Media:</label>
-          <textarea class="form-control" cols="20" rows="5" name="hashtags"><?php echo nm_h(isset($rs['hashtags']) ? $rs['hashtags'] : ''); ?></textarea>
-        </div>
-
-        <div class="col-md-12 form-group">
-          <label class="control-label">Short Description:</label>
-          <textarea class="form-control" cols="20" rows="5" name="short_description"><?php echo nm_h(isset($rs['short_description']) ? $rs['short_description'] : ''); ?></textarea>
-        </div>
-
-        <div class="col-md-12 form-group">
-          <label class="control-label">Description</label>
-          <textarea class="ckeditor form-control" id="description" name="description"><?php echo nm_h(isset($rs['description']) ? $rs['description'] : ''); ?></textarea>
-        </div>
-
-        <div class="col-md-12 form-group">
-          <button type="submit" name="update" value="update" class="btn btn-info">Update</button>
+        <div class="nm-form-actions">
+          <button type="submit" name="update" value="update" class="btn btn-info" id="nm-publish-btn"><?php echo $isScheduled ? 'Schedule' : 'Update'; ?></button>
           <a class="btn btn-outline-secondary" href="news.php">Cancel</a>
         </div>
       </form>
@@ -509,40 +379,32 @@ if (isset($_POST['update'])) {
 <?php include "footer.php"; ?>
 <script type="text/javascript" src="ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
-  CKEDITOR.replace('description', {
-    width: '100%',
-    extraPlugins: '',
-    filebrowserBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Connector=ckeditor/filemanager/connectors/php/connector.php',
-    filebrowserImageBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Type=Image&Connector=ckeditor/filemanager/connectors/php/connector.php',
-    filebrowserFlashBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Type=Flash&Connector=ckeditor/filemanager/connectors/php/connector.php',
-    filebrowserUploadUrl: 'ckeditor/filemanager/connectors/php/upload.php?Type=File',
-    filebrowserImageUploadUrl: 'ckeditor/filemanager/connectors/php/upload.php?Type=Image',
-    filebrowserFlashUploadUrl: 'ckeditor/filemanager/connectors/php/upload.php?Type=Flash'
-  });
-  // Critical: push CKEditor HTML into <textarea> before PHP receives the POST
-  document.getElementById('SubmitForm').addEventListener('submit', function () {
-    for (var name in CKEDITOR.instances) {
-      if (CKEDITOR.instances.hasOwnProperty(name)) {
-        CKEDITOR.instances[name].updateElement();
-      }
+<?php echo nm_ckeditor_js('description'); ?>
+document.getElementById('SubmitForm').addEventListener('submit', function () {
+  for (var name in CKEDITOR.instances) {
+    if (CKEDITOR.instances.hasOwnProperty(name)) {
+      CKEDITOR.instances[name].updateElement();
     }
-  });
-  (function () {
-    var wrap = document.getElementById('nm-schedule-wrap');
-    var input = document.getElementById('pub_date_time');
-    var scheduleRadio = document.getElementById('nm-publish-schedule');
-    if (!wrap || !scheduleRadio) return;
-    function sync() {
-      var schedule = scheduleRadio.checked;
-      wrap.style.display = schedule ? 'block' : 'none';
-      if (input) input.required = schedule;
-    }
-    var radios = document.querySelectorAll('input[name="publish_mode"]');
-    for (var i = 0; i < radios.length; i++) {
-      radios[i].addEventListener('change', sync);
-    }
-    sync();
-  })();
+  }
+});
+(function () {
+  var wrap = document.getElementById('nm-schedule-wrap');
+  var btn = document.getElementById('nm-publish-btn');
+  var input = document.getElementById('pub_date_time');
+  var scheduleRadio = document.getElementById('nm-publish-schedule');
+  if (!wrap || !scheduleRadio) return;
+  function sync() {
+    var schedule = scheduleRadio.checked;
+    wrap.style.display = schedule ? 'block' : 'none';
+    if (btn) btn.textContent = schedule ? 'Schedule' : 'Update';
+    if (input) input.required = schedule;
+  }
+  var radios = document.querySelectorAll('input[name="publish_mode"]');
+  for (var i = 0; i < radios.length; i++) {
+    radios[i].addEventListener('change', sync);
+  }
+  sync();
+})();
 </script>
 <script type="text/javascript">
   $(document).ready(function () {
@@ -554,16 +416,5 @@ if (isset($_POST['update'])) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 <script src="../include/js/bootstrap.min.js"></script>
 <script src="js/all.js"></script>
-<script>
-  $("#newstype").on('change', function () {
-    $.ajax({
-      type: "POST",
-      url: "ajaxVid.php",
-      data: { newstype: $("#newstype").val() },
-      beforeSend: function () { $('#vid').html("<p>Loading....</p>"); },
-      success: function (data) { $('#vid').html(data); }
-    });
-  });
-</script>
 </body>
 </html>

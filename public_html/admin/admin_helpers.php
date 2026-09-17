@@ -300,7 +300,7 @@ if (!function_exists('nm_js_notice')) {
 			'href' => (string) $href,
 			'type' => (string) $kind,
 		), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-		$css = 'css/admin-modern.css?v=18';
+		$css = 'css/admin-modern.css?v=19';
 		$js = 'js/nm-dialog.js?v=1';
 		if ($href !== '' && !headers_sent()) {
 			echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admin</title>';

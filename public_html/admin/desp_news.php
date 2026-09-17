@@ -41,7 +41,7 @@ $perPage = new PerPage();
 		}
 	}
 $orderby = " ORDER BY newsid desc";
-$sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `category`, `date`, `time`, `status`, `latest_news`, `pub_date_time` from news" . $queryCondition;
+$sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `category`, `date`, `time`, `status`, `latest_news`, `pub_date_time`, `team_id` from news" . $queryCondition;
 $paginationlink = "desp_news.php?page=";
 $pagination_setting = isset($_GET["pagination_setting"]) ? $_GET["pagination_setting"] : "";
 
@@ -131,6 +131,22 @@ $output = '';
                                 ?>
                               <?php } ?>
                               </div>
+                              <?php
+                              $authorName = "";
+                              $tid = isset($faq[$k]["team_id"]) ? (int) $faq[$k]["team_id"] : 0;
+                              if ($tid > 0) {
+                                  $aq = mysqli_query($con, "SELECT `name` FROM `team` WHERE `t_id`='" . $tid . "' LIMIT 1");
+                                  if ($aq instanceof mysqli_result) {
+                                      $ar = mysqli_fetch_assoc($aq);
+                                      if (is_array($ar) && !empty($ar["name"])) {
+                                          $authorName = $ar["name"];
+                                      }
+                                  }
+                              }
+                              if ($authorName !== "") {
+                                  echo '<span class="nm-byline">By ' . htmlspecialchars($authorName) . '</span>';
+                              }
+                              ?>
                               <code class="nm-url-cell" title="<?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?>"><?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?></code>
                             </td>
                             <td><?php echo htmlspecialchars($catName); ?></td>
