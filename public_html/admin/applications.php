@@ -35,10 +35,10 @@ $userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
     if($ex>0)
     {
         
-        echo ("<script language='javascript'>
-           window.alert('Record Deleted Successfully')
-           window.location.href='applications.php';
-           </script>");
+        if (!function_exists('nm_js_notice')) {
+            require_once __DIR__ . '/admin_helpers.php';
+        }
+        nm_js_notice('Record Deleted Successfully', 'applications.php');
     } 
    }
  

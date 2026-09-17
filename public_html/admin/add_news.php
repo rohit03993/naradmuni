@@ -176,10 +176,7 @@ if(isset($_POST['add']))
                             if (!empty($category) && $category !== '0') {
                               mysqli_query($con, "INSERT INTO `news_cat`(`category`, `news_id`) VALUES('$category','$lastInsertId')");
                             }
-                                   echo("<script language='javascript'>
-                                  window.alert('" . ($status === 'Scheduled' ? 'Scheduled successfully' : 'Published successfully') . "')
-                                  window.location.href='news.php';
-                                  </script>");
+                                   nm_js_notice($status === 'Scheduled' ? 'Scheduled successfully' : 'Published successfully', 'news.php');
                               }
                               else{ array_push($errors, "Sorry, there was an error: " . mysqli_error($con)); }
                              }

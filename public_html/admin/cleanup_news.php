@@ -252,14 +252,16 @@ $("#btn-delete").on("click", function () {
   var n = matchCount();
   var months = $("#months").val();
   if (n <= 0 || $("#confirm-delete").val().trim() !== "DELETE") {
-    alert("Preview first, then type DELETE exactly.");
+    nmAlert("Preview first, then type DELETE exactly.");
     return;
   }
 
-  if (!window.confirm(
+  nmConfirm(
     "DELETE up to " + n.toLocaleString() + " posts older than " + months + " months?\n\n" +
-    "Keep " + MIN_VIEWS_KEEP.toLocaleString() + "+ view posts.\nThis cannot be undone."
-  )) return;
+    "Keep " + MIN_VIEWS_KEEP.toLocaleString() + "+ view posts.\nThis cannot be undone.",
+    { title: "Delete old posts", okText: "Delete" }
+  ).then(function (ok) {
+    if (!ok) return;
 
   statsAbort = true;
   statsRunning = false;
@@ -339,6 +341,7 @@ $("#btn-delete").on("click", function () {
     });
   }
   next();
+  });
 });
 
 $(function () { getresult(); });

@@ -57,19 +57,16 @@ if(isset($_POST['add']))
 
                                  if($ex>0)
 
-                                    {echo 
-                                    ("<script language='javascript'>
-                                  window.alert('Added Successfully.') 
-                                  window.location.href='news.php';
-                                  </script>");
-
-
-
+                                    {
+                                        if (!function_exists('nm_js_notice')) {
+                                            require_once __DIR__ . '/admin_helpers.php';
+                                        }
+                                        nm_js_notice('Added Successfully.', 'news.php');
                                     } else {
-                                        echo ("<script language='javascript'>
-                                  window.alert('Sorry, there was an error uploading your file.') 
-                                  window.location.href='news.php';
-                                  </script>");
+                                        if (!function_exists('nm_js_notice')) {
+                                            require_once __DIR__ . '/admin_helpers.php';
+                                        }
+                                        nm_js_notice('Sorry, there was an error uploading your file.', 'news.php', 'error');
                                     }
                             }
 ?>

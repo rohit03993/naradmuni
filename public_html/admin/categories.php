@@ -39,8 +39,7 @@ if (isset($_POST['add'])) {
 	}
 
 	$flash = function ($msg) {
-		echo "<script language='javascript'>window.alert(" . json_encode($msg, JSON_UNESCAPED_UNICODE) . "); window.location.href='categories.php';</script>";
-		exit;
+		nm_js_notice($msg, 'categories.php');
 	};
 
 	if ($hindi_name === '' || $linkname === '') {

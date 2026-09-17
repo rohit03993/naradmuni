@@ -1321,3 +1321,171 @@ body.nm-login .card {
   margin: 0 auto !important;
   width: 100% !important;
 }
+
+/* ——— Shared dialog (replaces native alert/confirm) ——— */
+body.nm-dialog-page {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 20% 10%, #243447 0%, #0f1720 55%) !important;
+  font-family: "Source Sans 3", "Segoe UI", sans-serif;
+}
+
+.nm-dlg-root {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.nm-dlg-root.is-open {
+  display: flex;
+}
+
+.nm-dlg-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 32, 0.58);
+  backdrop-filter: blur(5px);
+}
+
+.nm-dlg {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(15, 23, 32, 0.28);
+  padding: 28px 24px 20px;
+  text-align: center;
+  animation: nmDlgIn 0.18s ease-out;
+}
+
+@keyframes nmDlgIn {
+  from {
+    transform: translateY(8px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.nm-dlg-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nm-dlg-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.nm-dlg-root[data-kind="success"] .nm-dlg-icon {
+  background: #e8f5ee;
+  color: var(--nm-ok);
+}
+
+.nm-dlg-root[data-kind="error"] .nm-dlg-icon,
+.nm-dlg-root[data-kind="danger"] .nm-dlg-icon {
+  background: var(--nm-accent-soft);
+  color: var(--nm-accent);
+}
+
+.nm-dlg-title {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--nm-ink);
+}
+
+.nm-dlg-msg {
+  margin: 0 0 20px;
+  color: var(--nm-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.nm-dlg-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.nm-dlg-btn {
+  min-width: 96px;
+  border-radius: 10px;
+  border: 1px solid var(--nm-line);
+  background: #fff;
+  color: var(--nm-ink);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 9px 16px;
+  cursor: pointer;
+  appearance: none;
+}
+
+.nm-dlg-btn:hover {
+  background: #f4f6f8;
+}
+
+.nm-dlg-ok {
+  background: var(--nm-ok);
+  border-color: var(--nm-ok);
+  color: #fff;
+}
+
+.nm-dlg-ok:hover {
+  filter: brightness(0.95);
+  background: var(--nm-ok);
+  color: #fff;
+}
+
+.nm-dlg-ok.is-danger {
+  background: var(--nm-accent);
+  border-color: var(--nm-accent);
+}
+
+#content table .nm-news-delete:hover {
+  background: var(--nm-accent) !important;
+  border-color: var(--nm-accent) !important;
+  color: #fff !important;
+}
+
+.nm-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 20001;
+  background: #15202b;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: var(--nm-shadow);
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  max-width: min(360px, calc(100vw - 32px));
+}
+
+.nm-toast.is-show {
+  opacity: 1;
+  transform: none;
+}
+
+.nm-toast.is-success {
+  background: #14532d;
+}

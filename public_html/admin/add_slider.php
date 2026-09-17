@@ -147,10 +147,10 @@ if(!empty($name)){
                                   }   
                              }
                                   //move_uploaded_file($_FILES["image"]["tmp_name"], $targetpath1);
-                                   echo("<script language='javascript'>
-                                  window.alert('added Successfully') 
-                                  window.location.href='news.php';
-                                  </script>");
+                                   if (!function_exists('nm_js_notice')) {
+                                       require_once __DIR__ . '/admin_helpers.php';
+                                   }
+                                   nm_js_notice('added Successfully', 'news.php');
                                   
                                   //array_push($sucs, "added Successfuly."); 
                               }

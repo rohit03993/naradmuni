@@ -173,7 +173,7 @@ $fullPreview = $sampleTitle . "\n" . $sampleUrl . "\n\n" . $previewFooter;
               <button type="submit" name="save_wa_share" value="1" class="btn btn-success">
                 <i class="fab fa-whatsapp"></i> Save WhatsApp share
               </button>
-              <button type="submit" name="reset_wa_share" value="1" class="btn btn-outline-secondary" onclick="return confirm('Reset to default WhatsApp share text and links?');">
+              <button type="submit" name="reset_wa_share" value="1" class="btn btn-outline-secondary" data-nm-confirm="Reset to default WhatsApp share text and links?">
                 Reset defaults
               </button>
             </div>

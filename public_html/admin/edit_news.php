@@ -50,7 +50,7 @@ $srid = isset($_GET['eid']) ? $_GET['eid'] : (isset($_GET['id']) ? $_GET['id'] :
 $srid = preg_replace('/\D+/', '', (string) $srid);
 
 if ($srid === '') {
-    echo "<script>alert('Missing news id'); window.location.href='news.php';</script>";
+    nm_js_notice('Missing news id', 'news.php', 'error');
     exit;
 }
 
@@ -59,7 +59,7 @@ $ex = mysqli_query($con, $qry);
 $rs = ($ex instanceof mysqli_result) ? mysqli_fetch_assoc($ex) : null;
 
 if (!$rs) {
-    echo "<script>alert('News not found'); window.location.href='news.php';</script>";
+    nm_js_notice('News not found', 'news.php', 'error');
     exit;
 }
 
@@ -247,7 +247,7 @@ if (isset($_POST['update'])) {
                 mysqli_query($con, "INSERT INTO `news_cat`(`category`, `news_id`) VALUES('$category','$srid')");
             }
 
-            echo "<script>alert('Updated Successfully'); window.location.href='news.php';</script>";
+            nm_js_notice('Updated successfully', 'news.php');
             exit;
         }
         array_push($errors, 'Sorry, there was an error: ' . mysqli_error($con));

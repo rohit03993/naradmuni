@@ -53,7 +53,7 @@ if(isset($_POST['update']))
                             $latter = mysqli_real_escape_string($con, (string) ($_POST['latter'] ?? ($rs['latter'] ?? '')));
 
                             if ($hindi_name === '') {
-                                echo "<script language='javascript'>window.alert('Hindi name is required.'); window.location.href='edit_category.php?eid=".(int)$srid."';</script>";
+                                nm_js_notice('Hindi name is required.', 'edit_category.php?eid=' . (int) $srid, 'error');
                                 exit;
                             }
 
@@ -63,19 +63,11 @@ if(isset($_POST['update']))
                             $ex= mysqli_query($con,$up);
 
                               if($ex) {
-
-                                   echo("<script language='javascript'>
-                                  window.alert('Updated Successfully')
-                                  window.location.href='categories.php';
-                                  </script>");
-                                  exit;
-
+                                   nm_js_notice('Updated Successfully', 'categories.php');
+                                   exit;
                               } else {
-                                   echo("<script language='javascript'>
-                                  window.alert('Sorry, there was an error.')
-                                  window.location.href='edit_category.php?eid=".(int)$srid."';
-                                  </script>");
-                                  exit;
+                                   nm_js_notice('Sorry, there was an error.', 'edit_category.php?eid=' . (int) $srid, 'error');
+                                   exit;
                               }
 
 

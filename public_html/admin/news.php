@@ -57,19 +57,16 @@ if(isset($_POST['add']))
 
                                  if($ex>0)
 
-                                    {echo 
-                                    ("<script language='javascript'>
-                                  window.alert('Added Successfully.') 
-                                  window.location.href='news.php';
-                                  </script>");
-
-
-
+                                    {
+                                        if (!function_exists('nm_js_notice')) {
+                                            require_once __DIR__ . '/admin_helpers.php';
+                                        }
+                                        nm_js_notice('Added Successfully.', 'news.php');
                                     } else {
-                                        echo ("<script language='javascript'>
-                                  window.alert('Sorry, there was an error uploading your file.') 
-                                  window.location.href='news.php';
-                                  </script>");
+                                        if (!function_exists('nm_js_notice')) {
+                                            require_once __DIR__ . '/admin_helpers.php';
+                                        }
+                                        nm_js_notice('Sorry, there was an error uploading your file.', 'news.php', 'error');
                                     }
                             }
 ?>
@@ -240,38 +237,36 @@ $(document).on('click', '.nm-news-delete', function (e) {
   var $btn = $(this);
   var id = $btn.attr("data-newsid") || $btn.data("newsid");
   if (!id) {
-    alert("Delete failed: missing article id.");
+    nmAlert("Delete failed: missing article id.");
     return false;
   }
-  if (!confirm("Delete this news and its photo from the server? This cannot be undone.")) {
-    return false;
-  }
-  $btn.prop("disabled", true).addClass("disabled");
-  $.ajax({
-    url: "ajax_news.php",
-    method: "POST",
-    dataType: "json",
-    data: { id: id, actions: "delete" },
-    success: function (res) {
-      if (res && res.ok) {
-        var $row = $btn.closest("tr");
-        $row.fadeOut(200, function () { $(this).remove(); });
-        var $note = $("#nm-delete-toast");
-        if (!$note.length) {
-          $note = $('<div id="nm-delete-toast" class="alert alert-success" style="margin:8px 0;"></div>');
-          $("#pagination-result").prepend($note);
-        }
-        $note.stop(true, true).removeClass("alert-danger").addClass("alert-success")
-          .text(res.message || "Deleted.").show().delay(3500).fadeOut();
-      } else {
-        $btn.prop("disabled", false).removeClass("disabled");
-        alert((res && res.message) ? res.message : "Delete failed.");
-      }
-    },
-    error: function (xhr) {
-      $btn.prop("disabled", false).removeClass("disabled");
-      alert("Delete failed" + (xhr && xhr.status ? " (HTTP " + xhr.status + ")" : "") + ".");
+  nmConfirm("Delete this news and its photo from the server? This cannot be undone.", {
+    title: "Delete news",
+    okText: "Delete"
+  }).then(function (ok) {
+    if (!ok) {
+      return;
     }
+    $btn.prop("disabled", true).addClass("disabled");
+    $.ajax({
+      url: "ajax_news.php",
+      method: "POST",
+      dataType: "json",
+      data: { id: id, actions: "delete" },
+      success: function (res) {
+        if (res && res.ok) {
+          $btn.closest("tr").fadeOut(200, function () { $(this).remove(); });
+          nmToast(res.message || "Deleted.", "success");
+        } else {
+          $btn.prop("disabled", false).removeClass("disabled");
+          nmAlert((res && res.message) ? res.message : "Delete failed.");
+        }
+      },
+      error: function (xhr) {
+        $btn.prop("disabled", false).removeClass("disabled");
+        nmAlert("Delete failed" + (xhr && xhr.status ? " (HTTP " + xhr.status + ")" : "") + ".");
+      }
+    });
   });
   return false;
 });

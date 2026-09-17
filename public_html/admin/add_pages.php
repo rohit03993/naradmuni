@@ -62,10 +62,10 @@ if(isset($_POST['add']))
                              $lastInsertId = mysqli_insert_id($con);
                               if($ex>0) {
                                   
-                                   echo("<script language='javascript'>
-                                  window.alert('added Successfully') 
-                                  window.location.href='pages.php';
-                                  </script>");
+                                   if (!function_exists('nm_js_notice')) {
+                                       require_once __DIR__ . '/admin_helpers.php';
+                                   }
+                                   nm_js_notice('added Successfully', 'pages.php');
                                   
                                   //array_push($sucs, "added Successfuly."); 
                               }

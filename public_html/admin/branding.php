@@ -176,7 +176,7 @@ $favPreview = $brandFavicon !== "" ? ("../images/logo/" . rawurlencode($brandFav
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;">
           <button type="submit" name="save_branding" value="1" class="btn btn-danger">Save branding</button>
-          <button type="submit" name="reset_branding" value="1" class="btn btn-outline-secondary" onclick="return confirm('Reset to default logo and favicon?');">Reset defaults</button>
+          <button type="submit" name="reset_branding" value="1" class="btn btn-outline-secondary" data-nm-confirm="Reset to default logo and favicon?">Reset defaults</button>
         </div>
       </form>
 

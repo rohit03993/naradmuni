@@ -371,7 +371,7 @@ $panel = "padding:18px 20px;border:1px solid #e5e7eb;border-radius:8px;backgroun
                   <td style="white-space:nowrap;">
                     <a class="btn btn-sm btn-primary" href="admin_users.php?edit=<?php echo (int) $a["id"]; ?>">Edit</a>
                     <?php if ((int) $a["id"] !== (int) $userRow["id"]) { ?>
-                      <a class="btn btn-sm btn-danger" href="admin_users.php?del=<?php echo (int) $a["id"]; ?>" onclick="return confirm('Delete this login?');">Delete</a>
+                      <a class="btn btn-sm btn-danger" href="admin_users.php?del=<?php echo (int) $a["id"]; ?>" data-nm-confirm="Delete this login?">Delete</a>
                     <?php } ?>
                   </td>
                 </tr>

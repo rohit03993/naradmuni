@@ -67,10 +67,10 @@ if(isset($_POST['add']))
                             $qry="insert into `rss_feed` (`title`, `link`, `sequence`, `date`, `small_description`, `url`, `image_name`) values('$title','$link','$sequence','$date','$small_description','$linkname','$post_image')";   
                              $ex=mysqli_query($con,$qry);
                               if($ex>0) {
-                                   echo("<script language='javascript'>
-                                  window.alert('added Successfully') 
-                                  window.location.href='rss_link.php';
-                                  </script>");
+                                   if (!function_exists('nm_js_notice')) {
+                                       require_once __DIR__ . '/admin_helpers.php';
+                                   }
+                                   nm_js_notice('added Successfully', 'rss_link.php');
                                
                               }
                               else{ array_push($errors, "Sorry, there was an error."); }

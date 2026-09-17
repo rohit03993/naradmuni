@@ -275,6 +275,46 @@ if (!function_exists('nm_admin_team_id')) {
 	}
 }
 
+/** Pick success vs error styling for admin dialogs. */
+if (!function_exists('nm_notice_kind')) {
+	function nm_notice_kind($message)
+	{
+		$s = strtolower((string) $message);
+		if (preg_match('/sorry|error|fail|missing|not found|not correct|required|already in use/', $s)) {
+			return 'error';
+		}
+		return 'success';
+	}
+}
+
+/**
+ * Replace native browser alert()+redirect with the shared admin dialog.
+ * If $href is set and output has not started, this prints a small page and exits.
+ */
+if (!function_exists('nm_js_notice')) {
+	function nm_js_notice($message, $href = '', $type = '')
+	{
+		$kind = $type !== '' ? $type : nm_notice_kind($message);
+		$payload = json_encode(array(
+			'message' => (string) $message,
+			'href' => (string) $href,
+			'type' => (string) $kind,
+		), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		$css = 'css/admin-modern.css?v=18';
+		$js = 'js/nm-dialog.js?v=1';
+		if ($href !== '' && !headers_sent()) {
+			echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admin</title>';
+			echo '<link rel="stylesheet" href="' . $css . '"></head><body class="nm-dialog-page">';
+			echo '<script src="' . $js . '"></script>';
+			echo '<script>window.nmReadyNotice(' . $payload . ');</script></body></html>';
+			exit;
+		}
+		echo '<link rel="stylesheet" href="' . $css . '">';
+		echo '<script src="' . $js . '"></script>';
+		echo '<script>window.nmReadyNotice(' . $payload . ');</script>';
+	}
+}
+
 /** Relative CKEditor filebrowser config (works when $urlroot is wrong on production). */
 if (!function_exists('nm_ckeditor_js')) {
 	function nm_ckeditor_js($fieldId = 'description')

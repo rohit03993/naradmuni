@@ -96,10 +96,10 @@ $up=("update admin set apwd='$pwd',aname='$uname',aemail='$email',image='$img1' 
 $ex= mysqli_query($con,$up);	
   if($ex>0)
   {
-	 echo("<script language='javascript'>
-  window.alert('Updated Successfully') 
-  window.location.href='profile.php';
-  </script>");
+	 if (!function_exists('nm_js_notice')) {
+		 require_once __DIR__ . '/admin_helpers.php';
+	 }
+	 nm_js_notice('Updated Successfully', 'profile.php');
  }
   else
   {

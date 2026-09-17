@@ -60,10 +60,10 @@ if(isset($_POST['update']))
                             
                               if($ex>0) {
                                   
-                                 echo ("<script language='javascript'>
-                                  window.alert('Updated Successfully') 
-                                  window.location.href='pages.php';
-                                  </script>");
+                                 if (!function_exists('nm_js_notice')) {
+                                     require_once __DIR__ . '/admin_helpers.php';
+                                 }
+                                 nm_js_notice('Updated Successfully', 'pages.php');
                                   array_push($sucs, "Updated Successfuly."); }
                               else{ array_push($errors, "Sorry, there was an error."); }
                             
