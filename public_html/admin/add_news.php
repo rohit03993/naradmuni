@@ -63,6 +63,9 @@ if(isset($_POST['add']))
                             $img_abt = $post('img_abt');
                             $v_link = $post('videolink');
                             $team_id = $post('team_id', '0');
+                            if (!nm_is_admin($con) && $nmLinkedTeamId > 0) {
+                                $team_id = (string) $nmLinkedTeamId;
+                            }
                             if (($team_id === '' || $team_id === '0') && $nmLinkedTeamId > 0) {
                                 $team_id = (string) $nmLinkedTeamId;
                             }
@@ -242,11 +245,24 @@ if(isset($_POST['add']))
                 <div class="nm-form-grid">
                   <div class="nm-form-field nm-form-field--full">
                     <label class="control-label" for="team_id">Shows as By Name / The Naradmuni</label>
+                    <?php
+                    $nmAddIsAdmin = function_exists('nm_is_admin') ? nm_is_admin($con) : true;
+                    $selDefault = $nmLinkedTeamId > 0 ? $nmLinkedTeamId : 0;
+                    if (!$nmAddIsAdmin && $selDefault > 0) {
+                        $myName = '';
+                        $nq = $con->query("SELECT `name` FROM `team` WHERE `t_id`='" . (int) $selDefault . "' LIMIT 1");
+                        if ($nq && ($nr = $nq->fetch_assoc())) {
+                            $myName = (string) $nr['name'];
+                        }
+                        echo '<input type="hidden" name="team_id" value="' . (int) $selDefault . '">';
+                        echo '<p class="form-control-plaintext" style="margin:0;font-weight:600;">' . htmlspecialchars($myName !== '' ? $myName : ('Author #' . $selDefault)) . '</p>';
+                        echo '<p class="nm-form-hint">Your byline. Admins can assign a different author.</p>';
+                    } else {
+                    ?>
                     <select class="custom-select" id="team_id" name="team_id" required>
                       <option value="0">select author</option>
                       <?php
                       $tq = $con->query("SELECT `t_id`,`name` FROM `team` ORDER BY `name` ASC");
-                      $selDefault = $nmLinkedTeamId > 0 ? $nmLinkedTeamId : 0;
                       if ($tq) {
                         while ($tr = $tq->fetch_assoc()) {
                           $sel = ((int) $tr['t_id'] === (int) $selDefault) ? ' selected' : '';
@@ -256,6 +272,7 @@ if(isset($_POST['add']))
                       ?>
                     </select>
                     <p class="nm-form-hint">Defaults to your linked profile when set. Change anytime.</p>
+                    <?php } ?>
                   </div>
                 </div>
               </section>

@@ -8,9 +8,15 @@ if (!isset($_SESSION["aemail"]) || $_SESSION["aemail"] === "") {
 }
 
 $newsid = isset($_POST["id"]) ? (int) $_POST["id"] : 0;
-require_once __DIR__ . "/news_media.php";
+if (!function_exists('nm_can_manage_news')) {
+	require_once __DIR__ . '/admin_helpers.php';
+}
+if (!nm_can_manage_news($con, $newsid)) {
+	echo json_encode(array("ok" => false, "message" => "You can only delete your own news.", "newsid" => $newsid, "files_removed" => 0));
+	exit;
+}
 
-// Any logged-in CMS user (Admin or Author) can delete from the News list.
+require_once __DIR__ . "/news_media.php";
 $result = nm_delete_news_article($con, $newsid, null, array("skip_view_check" => true));
 
 echo json_encode(array(

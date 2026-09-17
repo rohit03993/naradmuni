@@ -1,5 +1,8 @@
 <?php
 include "config.php";
+if (!function_exists('nm_news_scope_clause')) {
+    require_once __DIR__ . '/admin_helpers.php';
+}
 require_once("dbcontroller.php");
 require_once("pagination.class.php");
 $db_handle = new DBController();
@@ -40,6 +43,7 @@ $perPage = new PerPage();
 			}
 		}
 	}
+nm_sql_and($queryCondition, nm_news_scope_clause($con));
 $orderby = " ORDER BY newsid desc";
 $sql = "SELECT `newsid`, `newsurl`, `title`, `image`, `category`, `date`, `time`, `status`, `latest_news`, `pub_date_time`, `team_id` from news" . $queryCondition;
 $paginationlink = "desp_news.php?page=";
@@ -144,7 +148,7 @@ $output = '';
                                   }
                               }
                               if ($authorName !== "") {
-                                  echo '<span class="nm-byline">By ' . htmlspecialchars($authorName) . '</span>';
+                                  echo '<a class="nm-byline" href="news.php?author=' . $tid . '">By ' . htmlspecialchars($authorName) . '</a>';
                               }
                               ?>
                               <code class="nm-url-cell" title="<?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?>"><?php echo htmlspecialchars((string) $faq[$k]["newsurl"]); ?></code>

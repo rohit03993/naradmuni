@@ -4,13 +4,25 @@ if (!function_exists('nm_h')) {
 }
 if (!defined("NM_ADMIN_ASSETS")) {
 	define("NM_ADMIN_ASSETS", true);
-	echo '<link rel="stylesheet" href="css/admin-modern.css?v=19">' . "\n";
+	echo '<link rel="stylesheet" href="css/admin-modern.css?v=20">' . "\n";
 	echo '<script src="js/nm-dialog.js?v=1"></script>' . "\n";
 }
 $nmPage = basename(isset($_SERVER["PHP_SELF"]) ? $_SERVER["PHP_SELF"] : "");
-$nmAvatar = "";
-if (!empty($userRow["image"])) {
-	$nmAvatar = "profile/" . $userRow["image"];
+if (!isset($nmMe) || !is_array($nmMe)) {
+	$nmMe = function_exists('nm_cms_identity') ? nm_cms_identity($con, isset($userRow) ? $userRow : null) : array(
+		'name' => 'Admin', 'role' => 'Admin', 'is_admin' => true, 'team_id' => 0, 'avatar' => '', 'initial' => 'N',
+	);
+}
+$nmIsAdmin = !empty($nmMe['is_admin']);
+$nmAdminOnly = array(
+	'categories.php', 'edit_category.php', 'cleanup_news.php', 'rashifal.php', 'edit_rashifal.php',
+	'pages.php', 'add_pages.php', 'edit_pages.php', 'video.php', 'notification.php', 'comments.php',
+	'post_views.php', 'rss_link.php', 'add_rss_link.php', 'edit_rss_link.php', 'ads.php',
+	'youtube_shorts.php', 'branding.php', 'whatsapp_share.php', 'team.php', 'admin_users.php',
+	'slider.php', 'users.php', 'jobs.php',
+);
+if (!$nmIsAdmin && in_array($nmPage, $nmAdminOnly, true)) {
+	nm_require_admin($con);
 }
 if (!function_exists("nm_nav_active")) {
 	function nm_nav_active($page, $files) {
@@ -21,15 +33,16 @@ if (!function_exists("nm_nav_active")) {
 ?>
 <nav id="sidebar">
   <div class="sidebar-header">
-    <?php if ($nmAvatar && is_file(__DIR__ . "/" . $nmAvatar)) { ?>
-      <img class="sidebar-avatar" src="<?php echo htmlspecialchars($nmAvatar); ?>" alt="Admin" width="64" height="64">
+    <?php if (!empty($nmMe['avatar'])) { ?>
+      <img class="sidebar-avatar" src="<?php echo htmlspecialchars($nmMe['avatar']); ?>" alt="" width="64" height="64">
     <?php } else { ?>
-      <div class="sidebar-avatar" style="display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#fff;">N</div>
+      <div class="sidebar-avatar sidebar-avatar--letter"><?php echo htmlspecialchars($nmMe['initial']); ?></div>
     <?php } ?>
-    <a class="sidebar-brand" href="dashboard.php">
-      Naradmuni
-      <span>Admin CMS</span>
-    </a>
+    <div class="sidebar-who">
+      <strong><?php echo htmlspecialchars($nmMe['name']); ?></strong>
+      <span><?php echo htmlspecialchars($nmMe['role']); ?></span>
+    </div>
+    <a class="sidebar-brand" href="dashboard.php">Naradmuni</a>
   </div>
 
   <ul class="list-unstyled components">
@@ -41,16 +54,19 @@ if (!function_exists("nm_nav_active")) {
     </li>
 
     <p class="nav-label">Content</p>
+    <?php if ($nmIsAdmin) { ?>
     <li>
       <a class="<?php echo nm_nav_active($nmPage, array("categories.php", "edit_category.php")); ?>" href="categories.php">
         <i class="fas fa-folder-open"></i> Categories
       </a>
     </li>
+    <?php } ?>
     <li>
       <a class="<?php echo nm_nav_active($nmPage, array("news.php", "add_news.php", "edit_news.php")); ?>" href="news.php">
         <i class="fas fa-newspaper"></i> News
       </a>
     </li>
+    <?php if ($nmIsAdmin) { ?>
     <li>
       <a class="<?php echo nm_nav_active($nmPage, "cleanup_news.php"); ?>" href="cleanup_news.php">
         <i class="fas fa-broom"></i> Cleanup old news
@@ -71,6 +87,7 @@ if (!function_exists("nm_nav_active")) {
         <i class="fas fa-video"></i> Upload video
       </a>
     </li>
+    <?php } ?>
 
     <p class="nav-label">You</p>
     <li>
@@ -79,6 +96,7 @@ if (!function_exists("nm_nav_active")) {
       </a>
     </li>
 
+    <?php if ($nmIsAdmin) { ?>
     <p class="nav-label">Engagement</p>
     <li>
       <a class="<?php echo nm_nav_active($nmPage, "notification.php"); ?>" href="notification.php">
@@ -132,5 +150,6 @@ if (!function_exists("nm_nav_active")) {
         <i class="fas fa-user-shield"></i> Admin users
       </a>
     </li>
+    <?php } ?>
   </ul>
 </nav>

@@ -78,6 +78,13 @@ else{ array_push($errors, "Sorry, there was an error"); }
 if(isset($_POST['newsid'])){
     
 $newsid = mysqli_real_escape_string($con,$_POST['newsid']);
+if (!function_exists('nm_can_manage_news')) {
+    require_once __DIR__ . '/admin_helpers.php';
+}
+if (!nm_can_manage_news($con, $newsid)) {
+    echo '<div class="alert alert-danger">You can only change status on your own news.</div>';
+    exit;
+}
 $status = mysqli_real_escape_string($con,$_POST['status']);
 $cate = mysqli_query($con,"SELECT `category`,`title`,`newsurl`,`hashtags`,`short_description`,`image`,`status` AS `old_status` FROM `news` WHERE `newsid`='$newsid'");
 $cat = mysqli_fetch_array($cate);

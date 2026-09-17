@@ -63,6 +63,11 @@ if (!$rs) {
     exit;
 }
 
+if (!nm_can_manage_news($con, (int) $srid)) {
+    nm_js_notice('You can only edit your own news.', 'news.php', 'error');
+    exit;
+}
+
 $au = array('name' => '');
 $teamId = isset($rs['team_id']) ? (string) $rs['team_id'] : '0';
 $auth = mysqli_query($con, "SELECT `name` FROM `team` WHERE `t_id`='" . mysqli_real_escape_string($con, $teamId) . "' LIMIT 1");
@@ -115,6 +120,9 @@ if (isset($_POST['update'])) {
     $description = mysqli_real_escape_string($con, $descriptionRaw);
     $category = mysqli_real_escape_string($con, isset($_POST['category']) ? (string) $_POST['category'] : '');
     $team_id = mysqli_real_escape_string($con, isset($_POST['team_id']) ? (string) $_POST['team_id'] : '0');
+    if (!nm_is_admin($con) && $nmLinkedTeamId > 0) {
+        $team_id = (string) $nmLinkedTeamId;
+    }
     if (($team_id === '' || $team_id === '0') && $nmLinkedTeamId > 0) {
         $team_id = (string) $nmLinkedTeamId;
     }
@@ -286,6 +294,11 @@ if (isset($_POST['update'])) {
           <div class="nm-form-grid">
             <div class="nm-form-field nm-form-field--full">
               <label class="control-label" for="team_id">Shows as By Name / The Naradmuni</label>
+              <?php if (!nm_is_admin($con)) { ?>
+              <input type="hidden" name="team_id" value="<?php echo (int) $selTeam; ?>">
+              <p class="form-control-plaintext" style="margin:0;font-weight:600;"><?php echo nm_h(isset($au['name']) ? $au['name'] : ''); ?></p>
+              <p class="nm-form-hint">Your byline.</p>
+              <?php } else { ?>
               <select class="custom-select" id="team_id" name="team_id" required>
                 <option value="0">select author</option>
                 <?php
@@ -299,6 +312,7 @@ if (isset($_POST['update'])) {
                 ?>
               </select>
               <p class="nm-form-hint">Public story byline. Change anytime.</p>
+              <?php } ?>
             </div>
           </div>
         </section>

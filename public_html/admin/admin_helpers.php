@@ -252,18 +252,25 @@ if (!function_exists('nm_admin_role')) {
 	}
 }
 
-/** All logged-in CMS users have full access (role is for label/byline only). */
 if (!function_exists('nm_require_admin')) {
 	function nm_require_admin($con)
 	{
-		return;
+		if (nm_is_admin($con)) {
+			return;
+		}
+		if (!headers_sent()) {
+			header('Location: dashboard.php?denied=1');
+		} else {
+			echo '<script>location.replace("dashboard.php?denied=1");</script>';
+		}
+		exit;
 	}
 }
 
 if (!function_exists('nm_is_admin')) {
 	function nm_is_admin($con, $email = null)
 	{
-		return true;
+		return nm_admin_role($con, $email) === 'Admin';
 	}
 }
 
@@ -272,6 +279,125 @@ if (!function_exists('nm_admin_team_id')) {
 	{
 		$row = nm_admin_row($con, $email);
 		return $row && isset($row['team_id']) ? (int) $row['team_id'] : 0;
+	}
+}
+
+/** Display name, role, team id, and photo (team byline photo first, then admin profile/). */
+if (!function_exists('nm_cms_identity')) {
+	function nm_cms_identity($con, $userRow = null)
+	{
+		if (!is_array($userRow)) {
+			$userRow = nm_admin_row($con);
+		}
+		$role = 'Admin';
+		if (is_array($userRow) && isset($userRow['role']) && trim((string) $userRow['role']) === 'Author') {
+			$role = 'Author';
+		}
+		$teamId = is_array($userRow) && isset($userRow['team_id']) ? (int) $userRow['team_id'] : 0;
+		$teamName = '';
+		$teamImg = '';
+		if ($teamId > 0) {
+			$tq = @mysqli_query($con, "SELECT `name`,`image` FROM `team` WHERE `t_id`='$teamId' LIMIT 1");
+			if ($tq instanceof mysqli_result) {
+				$tr = mysqli_fetch_assoc($tq);
+				if (is_array($tr)) {
+					$teamName = trim((string) ($tr['name'] ?? ''));
+					$teamImg = trim((string) ($tr['image'] ?? ''));
+				}
+			}
+		}
+		$name = $teamName;
+		if ($name === '' && is_array($userRow) && !empty($userRow['aname'])) {
+			$name = (string) $userRow['aname'];
+		}
+		if ($name === '' && is_array($userRow) && !empty($userRow['aemail'])) {
+			$name = (string) $userRow['aemail'];
+		}
+		if ($name === '') {
+			$name = $role === 'Author' ? 'Author' : 'Admin';
+		}
+		$avatar = '';
+		$publicDir = dirname(__DIR__);
+		if ($teamImg !== '' && is_file($publicDir . '/team/' . $teamImg)) {
+			$avatar = '../team/' . $teamImg;
+		}
+		if ($avatar === '' && is_array($userRow) && !empty($userRow['image'])) {
+			$adminImg = (string) $userRow['image'];
+			if (is_file(__DIR__ . '/profile/' . $adminImg)) {
+				$avatar = 'profile/' . $adminImg;
+			}
+		}
+		$initial = strtoupper(substr($name, 0, 1));
+		if ($initial === '') {
+			$initial = 'N';
+		}
+		return array(
+			'name' => $name,
+			'role' => $role,
+			'is_admin' => ($role === 'Admin'),
+			'team_id' => $teamId,
+			'avatar' => $avatar,
+			'initial' => $initial,
+		);
+	}
+}
+
+/** SQL fragment to limit news. Authors: own team_id. Admins: optional ?author=me|others|id */
+if (!function_exists('nm_news_scope_clause')) {
+	function nm_news_scope_clause($con)
+	{
+		$isAdmin = nm_is_admin($con);
+		$mine = nm_admin_team_id($con);
+		$author = '';
+		if (isset($_GET['author'])) {
+			$author = trim((string) $_GET['author']);
+		} elseif (isset($_GET['search']['author'])) {
+			$author = trim((string) $_GET['search']['author']);
+		}
+		if (!$isAdmin) {
+			return $mine > 0 ? ("`team_id`='" . $mine . "'") : "`team_id`='-1'";
+		}
+		if ($author === 'me' && $mine > 0) {
+			return "`team_id`='" . $mine . "'";
+		}
+		if ($author === 'others' && $mine > 0) {
+			return "(`team_id` IS NULL OR `team_id`=0 OR `team_id`<>'" . $mine . "')";
+		}
+		if ($author !== '' && ctype_digit($author) && (int) $author > 0) {
+			return "`team_id`='" . (int) $author . "'";
+		}
+		return '';
+	}
+}
+
+if (!function_exists('nm_sql_and')) {
+	function nm_sql_and(&$queryCondition, $clause)
+	{
+		$clause = trim((string) $clause);
+		if ($clause === '') {
+			return;
+		}
+		$queryCondition .= ($queryCondition === '' ? ' WHERE ' : ' AND ') . $clause;
+	}
+}
+
+if (!function_exists('nm_can_manage_news')) {
+	function nm_can_manage_news($con, $newsid)
+	{
+		$newsid = (int) $newsid;
+		if ($newsid < 1) {
+			return false;
+		}
+		if (nm_is_admin($con)) {
+			return true;
+		}
+		$mine = nm_admin_team_id($con);
+		if ($mine < 1) {
+			return false;
+		}
+		$q = @mysqli_query($con, "SELECT `team_id` FROM `news` WHERE `newsid`='$newsid' LIMIT 1");
+		$row = ($q instanceof mysqli_result) ? mysqli_fetch_assoc($q) : null;
+		return is_array($row) && (int) $row['team_id'] === $mine;
 	}
 }
 
@@ -300,7 +426,7 @@ if (!function_exists('nm_js_notice')) {
 			'href' => (string) $href,
 			'type' => (string) $kind,
 		), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-		$css = 'css/admin-modern.css?v=19';
+		$css = 'css/admin-modern.css?v=20';
 		$js = 'js/nm-dialog.js?v=1';
 		if ($href !== '' && !headers_sent()) {
 			echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admin</title>';

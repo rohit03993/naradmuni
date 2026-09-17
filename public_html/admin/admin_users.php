@@ -263,7 +263,7 @@ $panel = "padding:18px 20px;border:1px solid #e5e7eb;border-radius:8px;backgroun
               <label for="role">Role</label>
               <select class="form-control" id="role" name="role">
                 <option value="Admin" <?php echo $form["role"] === "Admin" ? "selected" : ""; ?>>Admin</option>
-                <option value="Author" <?php echo $form["role"] === "Author" ? "selected" : ""; ?>>Author (same full CMS access)</option>
+                <option value="Author" <?php echo $form["role"] === "Author" ? "selected" : ""; ?>>Author (own news only)</option>
               </select>
               <small class="text-muted">Every login gets full CMS access. Link a Team profile for the article byline.</small>
             </div>

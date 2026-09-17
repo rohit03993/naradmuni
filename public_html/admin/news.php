@@ -25,6 +25,12 @@ $productsession=$_SESSION['aemail'];
 $res=mysqli_query($con,"SELECT * FROM admin WHERE aemail='$productsession'");
 
 $userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
+if (!function_exists('nm_cms_identity')) {
+    require_once __DIR__ . '/admin_helpers.php';
+}
+$nmMe = nm_cms_identity($con, $userRow);
+$nmIsAdmin = !empty($nmMe['is_admin']);
+$nmAuthorFilter = isset($_GET['author']) ? trim((string) $_GET['author']) : '';
 
 if(isset($_POST['add']))
                     {       
@@ -109,15 +115,41 @@ if(isset($_POST['add']))
                 <li class="breadcrumb-item"><a href="dashboard.php">Home</a> <i class="fa fa-angle-right"></i> News</li>
             </ol>
 <div class="container-fluid page-content">
-        <p class="text-muted" style="margin:0 0 12px;">
-            Eye icon opens the public article on <code><?php echo htmlspecialchars($publicroot); ?>news/…</code>.
-            Images column = files on disk (+ base64 embeds in body if any).
-            To free space from old posts, use <a href="cleanup_news.php"><strong>Cleanup old news</strong></a>.
-        </p>
+        <?php
+        $tabAll = $nmAuthorFilter === '';
+        $tabMe = $nmAuthorFilter === 'me';
+        $tabOthers = $nmAuthorFilter === 'others';
+        $tabId = ($nmAuthorFilter !== '' && ctype_digit($nmAuthorFilter));
+        ?>
+        <?php if ($nmIsAdmin) { ?>
+        <div class="nm-news-tabs">
+          <a class="<?php echo $tabAll ? 'is-on' : ''; ?>" href="news.php">All news</a>
+          <?php if ((int) $nmMe['team_id'] > 0) { ?>
+          <a class="<?php echo $tabMe ? 'is-on' : ''; ?>" href="news.php?author=me">By me</a>
+          <a class="<?php echo $tabOthers ? 'is-on' : ''; ?>" href="news.php?author=others">By others</a>
+          <?php } ?>
+          <?php if ($tabId) {
+              $tn = '';
+              $tid = (int) $nmAuthorFilter;
+              $tq = @mysqli_query($con, "SELECT `name` FROM `team` WHERE `t_id`='$tid' LIMIT 1");
+              if ($tq instanceof mysqli_result) {
+                  $tr = mysqli_fetch_assoc($tq);
+                  if ($tr) {
+                      $tn = $tr['name'];
+                  }
+              }
+              echo '<a class="is-on" href="news.php?author=' . $tid . '">' . htmlspecialchars($tn !== '' ? $tn : ('Author #' . $tid)) . '</a>';
+          } ?>
+        </div>
+        <?php } else { ?>
+        <p class="text-muted" style="margin:0 0 12px;">Showing only your stories. Edit or schedule from the list below.</p>
+        <?php } ?>
         <div class="row">
         <div class="col-sm-4"><button class="btn btn-warning reset" type="reset"><i class="fas fa-redo-alt"></i> Reset</button> <button onclick="myFunction()" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
         <a href="add_news.php" class="btn btn-success"><span class="fa fa-plus"></span> Add New </a>
+        <?php if ($nmIsAdmin) { ?>
         <a href="cleanup_news.php" class="btn btn-outline-danger"><i class="fas fa-broom"></i> Cleanup old</a>
+        <?php } ?>
         </div> 
     <div class="EditstatusMsg col-sm-4"></div>
     <div class="col-sm-4"></div>
@@ -209,7 +241,8 @@ function getresult(url) {
                 "search[title]":$("#title").val(),
                 "search[latest_news]":$("#latest_news").val(),
                 "search[slider]":$("#slider").val(),
-                "search[category]":$("#category").val()},
+                "search[category]":$("#category").val(),
+                "author": <?php echo json_encode($nmAuthorFilter); ?>},
 		beforeSend: function(){$("#overlay").show();},
 		success: function(data){
 		$("#pagination-result").html(data);
