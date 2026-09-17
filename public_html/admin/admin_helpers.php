@@ -401,6 +401,38 @@ if (!function_exists('nm_can_manage_news')) {
 	}
 }
 
+/**
+ * Actual news_views totals for a small id list (current News page only).
+ * Returns newsid => count, or null if the query failed.
+ * @param int[] $ids
+ * @return array<int,int>|null
+ */
+if (!function_exists('nm_page_view_counts')) {
+	function nm_page_view_counts($con, array $ids)
+	{
+		$ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+		$out = array();
+		foreach ($ids as $id) {
+			$out[$id] = 0;
+		}
+		if (!$ids) {
+			return $out;
+		}
+		$list = implode(',', $ids);
+		$q = @mysqli_query(
+			$con,
+			"SELECT `newsid`, COUNT(*) AS c FROM `news_views` WHERE `newsid` IN ($list) GROUP BY `newsid`"
+		);
+		if (!($q instanceof mysqli_result)) {
+			return null;
+		}
+		while ($row = mysqli_fetch_assoc($q)) {
+			$out[(int) $row['newsid']] = (int) $row['c'];
+		}
+		return $out;
+	}
+}
+
 /** Pick success vs error styling for admin dialogs. */
 if (!function_exists('nm_notice_kind')) {
 	function nm_notice_kind($message)
@@ -426,7 +458,7 @@ if (!function_exists('nm_js_notice')) {
 			'href' => (string) $href,
 			'type' => (string) $kind,
 		), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-		$css = 'css/admin-modern.css?v=20';
+		$css = 'css/admin-modern.css?v=21';
 		$js = 'js/nm-dialog.js?v=1';
 		if ($href !== '' && !headers_sent()) {
 			echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admin</title>';

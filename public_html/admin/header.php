@@ -11,7 +11,7 @@ if (!isset($nmMe) || !is_array($nmMe)) {
 $nmAdminName = $nmMe['name'];
 if (!defined("NM_ADMIN_ASSETS")) {
 	define("NM_ADMIN_ASSETS", true);
-	echo '<link rel="stylesheet" href="css/admin-modern.css?v=20">' . "\n";
+	echo '<link rel="stylesheet" href="css/admin-modern.css?v=21">' . "\n";
 	echo '<script src="js/nm-dialog.js?v=1"></script>' . "\n";
 }
 ?>

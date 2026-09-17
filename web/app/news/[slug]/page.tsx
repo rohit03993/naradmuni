@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import ArticleActions from "@/components/ArticleActions";
 import ArticleByline from "@/components/ArticleByline";
 import AuthorBox from "@/components/AuthorBox";
+import RecordNewsView from "@/components/RecordNewsView";
 import NewsDate from "@/components/NewsDate";
 import YeBhiPadhein from "@/components/YeBhiPadhein";
 import { asHtmlString, sanitizeArticleHtml } from "@/lib/html";
@@ -63,6 +64,7 @@ export default async function NewsPage({ params }: Props) {
 
   return (
     <article>
+      <RecordNewsView newsid={Number(article.newsid)} />
       {article.cat_url ? (
         <div className="crumb">
           <a href={`/category/${article.cat_url}`}>{article.hindi_name}</a>

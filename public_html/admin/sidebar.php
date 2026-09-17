@@ -4,7 +4,7 @@ if (!function_exists('nm_h')) {
 }
 if (!defined("NM_ADMIN_ASSETS")) {
 	define("NM_ADMIN_ASSETS", true);
-	echo '<link rel="stylesheet" href="css/admin-modern.css?v=20">' . "\n";
+	echo '<link rel="stylesheet" href="css/admin-modern.css?v=21">' . "\n";
 	echo '<script src="js/nm-dialog.js?v=1"></script>' . "\n";
 }
 $nmPage = basename(isset($_SERVER["PHP_SELF"]) ? $_SERVER["PHP_SELF"] : "");

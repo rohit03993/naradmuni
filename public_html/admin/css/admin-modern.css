@@ -348,6 +348,114 @@ body:not(.nm-login) {
   padding: 20px 22px !important;
 }
 
+/* Old login skin used .card { margin: 50% auto } — that shoved admin forms down the page. */
+body:not(.nm-login) .card {
+  margin: 0 0 16px !important;
+  width: auto !important;
+  max-width: 100%;
+}
+
+/* My profile — sit under breadcrumb; photo + fields, no empty scroll */
+.nm-profile {
+  max-width: 760px;
+}
+
+.nm-profile-card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.nm-profile-card .nm-profile-intro {
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--nm-line);
+  margin-bottom: 4px;
+}
+
+.nm-profile-card .nm-profile-intro h2 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--nm-ink);
+}
+
+.nm-profile-card .nm-profile-intro p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--nm-muted);
+}
+
+.nm-profile-grid {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: 20px 24px;
+  padding: 16px 0 0;
+  align-items: start;
+}
+
+.nm-profile-photo {
+  text-align: center;
+}
+
+.nm-profile-photo img,
+.nm-profile-photo .nm-profile-ph {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px var(--nm-line);
+  background: #eef2f6;
+  display: block;
+  margin: 0 auto 10px;
+}
+
+.nm-profile-photo .nm-profile-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #8a97a6;
+}
+
+.nm-profile-photo label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--nm-ink);
+}
+
+.nm-profile-fields .form-group {
+  margin-bottom: 12px;
+}
+
+.nm-profile-fields .form-group:last-of-type {
+  margin-bottom: 14px;
+}
+
+.nm-profile-fields label {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--nm-ink);
+}
+
+.nm-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.nm-profile-actions .btn-success {
+  min-height: 40px;
+  padding: 8px 18px;
+  font-weight: 600;
+}
+
 /* ——— Dashboard ——— */
 .nm-dash-wrap {
   padding: 4px 24px 28px;
@@ -1029,21 +1137,43 @@ a.nm-byline:hover {
   background: #f4f6f8;
 }
 
-/* News list: 7 columns — title gets the space, nothing clipped */
+/* News list: 8 columns — title still gets the space */
 .nm-news-table th:nth-child(1),
 .nm-news-table td:nth-child(1) { width: 4%; }
 .nm-news-table th:nth-child(2),
-.nm-news-table td:nth-child(2) { width: 42%; }
+.nm-news-table td:nth-child(2) { width: 36%; }
 .nm-news-table th:nth-child(3),
-.nm-news-table td:nth-child(3) { width: 12%; }
+.nm-news-table td:nth-child(3) { width: 11%; }
 .nm-news-table th:nth-child(4),
 .nm-news-table td:nth-child(4) { width: 8%; }
 .nm-news-table th:nth-child(5),
-.nm-news-table td:nth-child(5) { width: 12%; }
+.nm-news-table td:nth-child(5) { width: 11%; }
 .nm-news-table th:nth-child(6),
-.nm-news-table td:nth-child(6) { width: 10%; }
+.nm-news-table td:nth-child(6) { width: 9%; }
 .nm-news-table th:nth-child(7),
-.nm-news-table td:nth-child(7) { width: 12%; min-width: 124px; }
+.nm-news-table td:nth-child(7) { width: 8%; }
+.nm-news-table th:nth-child(8),
+.nm-news-table td:nth-child(8) { width: 13%; min-width: 124px; }
+
+.nm-views-cell {
+  white-space: nowrap;
+  text-align: right;
+  vertical-align: middle !important;
+}
+
+.nm-views-num {
+  display: block;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--nm-ink);
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.nm-views-cell .nm-muted {
+  display: block;
+  font-size: 0.68rem;
+}
 
 .nm-news-table td:nth-child(3) {
   font-size: 0.82rem;
@@ -1235,16 +1365,39 @@ code {
   .nm-news-table,
   .nm-cats-table,
   #myTable {
-    min-width: 640px;
+    min-width: 720px;
   }
-  .nm-news-table th:nth-child(7),
-  .nm-news-table td:nth-child(7),
+  .nm-news-table th:nth-child(8),
+  .nm-news-table td:nth-child(8),
   .nm-actions-cell {
     min-width: 118px;
     white-space: nowrap;
   }
   .nm-actions-cell .btn {
     margin: 2px 0;
+  }
+
+  .nm-profile {
+    max-width: none;
+  }
+  .nm-profile-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 16px;
+  }
+  .nm-profile-photo img,
+  .nm-profile-photo .nm-profile-ph {
+    width: 88px;
+    height: 88px;
+  }
+  .nm-profile-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .nm-profile-actions .btn {
+    width: 100%;
+    margin: 0;
+    text-align: center;
   }
 
   /* Forms: full-width stacked fields */

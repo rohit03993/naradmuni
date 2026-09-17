@@ -109,36 +109,49 @@ $publicBase = isset($publicroot) ? rtrim($publicroot, "/") : "";
       <?php if ($err) { ?><div class="alert alert-danger"><?php echo nm_h($err); ?></div><?php } ?>
       <?php if ($ok) { ?><div class="alert alert-success"><?php echo nm_h($ok); ?></div><?php } ?>
 
-      <div class="card" style="max-width:720px;">
-        <div class="card-header"><strong>Public author profile</strong></div>
-        <div class="card-body">
-          <p class="text-muted">This is what readers see under the headline: photo + “By your name” + The Naradmuni.</p>
-          <?php if ($team && !empty($team["image"])) { ?>
-            <p>
-              <img src="../team/<?php echo nm_h($team["image"]); ?>" alt="" width="64" height="64" style="border-radius:50%;object-fit:cover;">
-            </p>
-          <?php } ?>
+      <div class="nm-profile">
+        <div class="nm-profile-card">
+          <div class="nm-profile-intro">
+            <h2>Public author profile</h2>
+            <p>This is what readers see under the headline: photo + “By your name” + The Naradmuni.</p>
+          </div>
           <form method="post" enctype="multipart/form-data">
-            <div class="form-group">
-              <label>Name</label>
-              <input class="form-control" type="text" name="name" required value="<?php echo nm_h($team["name"] ?? $userRow["aname"]); ?>">
+            <div class="nm-profile-grid">
+              <div class="nm-profile-photo">
+                <?php
+                $photo = ($team && !empty($team["image"])) ? $team["image"] : "";
+                $nameForInitial = trim((string) ($team["name"] ?? $userRow["aname"] ?? "N"));
+                $initial = nm_h(function_exists("mb_substr") ? mb_substr($nameForInitial, 0, 1) : substr($nameForInitial, 0, 1));
+                if ($photo !== "") {
+                  echo '<img src="../team/' . nm_h($photo) . '" alt="">';
+                } else {
+                  echo '<div class="nm-profile-ph">' . $initial . '</div>';
+                }
+                ?>
+                <label for="nm-profile-image">Photo</label>
+                <input class="form-control" id="nm-profile-image" type="file" name="image" accept="image/*">
+              </div>
+              <div class="nm-profile-fields">
+                <div class="form-group">
+                  <label for="nm-profile-name">Name</label>
+                  <input class="form-control" id="nm-profile-name" type="text" name="name" required value="<?php echo nm_h($team["name"] ?? $userRow["aname"]); ?>">
+                </div>
+                <div class="form-group">
+                  <label for="nm-profile-desig">Designation</label>
+                  <input class="form-control" id="nm-profile-desig" type="text" name="designation" value="<?php echo nm_h($team["designation"] ?? ""); ?>">
+                </div>
+                <div class="form-group">
+                  <label for="nm-profile-about">About</label>
+                  <textarea class="form-control" id="nm-profile-about" name="email" rows="3"><?php echo nm_h($team["email"] ?? ""); ?></textarea>
+                </div>
+                <div class="nm-profile-actions">
+                  <button type="submit" name="save_profile" class="btn btn-success">Save profile</button>
+                  <?php if ($teamId > 0 && $publicBase) { ?>
+                    <a class="btn btn-outline-secondary" href="<?php echo nm_h($publicBase . "/author/" . $teamId); ?>" target="_blank" rel="noopener">Preview public page</a>
+                  <?php } ?>
+                </div>
+              </div>
             </div>
-            <div class="form-group">
-              <label>Designation</label>
-              <input class="form-control" type="text" name="designation" value="<?php echo nm_h($team["designation"] ?? ""); ?>">
-            </div>
-            <div class="form-group">
-              <label>About</label>
-              <textarea class="form-control" name="email" rows="3"><?php echo nm_h($team["email"] ?? ""); ?></textarea>
-            </div>
-            <div class="form-group">
-              <label>Photo</label>
-              <input class="form-control" type="file" name="image" accept="image/*">
-            </div>
-            <button type="submit" name="save_profile" class="btn btn-success">Save profile</button>
-            <?php if ($teamId > 0 && $publicBase) { ?>
-              <a class="btn btn-link" href="<?php echo nm_h($publicBase . "/author/" . $teamId); ?>" target="_blank" rel="noopener">Preview public page</a>
-            <?php } ?>
           </form>
         </div>
       </div>

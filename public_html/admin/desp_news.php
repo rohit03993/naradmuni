@@ -62,6 +62,14 @@ $query =  $sql . $orderby . " limit " . $start . "," . $perPage->perpage;
 $faq = $db_handle->runQuery($query);
 if (empty($faq)) { $faq = array(); }
 
+$viewIds = array();
+foreach ($faq as $row) {
+	if (!empty($row["newsid"])) {
+		$viewIds[] = (int) $row["newsid"];
+	}
+}
+$viewCounts = function_exists("nm_page_view_counts") ? nm_page_view_counts($con, $viewIds) : null;
+
 if(empty($_GET["rowcount"])) {
 $_GET["rowcount"] = $db_handle->numRows("SELECT newsid from news" . $queryCondition);
 }
@@ -89,6 +97,7 @@ $output = '';
                             <th>Photo</th>
                             <th>Status</th>
                             <th>Date</th>
+                            <th>Views</th>
 							<th>Action</th>
 						  </tr>
                             </thead>
@@ -180,6 +189,18 @@ $output = '';
                                     $goLabel = $goTs ? date("d-m-Y h:i A", $goTs) : $goLive;
                                     echo '<br><span class="badge badge-info" style="font-size:10px;font-weight:600;">Go live ' . htmlspecialchars($goLabel) . '</span>';
                                 }
+                            }
+                            ?>
+                            </td>
+                            <td class="nm-views-cell">
+                            <?php
+                            $nid = (int) $faq[$k]["newsid"];
+                            if (!is_array($viewCounts)) {
+                                echo "—";
+                            } else {
+                                $vc = isset($viewCounts[$nid]) ? (int) $viewCounts[$nid] : 0;
+                                echo '<span class="nm-views-num">' . number_format($vc) . '</span>';
+                                echo '<span class="nm-muted">views</span>';
                             }
                             ?>
                             </td>
