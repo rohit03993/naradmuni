@@ -12,4 +12,6 @@ public_html/videos/
 *.sql
 *.sql.gz
 
-.cursor/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**

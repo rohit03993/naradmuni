@@ -1,0 +1,59 @@
+---
+description: When the user asks for server commands, output only a safe copy-paste block. Never overwrite live config.php or restart Next for PHP-only work.
+alwaysApply: true
+---
+
+# Cursor → server commands (user pastes them)
+
+The user does **not** invent SSH steps. Whatever this chat prints, they run. Commands must be safe on live thenaradmuni.com.
+
+**Always:** one recipe, full paths, labeled **as thenaradmuni** vs **as root**. If they are already `thenaradmuni@`, omit `su - thenaradmuni`. If they are `root@`, start with `su - thenaradmuni` except for `systemctl`.
+
+**Never include:** `git checkout -- public_html/admin/config.php`, `git reset --hard`, `git stash`, `git clean`, `rm config.php`, or restart Next unless `web/` changed in that push.
+
+Site: `/home/thenaradmuni/htdocs/www.thenaradmuni.com`
+
+After every `git pull`, they must still see production config (`thenaradmuni.com`, `paldigitalnews`, `newssite3`). If `localhost` or `thenaradmunicom_db` appears, tell them **STOP** and fix File Manager — do not pull again.
+
+## One-time lock (only if config is already production)
+
+```bash
+cd /home/thenaradmuni/htdocs/www.thenaradmuni.com
+git update-index --assume-unchanged public_html/admin/config.php
+```
+
+Then `git pull` will not replace live `config.php`.
+
+## Recipe A — PHP only (no files under `web/`)
+
+```bash
+cd /home/thenaradmuni/htdocs/www.thenaradmuni.com
+grep -E 'urlroot|db_name|\$user' public_html/admin/config.php | head -5
+git pull
+grep -E 'urlroot|db_name|\$user' public_html/admin/config.php | head -5
+```
+
+Do **not** add `npm run build` or `systemctl restart`.
+
+## Recipe B — `web/` changed
+
+Block 1 (thenaradmuni) — wait for build **success**:
+
+```bash
+cd /home/thenaradmuni/htdocs/www.thenaradmuni.com
+grep -E 'urlroot|db_name' public_html/admin/config.php | head -3
+git pull
+grep -E 'urlroot|db_name' public_html/admin/config.php | head -3
+cd web && npm run build
+```
+
+Block 2 (**root** only, after build OK):
+
+```bash
+systemctl restart thenaradmuni-next
+systemctl status thenaradmuni-next --no-pager
+```
+
+Brief 500 on the homepage during restart is expected. Admin 500 after Ready = config.php, not Next.
+
+If both PHP and `web/` changed, use Recipe B once (pull gets both). Still never checkout `config.php`.

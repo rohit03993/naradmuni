@@ -1,0 +1,24 @@
+---
+description: Never break ranked public URLs, image paths, or SEO placements for Naradmuni
+alwaysApply: true
+---
+
+# Preserve production URLs (SEO critical)
+
+At any cost, do **not** change or break URLs that already rank or work on the live site.
+
+## Locked public paths
+
+- Articles: `/news/{newsurl}` — use the exact `news.newsurl` value from MySQL. Never invent new slug schemes.
+- Categories: `/category/{cat_url}` — use exact `categories.cat_url` from DB.
+- Images / media: keep `/images/news/...`, `/team/...`, `/ads/...`, `/images/logo/...`.
+- Admin: one login (`/login`) and dashboard (`/admin`). No extra login entry points.
+
+## Local browser rule
+
+- Open **only** `http://localhost:3000` (public + admin). Apache `:8080` is the backend engine — never send users to `:8080` for browsing.
+- Old PHP public skins must redirect to Next.js with the **same path**.
+
+## Production
+
+- Same path → same content. Do not rename `newsurl` or image files for “clean URLs.”

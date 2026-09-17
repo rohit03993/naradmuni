@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
         { url: icon, sizes: "192x192", type },
         { url: icon, sizes: "512x512", type },
       ],
-      apple: [{ url: icon, sizes: "180x180" }],
+      apple: [{ url: "/icons/nm-192.png", sizes: "180x180", type: "image/png" }],
       shortcut: [fav],
     },
   };

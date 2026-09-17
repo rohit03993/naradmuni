@@ -36,7 +36,7 @@ export default async function InstallPage() {
         </p>
         <InstallPwaButton />
         <p style={{ fontSize: 12, color: "#9ca3af", margin: "16px 0 0", lineHeight: 1.45 }}>
-          Use normal Chrome (not Incognito). On iPhone use Safari → Share → Add to Home Screen.
+          Android: use Chrome (not Incognito). iPhone: Safari → Share → Add to Home Screen.
         </p>
       </div>
     </div>

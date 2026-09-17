@@ -48,6 +48,17 @@ async function saveToken(token: string) {
   localStorage.setItem("nm_fcm_token_saved", token);
 }
 
+function detectIosMode(): "none" | "safari" | "other" {
+  if (typeof navigator === "undefined") return "none";
+  const ua = navigator.userAgent || "";
+  if (!/iPhone|iPad|iPod/i.test(ua)) return "none";
+  const nav = navigator as Navigator & { standalone?: boolean };
+  if (nav.standalone) return "none";
+  if (/CriOS|FxiOS|EdgiOS|FBAN|FBAV|Instagram|Line\//i.test(ua)) return "other";
+  if (/Safari/i.test(ua)) return "safari";
+  return "other";
+}
+
 function isStandaloneDisplay(): boolean {
   if (typeof window === "undefined") return false;
   if (window.matchMedia("(display-mode: standalone)").matches) return true;
@@ -150,7 +161,7 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
   const [showModal, setShowModal] = useState(false);
   const [manualTip, setManualTip] = useState(false);
   const [notifState, setNotifState] = useState<"idle" | "on" | "denied" | "unsupported">("idle");
-  const [canNativeInstall, setCanNativeInstall] = useState(false);
+  const [iosMode, setIosMode] = useState<"none" | "safari" | "other">("none");
 
   const enableNotifications = useCallback(async () => {
     if (typeof window === "undefined") return;
@@ -241,6 +252,7 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    setIosMode(detectIosMode());
 
     const syncInstalled = async () => {
       if (isReallyInstalled()) {
@@ -270,14 +282,12 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
     const onBip = (e: Event) => {
       e.preventDefault();
       deferredRef.current = e as BeforeInstallPromptEvent;
-      setCanNativeInstall(true);
     };
     const onInstalled = () => {
       markInstalled();
       setInstalled(true);
       setShowModal(false);
       setManualTip(false);
-      setCanNativeInstall(false);
     };
 
     window.addEventListener("beforeinstallprompt", onBip);
@@ -303,11 +313,6 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
     };
   }, [enableNotifications, openInstallModal]);
 
-  const isIos =
-    typeof navigator !== "undefined" &&
-    /iphone|ipad|ipod/i.test(navigator.userAgent) &&
-    !(navigator as Navigator & { standalone?: boolean }).standalone;
-
   const onInstall = async () => {
     const ev = deferredRef.current;
     if (ev) {
@@ -315,7 +320,6 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
         await ev.prompt();
         const choice = await ev.userChoice;
         deferredRef.current = null;
-        setCanNativeInstall(false);
         if (choice.outcome === "accepted") {
           markInstalled();
           setInstalled(true);
@@ -351,38 +355,58 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
             <h3>The Naradmuni</h3>
             {installed && isReallyInstalled() ? (
               <p>App is already installed on your home screen.</p>
-            ) : (
-              <p>Install the app on your home screen for faster access.</p>
-            )}
-
-            {manualTip ? (
-              <div className="pwa-ios-tip">
-                {isIos ? (
+            ) : iosMode === "other" ? (
+              <>
+                <p>iPhone cannot install from this browser.</p>
+                <div className="pwa-ios-tip">
                   <p>
-                    <strong>iPhone Safari:</strong> Share (□↑) → <strong>Add to Home Screen</strong>
+                    Open this page in <strong>Safari</strong>, then tap <strong>Share</strong> (□↑) →{" "}
+                    <strong>Add to Home Screen</strong>.
                   </p>
-                ) : (
-                  <p>
-                    Chrome menu <strong>⋮</strong> → <strong>Install app</strong> / <strong>Add to Home screen</strong>
-                    <br />
-                    <small>Does not work in Incognito — use a normal Chrome window.</small>
-                  </p>
-                )}
-                <button type="button" className="pwa-later-btn" onClick={dismissModal} style={{ marginTop: 8 }}>
-                  Close
-                </button>
-              </div>
-            ) : (
-              <div className="pwa-card-actions">
-                {!isReallyInstalled() ? (
-                  <button type="button" className="pwa-install-btn pwa-install-btn--block" onClick={() => void onInstall()}>
-                    Install App now
+                  <button type="button" className="pwa-later-btn" onClick={dismissModal} style={{ marginTop: 8 }}>
+                    Close
                   </button>
-                ) : null}
-                <button type="button" className="pwa-later-btn" onClick={dismissModal}>
-                  Later
-                </button>
-              </div>
+                </div>
+              </>
+            ) : iosMode === "safari" ? (
+              <>
+                <p>Add The Naradmuni to your home screen.</p>
+                <div className="pwa-ios-tip">
+                  <p>
+                    Tap <strong>Share</strong> (□↑) at the bottom → <strong>Add to Home Screen</strong>.
+                  </p>
+                  <button type="button" className="pwa-later-btn" onClick={dismissModal} style={{ marginTop: 8 }}>
+                    Close
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p>Install the app on your home screen for faster access.</p>
+                {manualTip ? (
+                  <div className="pwa-ios-tip">
+                    <p>
+                      Chrome menu <strong>⋮</strong> → <strong>Install app</strong> / <strong>Add to Home screen</strong>
+                      <br />
+                      <small>Does not work in Incognito — use a normal Chrome window.</small>
+                    </p>
+                    <button type="button" className="pwa-later-btn" onClick={dismissModal} style={{ marginTop: 8 }}>
+                      Close
+                    </button>
+                  </div>
+                ) : (
+                  <div className="pwa-card-actions">
+                    {!isReallyInstalled() ? (
+                      <button type="button" className="pwa-install-btn pwa-install-btn--block" onClick={() => void onInstall()}>
+                        Install App now
+                      </button>
+                    ) : null}
+                    <button type="button" className="pwa-later-btn" onClick={dismissModal}>
+                      Later
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

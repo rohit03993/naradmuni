@@ -1,0 +1,39 @@
+---
+description: Two apps (Next public + PHP admin). Never let a Git pull or Next rebuild wipe live admin config.
+alwaysApply: true
+---
+
+# Two apps, one domain — do not couple deploys
+
+Naradmuni is **not** one process. Visitors hit Next.js; admin is PHP. They share MySQL and images only.
+
+| App | Folder | Live config | After code change |
+|-----|--------|-------------|-------------------|
+| Public site | `web/` | `web/.env.local` (Git-ignored) | `npm run build` then restart `thenaradmuni-next` |
+| Admin CMS | `public_html/admin/` | `public_html/admin/config.php` | `git pull` of PHP only. **No** Next rebuild |
+
+Browser: public `/news/{newsurl}` and `/category/{cat_url}`; admin `/login` → `/naradmuni/manage.php`. Next **proxies** `/naradmuni/*` to PHP (`PHP_ORIGIN`; production has used port **8082**, Next **3002**). If Next is down, admin on the same domain looks dead too.
+
+## Never overwrite live `config.php`
+
+GitHub `config.php` is **local XAMPP** (`localhost:3000`, DB `thenaradmunicom_db`). Production is `https://www.thenaradmuni.com/naradmuni/` and CloudPanel DB `paldigitalnews` / `newssite3`.
+
+- **Never** `git checkout -- public_html/admin/config.php` on the server.
+- **Never** commit or restore a backup taken *after* that checkout (that backup is already the Git file).
+- Backup only if the live file still has `thenaradmuni.com` and `paldigitalnews`.
+- PHP pages must `require_once admin_helpers.php` themselves. Do not rely on `config.php` to load helpers (production config is not the Git copy).
+
+When the user asks what to run on the server, follow `.cursor/rules/server-deploy-commands.mdc`: one safe copy-paste block, never `git checkout -- config.php`.
+
+## Which deploy to run
+
+- Touched **only** `public_html/admin/*.php` (or CSS there): Git pull PHP. Do **not** restart Next.
+- Touched **`web/`**: pull, `cd web && npm run build`, then root `systemctl restart thenaradmuni-next`. Do **not** touch `config.php`.
+- Admin CSS/helpers/sidebar are **global**. A CSS rule like `.card { margin: 50% }` or a helper called before it is loaded 500s many admin tabs, not just the page you edited.
+
+## Do not
+
+- Change ranked URLs or image paths (see preserve-seo-urls).
+- Point production `$urlroot` at localhost.
+- Rebuild Next “just in case” after a PHP-only fix.
+- Run `ALTER TABLE` as a required step for an admin page to load.
