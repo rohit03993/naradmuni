@@ -1,5 +1,10 @@
 <?php
 include "config.php";
+require_once __DIR__ . "/admin_helpers.php";
+if (!isset($_SESSION["aemail"]) || !nm_is_admin($con)) {
+	http_response_code(403);
+	exit;
+}
 require_once("dbcontroller.php");
 require_once("pagination.class.php");
 $db_handle = new DBController();

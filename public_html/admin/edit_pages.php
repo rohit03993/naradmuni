@@ -1,180 +1,132 @@
 <?php
+include "config.php";
+require_once __DIR__ . "/admin_helpers.php";
 
-    include"config.php";
- 
-	if (!isset($_SESSION['aemail'])) {
-		$_SESSION['msg'] = "You must log in first";
-		header('location: ../manage.php');
+if (!isset($_SESSION["aemail"])) {
+	$_SESSION["msg"] = "You must log in first";
+	header("location: ../manage.php");
+	exit;
+}
+
+nm_require_admin($con);
+
+$usersession = $_SESSION["aemail"];
+$userRow = nm_admin_row($con, $usersession);
+
+$srid = isset($_GET["eid"]) ? (int) $_GET["eid"] : (isset($_GET["id"]) ? (int) $_GET["id"] : 0);
+$rs = array();
+if ($srid > 0) {
+	$ex = mysqli_query($con, "SELECT * FROM `pages` WHERE `p_id`='$srid' LIMIT 1");
+	if ($ex instanceof mysqli_result) {
+		$row = mysqli_fetch_array($ex, MYSQLI_ASSOC);
+		if (is_array($row)) {
+			$rs = $row;
+		}
 	}
+}
+if (!$rs) {
+	nm_js_notice("Page not found.", "pages.php", "error");
+}
 
-	if (isset($_GET['logout'])) {
-		session_destroy();
-		unset($_SESSION['aemail']);
-		header("location: ../manage.php");
+$err = "";
+$ok = "";
+
+if (isset($_POST["update"])) {
+	$page = trim((string) ($_POST["page"] ?? ""));
+	$description = (string) ($_POST["description"] ?? "");
+	$metat = trim((string) ($_POST["metat"] ?? ""));
+	$metad = trim((string) ($_POST["metad"] ?? ""));
+	$lockedUrl = (string) $rs["page_url"];
+
+	if ($page === "") {
+		$err = "Page name is required.";
+	} elseif (trim(strip_tags($description)) === "") {
+		$err = "Add the page content.";
+	} else {
+		$pageEsc = mysqli_real_escape_string($con, $page);
+		$descEsc = mysqli_real_escape_string($con, $description);
+		$metatEsc = mysqli_real_escape_string($con, $metat);
+		$metadEsc = mysqli_real_escape_string($con, $metad);
+		$up = "UPDATE `pages` SET `page`='$pageEsc', `description`='$descEsc', `metat`='$metatEsc', `metad`='$metadEsc' WHERE `p_id`='$srid' LIMIT 1";
+		if (mysqli_query($con, $up)) {
+			nm_js_notice("Page updated. Public site shows this within about 1 minute.", "pages.php");
+		} else {
+			$err = "Could not save. Try again.";
+		}
+		$rs["page"] = $page;
+		$rs["description"] = $description;
+		$rs["metat"] = $metat;
+		$rs["metad"] = $metad;
+		$rs["page_url"] = $lockedUrl;
 	}
+}
 
- if(!isset($_SESSION['aemail']))
- {
-  echo ("<script language='javascript'>
-                   window.location.href='logout.php';
-                        </script>");
- }
-
-$productsession=$_SESSION['aemail'];
-
-$res=mysqli_query($con,"SELECT * FROM admin WHERE aemail='$productsession'");
-
-$userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
-
-$srid = isset($_GET['eid']) ? $_GET['eid'] : (isset($_GET['id']) ? $_GET['id'] : '');
-$qry="SELECT * FROM `pages` WHERE p_id='".mysqli_real_escape_string($con, (string)$srid)."'";
-$ex=mysqli_query($con,$qry);
-$rs=mysqli_fetch_array($ex);
-if (!is_array($rs)) { $rs = array(); }
-
-if(isset($_POST['update']))
-                    {     
-                            $page = mysqli_real_escape_string($con,$_POST['page']);
-                            $description = mysqli_real_escape_string($con,$_POST['description']);
-                            $metat = mysqli_real_escape_string($con,$_POST['metat']);
-                            $metad = mysqli_real_escape_string($con,$_POST['metad']);
-                            $page_url = mysqli_real_escape_string($con,$_POST['page_url']);
-                            /*   Linkname starts  */
-                            $replace = array(" ",",",".","'","&","-","_",":","(",")","+",";","#","!","*","{","}","[","]","?","/","\"","|","@","%","$");
-                    		$linkStr_Replace = str_replace($replace,"-",trim($page_url));
-                    		$linkStr_Replace = str_replace("----","-",$linkStr_Replace);
-                    		$linkStr_Replace = str_replace("---","-",$linkStr_Replace);
-                    		$linkStr_Replace = str_replace("--","-",$linkStr_Replace);
-                    		$linkname =  $linkStr_Replace;
-                          
-                        
-                            if (empty($page)) { array_push($errors, "Kindly select a page"); }
-                           
-                            if (empty($description)) { array_push($errors, "Kindly fill description"); }
-                             
-                        if (count($errors) == 0) {
-                            
-                        $up=("UPDATE `pages` SET `page`='$page',`description`='$description',`page_url`='$linkname',`metat`='$metat',`metad`='$metad' WHERE `p_id`='$srid'");
-                            
-                            $ex= mysqli_query($con,$up);
-                            
-                              if($ex>0) {
-                                  
-                                 if (!function_exists('nm_js_notice')) {
-                                     require_once __DIR__ . '/admin_helpers.php';
-                                 }
-                                 nm_js_notice('Updated Successfully', 'pages.php');
-                                  array_push($sucs, "Updated Successfuly."); }
-                              else{ array_push($errors, "Sorry, there was an error."); }
-                            
-                             }
-                        
-                                
- 
-                            }
+$slug = (string) $rs["page_url"];
+$live = "/page/" . rawurlencode($slug);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Admin</title>
+  <title>Edit page — Admin</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="../include/css/bootstrap.min.css">
   <link rel="stylesheet" href="css/all.min.css">
   <link rel="stylesheet" href="../include/css/style.css">
-<link rel="stylesheet" href="../include/css/jquery-ui.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.5/css/responsive.dataTables.min.css">
-<script src="../include/js/jquery.min.js"></script>
-<script>
-
-    $( function() {
-    $( "#datepicker" ).datepicker({ yearRange: "-100:+0",changeMonth: true,
-    changeYear: true,
-    dateFormat: 'yy-mm-dd' });
-    $( "#datepicker1" ).datepicker({ dateFormat: 'yy-mm-dd' });
-    $( "#datepicker2" ).datepicker({ dateFormat: 'yy-mm-dd' });
-    $( "#datepicker3" ).datepicker({ dateFormat: 'yy-mm-dd' });
-    });
-</script>
+  <script src="../include/js/jquery.min.js"></script>
 </head>
 <body>
-<div id="overlay"><div><img src="img/loading.gif" width="64px" height="64px"/></div></div>
-    <div class="wrapper">
-        <!-- Sidebar  -->
-        <?php include"sidebar.php"; ?>
+<div class="wrapper">
+  <?php include "sidebar.php"; ?>
+  <div id="content">
+    <?php include "header.php"; ?>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="dashboard.php">Home</a> <i class="fa fa-angle-right"></i> <a href="pages.php">Pages</a> <i class="fa fa-angle-right"></i> Edit</li>
+    </ol>
+    <div class="container-fluid page-content nm-pages nm-pages-edit">
+      <div class="nm-pages-head">
+        <div>
+          <h2>Edit <?php echo nm_h($rs["page"]); ?></h2>
+          <p>Replace the text below. The live address stays <strong>/page/<?php echo nm_h($slug); ?></strong> so Google rankings are not affected.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="<?php echo nm_h($live); ?>" target="_blank" rel="noopener">View live</a>
+      </div>
+      <?php if ($err) { ?><div class="alert alert-danger"><?php echo nm_h($err); ?></div><?php } ?>
+      <?php if ($ok) { ?><div class="alert alert-success"><?php echo nm_h($ok); ?></div><?php } ?>
 
-        <!-- Page Content  -->
-<div id="content">
-            <?php include"header.php"; ?>
-            
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="dashboard.php">Home</a> <i class="fa fa-angle-right"></i> Edit Page</li>
-            </ol>
-<div class="container-fluid page-content">
-<?php include('errors.php'); ?>
-                            <?php include('sucsess.php'); ?>
-            <form id="SubmitForm" method="post" enctype="multipart/form-data"> 
-                
-            <div class="col-md-6 form-group group">
-              <label class="control-label">Page URL:</label>
-              <input class="form-control" type="text" name="page_url" value="<?php echo nm_h(isset($rs['page_url']) ? $rs['page_url'] : ''); ?>" >
-            </div>
-               
-            <div class="col-md-6 form-group group">
-              <label class="control-label">Page Name:</label>
-              <input class="form-control" type="text" name="page" value="<?php echo nm_h(isset($rs['page']) ? $rs['page'] : ''); ?>" >
-            </div>
-                
-            
-                 
-            <div class="col-md-12 form-group group">
-              <label class="control-label">Meta Title:</label>
-              <input class="form-control" type="text" name="metat" value="<?php echo nm_h(isset($rs['metat']) ? $rs['metat'] : ''); ?>" >
-            </div>
-                
-            <div class="col-md-12 form-group group">
-              <label class="control-label">Meta Description:</label>
-             <textarea class="form-control" cols="20" rows="5" name="metad"><?php echo nm_h(isset($rs['metad']) ? $rs['metad'] : ''); ?></textarea>
-            </div>
-            
-            <div class="col-md-12 form-group group">
-              <label class="control-label">Description</label>
-              <textarea class="ckeditor form-control" id="description"  name="description"><?php echo nm_h(isset($rs['description']) ? $rs['description'] : ''); ?></textarea>
-            </div>
-                
-            <div class="col-md-12 form-group group">
-                <input type="text" name="update" id="actions" class="hidden" value="update" hidden>
-                <button type="submit" name="update" class="btn btn-info">Update</button>
-            </div>
-           
-        </form>
+      <form method="post">
+        <div class="form-group">
+          <label>Public URL (locked)</label>
+          <input class="form-control" type="text" value="/page/<?php echo nm_h($slug); ?>" readonly>
+        </div>
+        <div class="form-group">
+          <label for="nm-page-name">Page name (footer + headline)</label>
+          <input class="form-control" id="nm-page-name" type="text" name="page" required value="<?php echo nm_h($rs["page"]); ?>">
+        </div>
+        <div class="form-group">
+          <label for="nm-page-metat">SEO title</label>
+          <input class="form-control" id="nm-page-metat" type="text" name="metat" value="<?php echo nm_h($rs["metat"]); ?>">
+        </div>
+        <div class="form-group">
+          <label for="nm-page-metad">SEO description</label>
+          <textarea class="form-control" id="nm-page-metad" name="metad" rows="3"><?php echo nm_h($rs["metad"]); ?></textarea>
+        </div>
+        <div class="form-group">
+          <label for="description">Page content</label>
+          <textarea class="ckeditor form-control" id="description" name="description"><?php echo nm_h($rs["description"]); ?></textarea>
+        </div>
+        <div class="nm-page-actions">
+          <button type="submit" name="update" class="btn btn-success">Save page</button>
+          <a class="btn btn-outline-secondary" href="pages.php">Back to list</a>
+        </div>
+      </form>
+    </div>
+    <?php include "footer.php"; ?>
+  </div>
 </div>
-</div>			
-
-    
-
-</div>
-<?php include"footer.php"; ?>
-<script type="text/javascript" src="ckeditor/ckeditor.js"></script>
-<script type="text/javascript">
-<?php echo nm_ckeditor_js('description'); ?>
-</script>
-<script type="text/javascript">
-        $(document).ready(function () {
-            $('#sidebar').toggleClass('');
-            $('#sidebarCollapse').on('click', function () {
-                $('#sidebar').toggleClass('active');
-            });
-        });
-    </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-  <script src="../include/js/bootstrap.min.js"></script>
-  <!-- Font Awesome JS -->
-    <script src="js/all.js"></script>
-<script src="../include/js/jquery-ui.js"></script>
-<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.2.5/js/dataTables.responsive.min.js"></script>
-    
+<script src="ckeditor/ckeditor.js"></script>
+<script><?php echo nm_ckeditor_js("description"); ?></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="../include/js/bootstrap.min.js"></script>
 </body>
 </html>

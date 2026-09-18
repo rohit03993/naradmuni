@@ -1,208 +1,126 @@
 <?php
+include "config.php";
+require_once __DIR__ . "/admin_helpers.php";
 
-    include"config.php";
- 
-	if (!isset($_SESSION['aemail'])) {
-		$_SESSION['msg'] = "You must log in first";
-		header('location: ../manage.php');
+if (!isset($_SESSION["aemail"])) {
+	$_SESSION["msg"] = "You must log in first";
+	header("location: ../manage.php");
+	exit;
+}
+
+nm_require_admin($con);
+
+$usersession = $_SESSION["aemail"];
+$userRow = nm_admin_row($con, $usersession);
+
+function nm_new_page_slug($raw) {
+	$s = strtolower(trim((string) $raw));
+	$s = preg_replace("/[^a-z0-9]+/", "-", $s);
+	return trim((string) $s, "-");
+}
+
+$err = "";
+$form = array("page" => "", "page_url" => "", "metat" => "", "metad" => "", "description" => "");
+
+if (isset($_POST["add"])) {
+	$form["page"] = trim((string) ($_POST["page"] ?? ""));
+	$form["page_url"] = trim((string) ($_POST["page_url"] ?? ""));
+	$form["metat"] = trim((string) ($_POST["metat"] ?? ""));
+	$form["metad"] = trim((string) ($_POST["metad"] ?? ""));
+	$form["description"] = (string) ($_POST["description"] ?? "");
+	$slug = nm_new_page_slug($form["page_url"] !== "" ? $form["page_url"] : $form["page"]);
+
+	if ($form["page"] === "") {
+		$err = "Page name is required.";
+	} elseif ($slug === "") {
+		$err = "Give a URL slug such as about-us.";
+	} elseif (trim(strip_tags($form["description"])) === "") {
+		$err = "Add the page content.";
+	} else {
+		$slugEsc = mysqli_real_escape_string($con, $slug);
+		$dup = mysqli_query($con, "SELECT `p_id` FROM `pages` WHERE `page_url`='$slugEsc' LIMIT 1");
+		if ($dup instanceof mysqli_result && mysqli_num_rows($dup) > 0) {
+			$err = "That URL is already used. Pick a different slug.";
+		} else {
+			$pageEsc = mysqli_real_escape_string($con, $form["page"]);
+			$descEsc = mysqli_real_escape_string($con, $form["description"]);
+			$metatEsc = mysqli_real_escape_string($con, $form["metat"]);
+			$metadEsc = mysqli_real_escape_string($con, $form["metad"]);
+			$okIns = mysqli_query(
+				$con,
+				"INSERT INTO `pages` (`page`, `description`, `page_url`, `metat`, `metad`) VALUES ('$pageEsc','$descEsc','$slugEsc','$metatEsc','$metadEsc')"
+			);
+			if ($okIns) {
+				nm_js_notice("Page added.", "pages.php");
+			} else {
+				$err = "Could not save. Try again.";
+			}
+		}
 	}
-
-	if (isset($_GET['logout'])) {
-		session_destroy();
-		unset($_SESSION['aemail']);
-		header("location: ../manage.php");
-	}
-
- if(!isset($_SESSION['aemail']))
- {
-  echo ("<script language='javascript'>
-                   window.location.href='logout.php';
-                        </script>");
- }
-
-$productsession=$_SESSION['aemail'];
-
-$res=mysqli_query($con,"SELECT * FROM admin WHERE aemail='$productsession'");
-
-$userRow=mysqli_fetch_array($res,MYSQLI_ASSOC);
-
-
-if(isset($_POST['add']))
-                    {     
-                            $page = mysqli_real_escape_string($con,$_POST['page']);
-                            $description = mysqli_real_escape_string($con, isset($_POST['description']) ? $_POST['description'] : '');
-                            $metat = mysqli_real_escape_string($con,$_POST['metat']);
-                            $metad = mysqli_real_escape_string($con,$_POST['metad']);
-                            $page_url = mysqli_real_escape_string($con,$_POST['page_url']);
-                            /*   Linkname starts  */
-                            $replace = array(" ",",",".","'","&","-","_",":","(",")","+",";","#","!","*","{","}","[","]","?","/","\"","|","@","%","$");
-                    		$linkStr_Replace = str_replace($replace,"-",trim($page_url));
-                    		$linkStr_Replace = str_replace("----","-",$linkStr_Replace);
-                    		$linkStr_Replace = str_replace("---","-",$linkStr_Replace);
-                    		$linkStr_Replace = str_replace("--","-",$linkStr_Replace);
-                    		$linkname =  $linkStr_Replace;
-                            
-                            $sql_u = "SELECT * FROM `pages` WHERE `page`='$page'";
-    
-                            $res_u = mysqli_query($con, $sql_u);
-    
-                            if (mysqli_num_rows($res_u) > 0) {array_push($errors, "Sorry... Page already Exixts"); }
-                        
-                            if (empty($page)) { array_push($errors, "Kindly select a page"); }
-                           
-                            if (empty($description)) { array_push($errors, "Kindly fill news description"); }
-                         
-    
-                        if (count($errors) == 0) {
-                            
-                            
-                           $qry="INSERT INTO `pages`(`page`, `description`, `page_url`, `metat`, `metad`) VALUES ('$page','$description','$linkname','$metat','$metad')";
-                                
-                             $ex=mysqli_query($con,$qry);
-                             $lastInsertId = mysqli_insert_id($con);
-                              if($ex>0) {
-                                  
-                                   if (!function_exists('nm_js_notice')) {
-                                       require_once __DIR__ . '/admin_helpers.php';
-                                   }
-                                   nm_js_notice('added Successfully', 'pages.php');
-                                  
-                                  //array_push($sucs, "added Successfuly."); 
-                              }
-                              else{ array_push($errors, "Sorry, there was an error."); }
-                             }
- 
-                            }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Admin</title>
+  <title>Add page — Admin</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="../include/css/bootstrap.min.css">
   <link rel="stylesheet" href="css/all.min.css">
   <link rel="stylesheet" href="../include/css/style.css">
-<link rel="stylesheet" href="../include/css/jquery-ui.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.5/css/responsive.dataTables.min.css">
-<script src="../include/js/jquery.min.js"></script>
-<script>
-
-    $( function() {
-    $( "#datepicker" ).datepicker({ yearRange: "-100:+0",changeMonth: true,
-    changeYear: true,
-    dateFormat: 'yy-mm-dd' });
-    $( "#datepicker1" ).datepicker({ dateFormat: 'yy-mm-dd' });
-    $( "#datepicker2" ).datepicker({ dateFormat: 'yy-mm-dd' });
-    $( "#datepicker3" ).datepicker({ dateFormat: 'yy-mm-dd' });
-    });
-</script>
+  <script src="../include/js/jquery.min.js"></script>
 </head>
 <body>
-<div id="overlay"><div><img src="img/loading.gif" width="64px" height="64px"/></div></div>
-    <div class="wrapper">
-        <!-- Sidebar  -->
-        <?php include"sidebar.php"; ?>
+<div class="wrapper">
+  <?php include "sidebar.php"; ?>
+  <div id="content">
+    <?php include "header.php"; ?>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="dashboard.php">Home</a> <i class="fa fa-angle-right"></i> <a href="pages.php">Pages</a> <i class="fa fa-angle-right"></i> Add</li>
+    </ol>
+    <div class="container-fluid page-content nm-pages nm-pages-edit">
+      <div class="nm-pages-head">
+        <div>
+          <h2>Add a site page</h2>
+          <p>Use this for a new footer page only. Existing About / Contact URLs stay on their current slug.</p>
+        </div>
+      </div>
+      <?php if ($err) { ?><div class="alert alert-danger"><?php echo nm_h($err); ?></div><?php } ?>
 
-        <!-- Page Content  -->
-<div id="content">
-            <?php include"header.php"; ?>
-            
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="dashboard.php">Home</a> <i class="fa fa-angle-right"></i> Add Page</li>
-            </ol>
-<div class="container-fluid page-content">
-                            <?php include('errors.php'); ?>
-                            <?php include('sucsess.php'); ?>
-            <form id="SubmitForm" method="post" enctype="multipart/form-data">
-               
-            <div class="col-md-6 form-group group">
-              <label class="control-label">Page URL:</label>
-              <input class="form-control" type="text" name="page_url" value="<?php if(isset($_POST['add'])){ echo nm_h($_POST['page_url']); } ?>" >
-            </div>
-               
-            <div class="col-md-6 form-group group">
-              <label class="control-label">Page Name:</label>
-              <input class="form-control" type="text" name="page" value="<?php if(isset($_POST['add'])){ echo nm_h($_POST['page']); } ?>" >
-            </div>
-                
-            
-                 
-            <div class="col-md-12 form-group group">
-              <label class="control-label">Meta Title:</label>
-              <input class="form-control" type="text" name="metat" value="<?php if(isset($_POST['add'])){ echo nm_h($_POST['metat']); } ?>" >
-            </div>
-                
-            <div class="col-md-12 form-group group">
-              <label class="control-label">Meta Description:</label>
-             <textarea class="form-control" cols="20" rows="5" name="metad"><?php if(isset($_POST['add'])){ echo nm_h($_POST['metad']); } ?></textarea>
-            </div>
-                
-            <div class="col-md-12 form-group group">
-              <label class="control-label">Description</label>
-              <textarea class="ckeditor form-control" id="description"  name="description"><?php if(isset($_POST['add'])){ echo nm_h(isset($_POST['description']) ? $_POST['description'] : ''); } ?></textarea>
-            </div>
-                
-            <div class="col-md-12 form-group group">
-                <button type="submit" name="add" class="btn btn-info">Add</button>
-            </div>
-           
-        </form>
+      <form method="post">
+        <div class="form-group">
+          <label for="nm-page-name">Page name</label>
+          <input class="form-control" id="nm-page-name" type="text" name="page" required value="<?php echo nm_h($form["page"]); ?>" placeholder="Contact Us">
+        </div>
+        <div class="form-group">
+          <label for="nm-page-url">URL slug</label>
+          <input class="form-control" id="nm-page-url" type="text" name="page_url" value="<?php echo nm_h($form["page_url"]); ?>" placeholder="contact-us">
+          <small class="text-muted">Public address will be /page/your-slug — do not copy an existing slug.</small>
+        </div>
+        <div class="form-group">
+          <label for="nm-page-metat">SEO title</label>
+          <input class="form-control" id="nm-page-metat" type="text" name="metat" value="<?php echo nm_h($form["metat"]); ?>">
+        </div>
+        <div class="form-group">
+          <label for="nm-page-metad">SEO description</label>
+          <textarea class="form-control" id="nm-page-metad" name="metad" rows="3"><?php echo nm_h($form["metad"]); ?></textarea>
+        </div>
+        <div class="form-group">
+          <label for="description">Page content</label>
+          <textarea class="ckeditor form-control" id="description" name="description"><?php echo nm_h($form["description"]); ?></textarea>
+        </div>
+        <div class="nm-page-actions">
+          <button type="submit" name="add" class="btn btn-success">Add page</button>
+          <a class="btn btn-outline-secondary" href="pages.php">Cancel</a>
+        </div>
+      </form>
+    </div>
+    <?php include "footer.php"; ?>
+  </div>
 </div>
-</div>			
-
-    
-
-</div>
-<?php include"footer.php"; ?>
-<script type="text/javascript" src="ckeditor/ckeditor.js"></script>
-<script type="text/javascript">
-<?php echo nm_ckeditor_js('description'); ?>
-</script>
-<script type="text/javascript">
-        $(document).ready(function () {
-            $('#sidebar').toggleClass('');
-            $('#sidebarCollapse').on('click', function () {
-                $('#sidebar').toggleClass('active');
-            });
-        });
-    </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-  <script src="../include/js/bootstrap.min.js"></script>
-  <!-- Font Awesome JS -->
-    <script src="js/all.js"></script>
-<script src="../include/js/jquery-ui.js"></script>
-<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.2.5/js/dataTables.responsive.min.js"></script>
-<script>
-    $("#newstype").on('change', function(){
-			$.ajax({
-						type: "POST",
-						url: "ajaxVid.php",
-						data:{newstype:$("#newstype").val()},
-						beforeSend:function(){
-						    $('#vid').html("<p>Loading....</p>");
-                          },
-						success: function(data){
-							$('#vid').html(data);
-						}
-			});
-	});
-    
-    $("#videotype").on('change', function(){
-			$.ajax({
-						type: "POST",
-						url: "ajaxVid.php",
-						data:{videotype:$("#videotype").val()},
-						beforeSend:function(){
-						    $('#vid2').html("<p>Loading....</p>");
-                          },
-						success: function(data){
-							$('#vid2').html(data);
-						}
-			});
-	});
-</script>
+<script src="ckeditor/ckeditor.js"></script>
+<script><?php echo nm_ckeditor_js("description"); ?></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="../include/js/bootstrap.min.js"></script>
 </body>
 </html>

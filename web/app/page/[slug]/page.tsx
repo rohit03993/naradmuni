@@ -30,6 +30,7 @@ export default async function CmsPage({ params }: Props) {
   const page = await getPageBySlug(slug);
   if (!page) notFound();
 
+  const lead = (page.metad || "").trim();
   const bodyHtml = sanitizeArticleHtml(asHtmlString(page.description));
 
   return (
@@ -39,6 +40,7 @@ export default async function CmsPage({ params }: Props) {
         <span> / {page.page}</span>
       </div>
       <h1 className="h1">{page.page}</h1>
+      {lead ? <p className="static-page-lead">{lead}</p> : null}
       {bodyHtml ? (
         <div className="body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
       ) : (
