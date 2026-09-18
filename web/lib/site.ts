@@ -18,27 +18,23 @@ const empty: Chrome = {
   pages: [],
 };
 
-let cache: { at: number; data: Chrome } | null = null;
-const TTL = 5 * 60_000; // 5 min — fewer DB hits, faster repeat visits
+let cache: { at: number; nav: Category[]; cities: Category[] } | null = null;
+const TTL = 5 * 60_000; // nav/cities — pages stay fresh so footer picks up Admin → Pages
 
 export async function getSiteChrome(): Promise<Chrome> {
-  if (cache && Date.now() - cache.at < TTL) return cache.data;
-
   try {
-    // Parallel + cache — no taza rail query (replaced by cities list)
-    const [nav, cities, pages] = await Promise.all([
-      getMainNavCategories(),
-      getDistrictsWithNews(),
-      getPages(),
-    ]);
-
-    const data: Chrome = {
-      nav,
-      cities,
-      pages,
-    };
-    cache = { at: Date.now(), data };
-    return data;
+    const pagesPromise = getPages();
+    let nav: Category[];
+    let cities: Category[];
+    if (cache && Date.now() - cache.at < TTL) {
+      nav = cache.nav;
+      cities = cache.cities;
+    } else {
+      [nav, cities] = await Promise.all([getMainNavCategories(), getDistrictsWithNews()]);
+      cache = { at: Date.now(), nav, cities };
+    }
+    const pages = await pagesPromise;
+    return { nav, cities, pages };
   } catch (err) {
     const dbError = err instanceof Error ? err.message : String(err);
     return { ...empty, dbError };
