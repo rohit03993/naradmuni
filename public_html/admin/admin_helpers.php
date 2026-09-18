@@ -491,3 +491,106 @@ CKEDITOR.replace({$id}, {
 JS;
 	}
 }
+
+/**
+ * Insert standard policy pages if missing. Never changes an existing page_url or body.
+ */
+if (!function_exists('nm_ensure_cms_pages')) {
+	function nm_ensure_cms_pages($con)
+	{
+		if (!($con instanceof mysqli)) {
+			return;
+		}
+		$pages = array(
+			array(
+				'page' => 'Editorial Policy',
+				'page_url' => 'editorial-policy',
+				'metat' => 'Editorial Policy | The Naradmuni',
+				'metad' => 'The Naradmuni की संपादकीय नीति — स्वतंत्र रिपोर्टिंग, स्रोत और जवाबदेही।',
+				'description' => <<<HTML
+<p>The Naradmuni मध्य प्रदेश और छत्तीसगढ़ की खबरें जनता के हित में प्रकाशित करता है। यह पेज बताता है कि हम खबर कैसे चुनते और लिखते हैं। टीम इसे कभी भी अपडेट कर सकती है।</p>
+<h2>स्वतंत्र संपादन</h2>
+<p>संपादकीय फैसला खबर की सार्वजनिक अहमियत, तथ्यों और लोकहित पर आधारित होता है। सत्ता, विपक्ष, विज्ञापनदाता या निजी दबाव से खबर नहीं बदलवाई जाती।</p>
+<h2>बायलाइन और स्रोत</h2>
+<ul>
+<li>जहाँ संभव हो, रिपोर्ट पर रिपोर्टर या डेस्क का नाम रहता है।</li>
+<li>तथ्य विश्वसनीय स्रोत से जाँच कर प्रकाशित होते हैं। अनौपचारिक दावे को पुष्टि के बिना खबर नहीं बनाया जाता।</li>
+<li>गुमनाम स्रोत तभी, जब जानकारी लोकहित में हो और स्रोत को खतरा हो।</li>
+</ul>
+<h2>भुगतान वाली सामग्री</h2>
+<p>विज्ञापन, स्पॉन्सर्ड या एडवरटोरियल सामग्री को खबर से अलग चिह्नित किया जाता है। पेड न्यूज़ को सामान्य रिपोर्ट की तरह नहीं चलाया जाता।</p>
+<h2>निजता और संवेदनशीलता</h2>
+<p>अपराध, दुर्घटना और नाबालिगों से जुड़ी खबरों में गरिमा और कानून का ध्यान रखा जाता है। अनुमान या अफवाह को तथ्य नहीं लिखा जाता।</p>
+<h2>सुधार</h2>
+<p>गलती होने पर हम सुधार करते हैं। तरीका <strong>Correction Policy</strong> पेज पर है।</p>
+HTML
+			),
+			array(
+				'page' => 'Fact Check Policy',
+				'page_url' => 'fact-check-policy',
+				'metat' => 'Fact Check Policy | The Naradmuni',
+				'metad' => 'The Naradmuni कैसे दावों की जाँच करता है — स्रोत, सबूत और निष्कर्ष।',
+				'description' => <<<HTML
+<p>सोशल मीडिया और वायरल मैसेज में गलत सूचना तेज़ी से फैलती है। The Naradmuni फैक्ट चेक में दावे को सबूत से मिलाकर बताता है — राय नहीं, जाँच।</p>
+<h2>क्या जाँच करते हैं</h2>
+<ul>
+<li>वायरल फोटो, वीडियो, आँकड़े और राजनीतिक दावे, जब वे लोकहित में हों।</li>
+<li>ऐसे दावे जिनका असर मतदाताओं, स्वास्थ्य या कानून-व्यवस्था पर पड़ सकता है।</li>
+</ul>
+<h2>क्या नहीं</h2>
+<ul>
+<li>स्पष्ट व्यंग्य या मीम, जब वे खबर के रूप में न फैले हों।</li>
+<li>निजी विवाद जिनका सार्वजनिक असर न हो।</li>
+</ul>
+<h2>तरीका</h2>
+<ol>
+<li>मूल दावा साफ लिखा जाता है।</li>
+<li>प्राथमिक स्रोत — सरकारी दस्तावेज, आधिकारिक बयान, डेटा, मूल वीडियो — से मिलान होता है।</li>
+<li>निष्कर्ष संक्षेप में बताया जाता है: सही, गलत, भ्रामक, या सबूत अधूरा।</li>
+</ol>
+<h2>पारदर्शिता</h2>
+<p>जहाँ संभव हो, स्रोत का लिंक या नाम रिपोर्ट में रहता है। नई जानकारी आने पर फैक्ट चेक अपडेट किया जा सकता है।</p>
+HTML
+			),
+			array(
+				'page' => 'Correction Policy',
+				'page_url' => 'correction-policy',
+				'metat' => 'Correction Policy | The Naradmuni',
+				'metad' => 'गलती दिखे तो कैसे सुधार करवाएँ — The Naradmuni की सुधार नीति।',
+				'description' => <<<HTML
+<p>गलती हो सकती है। हम उसे छिपाते नहीं। यह पेज बताता है कि सुधार कैसे माँगें और हम क्या करते हैं।</p>
+<h2>सुधार कैसे भेजें</h2>
+<ul>
+<li>फुटर में <strong>Contact Us</strong> खोलें और खबर का लिंक, गलत वाक्य और सही तथ्य लिखें।</li>
+<li>जहाँ हो, सबूत (आधिकारिक दस्तावेज, फोटो, संपर्क) साथ दें।</li>
+</ul>
+<h2>हम क्या करते हैं</h2>
+<ol>
+<li>शिकायत की जाँच संपादकीय टीम करती है।</li>
+<li>तथ्य गलत निकले तो खबर में सुधार किया जाता है — नाम, आँकड़ा, जगह या संदर्भ साफ करके।</li>
+<li>बड़ी गलती पर खबर में सुधार का संक्षिप्त नोट जोड़ा जा सकता है।</li>
+</ol>
+<h2>क्या सुधार नहीं</h2>
+<p>सहमति न होने मात्र से राय या हेडलाइन नहीं बदली जाती। मानहानि या कानूनी नोटिस अलग प्रक्रिया से देखे जाते हैं।</p>
+<p>फैक्ट चेक की विधि <strong>Fact Check Policy</strong> पर है। संपादकीय सिद्धांत <strong>Editorial Policy</strong> पर हैं।</p>
+HTML
+			),
+		);
+
+		foreach ($pages as $p) {
+			$slug = mysqli_real_escape_string($con, $p['page_url']);
+			$exists = mysqli_query($con, "SELECT `p_id` FROM `pages` WHERE `page_url`='$slug' LIMIT 1");
+			if ($exists instanceof mysqli_result && mysqli_num_rows($exists) > 0) {
+				continue;
+			}
+			$name = mysqli_real_escape_string($con, $p['page']);
+			$metat = mysqli_real_escape_string($con, $p['metat']);
+			$metad = mysqli_real_escape_string($con, $p['metad']);
+			$body = mysqli_real_escape_string($con, $p['description']);
+			mysqli_query(
+				$con,
+				"INSERT INTO `pages` (`page`, `description`, `page_url`, `metat`, `metad`) VALUES ('$name', '$body', '$slug', '$metat', '$metad')"
+			);
+		}
+	}
+}

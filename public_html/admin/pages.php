@@ -9,6 +9,7 @@ if (!isset($_SESSION["aemail"])) {
 }
 
 nm_require_admin($con);
+nm_ensure_cms_pages($con);
 
 $usersession = $_SESSION["aemail"];
 $userRow = nm_admin_row($con, $usersession);
