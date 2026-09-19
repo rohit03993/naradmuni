@@ -2,6 +2,7 @@ import NewsCardTile from "@/components/NewsCardTile";
 import NewsListItem from "@/components/NewsListItem";
 import TopicBlock from "@/components/TopicBlock";
 import YoutubeShortsRail from "@/components/YoutubeShortsRail";
+import { getBranding, SOCIAL_DEFAULTS } from "@/lib/branding";
 import { newsImage } from "@/lib/images";
 import {
   getBreaking,
@@ -44,17 +45,21 @@ export default async function HomePage() {
   let topics: Awaited<ReturnType<typeof getTopicSections>> = [];
   let naradKahin: Awaited<ReturnType<typeof getNaradKahinSection>> = null;
   let shorts: Awaited<ReturnType<typeof getHomepageShorts>> = { items: [], isDemo: true };
+  let youtubeUrl = SOCIAL_DEFAULTS.youtube;
   let err = "";
 
   try {
-    [sliderLead, breaking, recent, topics, naradKahin, shorts] = await Promise.all([
+    let branding: Awaited<ReturnType<typeof getBranding>>;
+    [sliderLead, breaking, recent, topics, naradKahin, shorts, branding] = await Promise.all([
       getLead(),
       getBreaking(6),
       getRecentPublished(60),
       getTopicSections(8),
       getNaradKahinSection(),
       getHomepageShorts(),
+      getBranding(),
     ]);
+    youtubeUrl = branding.social.youtube;
   } catch (e) {
     err = e instanceof Error ? e.message : String(e);
   }
@@ -133,7 +138,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <YoutubeShortsRail items={shorts.items} />
+      <YoutubeShortsRail items={shorts.items} channelUrl={youtubeUrl} />
 
       {naradBlock ? (
         <TopicBlock section={naradBlock} showEmptyHint={naradFromDb === 0} singleOnly />

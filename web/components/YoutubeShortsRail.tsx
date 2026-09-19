@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import type { YoutubeShort } from "@/lib/youtube";
 
-export default function YoutubeShortsRail({ items }: { items: YoutubeShort[] }) {
+export default function YoutubeShortsRail({
+  items,
+  channelUrl = "",
+}: {
+  items: YoutubeShort[];
+  channelUrl?: string;
+}) {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const titleId = useId();
   const active = playingId ? items.find((s) => s.id === playingId) : null;
@@ -41,6 +47,11 @@ export default function YoutubeShortsRail({ items }: { items: YoutubeShort[] }) 
     <section className="shorts-block topic-block" aria-label="YouTube Shorts">
       <div className="section-head">
         <h2>Shorts</h2>
+        {channelUrl ? (
+          <a className="more" href={channelUrl} target="_blank" rel="noreferrer">
+            और वीडियो देखें →
+          </a>
+        ) : null}
       </div>
 
       <div className="shorts-rail" role="list">
