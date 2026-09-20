@@ -1,0 +1,68 @@
+<?php
+/**
+ * CKEditor in-article image upload. Login required. Max 600 KB.
+ * Saves under public_html/images/news/ so Next already serves the file.
+ */
+include __DIR__ . '/config.php';
+require_once __DIR__ . '/admin_helpers.php';
+
+$funcNum = isset($_GET['CKEditorFuncNum']) ? preg_replace('/[^0-9]/', '', (string) $_GET['CKEditorFuncNum']) : '0';
+
+function nm_cke_upload_done($funcNum, $url, $message)
+{
+	header('Content-Type: text/html; charset=utf-8');
+	$fn = (int) $funcNum;
+	$u = json_encode((string) $url, JSON_UNESCAPED_SLASHES);
+	$m = json_encode((string) $message, JSON_UNESCAPED_UNICODE);
+	echo '<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(' . $fn . ', ' . $u . ', ' . $m . ');</script>';
+	exit;
+}
+
+if (!isset($_SESSION['aemail']) || $_SESSION['aemail'] === '') {
+	nm_cke_upload_done($funcNum, '', 'Please log in again.');
+}
+
+$file = null;
+if (isset($_FILES['upload']) && is_array($_FILES['upload'])) {
+	$file = $_FILES['upload'];
+} elseif (isset($_FILES['NewFile']) && is_array($_FILES['NewFile'])) {
+	$file = $_FILES['NewFile'];
+}
+
+if (!$file || empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+	nm_cke_upload_done($funcNum, '', 'Choose an image to upload.');
+}
+
+if (!empty($file['error'])) {
+	nm_cke_upload_done($funcNum, '', 'Upload failed. Try a smaller file.');
+}
+
+if ((int) $file['size'] > 600 * 1024) {
+	nm_cke_upload_done($funcNum, '', 'Image must be under 600 KB. Compress it and try again.');
+}
+
+$ext = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
+$allowed = array('jpg' => 1, 'jpeg' => 1, 'png' => 1, 'gif' => 1, 'webp' => 1);
+if (!isset($allowed[$ext])) {
+	nm_cke_upload_done($funcNum, '', 'Use JPG, PNG, GIF, or WebP.');
+}
+
+if (@getimagesize($file['tmp_name']) === false) {
+	nm_cke_upload_done($funcNum, '', 'That file is not a valid image.');
+}
+
+$dir = dirname(__DIR__) . '/images/news/';
+if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
+	nm_cke_upload_done($funcNum, '', 'Could not create the image folder.');
+}
+
+$rand = function_exists('random_bytes') ? bin2hex(random_bytes(3)) : str_replace('.', '', uniqid('', true));
+$name = 'inline_' . date('Ymd_His') . '_' . $rand . '.' . $ext;
+$dest = $dir . $name;
+if (!move_uploaded_file($file['tmp_name'], $dest)) {
+	nm_cke_upload_done($funcNum, '', 'Could not save the image.');
+}
+
+$base = isset($urlroot) ? rtrim((string) $urlroot, '/') : '';
+$url = $base . '/images/news/' . $name;
+nm_cke_upload_done($funcNum, $url, '');

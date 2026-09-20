@@ -47,7 +47,10 @@ const nextConfig: NextConfig = {
     // fallback = proxy to PHP only when no file exists under web/public/
     // Images are symlinked into public/naradmuni/* so Next serves them fast.
     return {
-      fallback: [{ source: "/naradmuni/:path*", destination: `${PHP}/naradmuni/:path*` }],
+      fallback: [
+        { source: "/userfiles/:path*", destination: `${PHP}/naradmuni/userfiles/:path*` },
+        { source: "/naradmuni/:path*", destination: `${PHP}/naradmuni/:path*` },
+      ],
     };
   },
 };

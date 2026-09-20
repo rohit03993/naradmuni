@@ -357,6 +357,7 @@ if (isset($_POST['update'])) {
           <div class="nm-form-field nm-form-field--full">
             <label class="control-label" for="description">Description</label>
             <textarea class="ckeditor form-control" id="description" name="description"><?php echo nm_h(isset($rs['description']) ? $rs['description'] : ''); ?></textarea>
+            <p class="nm-form-hint">To put a photo in the story: click the image icon in the toolbar → <strong>Upload</strong>. Max 600 KB. Click the photo again to set width, height, or left/right.</p>
           </div>
         </section>
 

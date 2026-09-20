@@ -178,6 +178,16 @@ function FileUpload( $resourceType, $currentFolder, $sCommand, $CKEcallback = ''
  
                  //PATCH to detect a quick file upload.
 		$oFile = isset($_FILES['NewFile']) ? $_FILES['NewFile'] : $_FILES['upload'];
+
+		if ((int) $oFile['size'] > 600 * 1024) {
+			$tooBig = 'Image must be under 600 KB. Compress it and try again.';
+			if ($CKEcallback == '') {
+				SendUploadResults(1, '', '', $tooBig);
+			} else {
+				SendCKEditorResults(1, $CKEcallback, '', '', $tooBig);
+			}
+			exit;
+		}
  
 		// Map the virtual path to the local server path.
 		$sServerDir = ServerMapFolder( $resourceType, $currentFolder, $sCommand ) ;

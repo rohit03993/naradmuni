@@ -479,15 +479,54 @@ if (!function_exists('nm_ckeditor_js')) {
 	{
 		$id = json_encode((string) $fieldId);
 		return <<<JS
+if (!window.nmCkeditorCssAdded && window.CKEDITOR && CKEDITOR.addCss) {
+  window.nmCkeditorCssAdded = true;
+  CKEDITOR.addCss('img{max-width:100%;height:auto;cursor:pointer;}');
+}
 CKEDITOR.replace({$id}, {
   width: '100%',
+  extraAllowedContent: 'img[src,alt,width,height,border,align,hspace,vspace]{*}(*)',
+  removeDialogTabs: 'image:advanced',
   filebrowserBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Connector=ckeditor/filemanager/connectors/php/connector.php',
   filebrowserImageBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Type=Image&Connector=ckeditor/filemanager/connectors/php/connector.php',
   filebrowserFlashBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Type=Flash&Connector=ckeditor/filemanager/connectors/php/connector.php',
-  filebrowserUploadUrl: 'ckeditor/filemanager/connectors/php/upload.php?Type=File',
-  filebrowserImageUploadUrl: 'ckeditor/filemanager/connectors/php/upload.php?Type=Image',
+  filebrowserUploadUrl: 'ckeditor_image_upload.php',
+  filebrowserImageUploadUrl: 'ckeditor_image_upload.php',
   filebrowserFlashUploadUrl: 'ckeditor/filemanager/connectors/php/upload.php?Type=Flash'
 });
+if (!window.nmCkeditorImageDialogHooked) {
+  window.nmCkeditorImageDialogHooked = true;
+  CKEDITOR.on('dialogDefinition', function (ev) {
+    if (ev.data.name !== 'image') return;
+    var def = ev.data.definition;
+    try { def.removeContents('advanced'); } catch (e1) {}
+    var contents = def.contents;
+    if (contents && contents.length) {
+      var i, uploadIdx = -1;
+      for (i = 0; i < contents.length; i++) {
+        if (contents[i] && contents[i].id === 'Upload') { uploadIdx = i; break; }
+      }
+      if (uploadIdx > 0) {
+        contents.unshift(contents.splice(uploadIdx, 1)[0]);
+      }
+    }
+    var upload = def.getContents('Upload');
+    if (!upload) return;
+    var fileField = upload.get('upload');
+    if (!fileField) return;
+    var prev = fileField.onChange;
+    fileField.onChange = function () {
+      var el = this.getInputElement && this.getInputElement();
+      var input = el && el.\$;
+      if (input && input.files && input.files[0] && input.files[0].size > 600 * 1024) {
+        alert('Image must be under 600 KB. Compress it and try again.');
+        input.value = '';
+        return false;
+      }
+      if (typeof prev === 'function') return prev.apply(this, arguments);
+    };
+  });
+}
 JS;
 	}
 }
