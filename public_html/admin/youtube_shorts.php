@@ -42,7 +42,7 @@ if (isset($_POST["save_shorts"])) {
 		&& nm_setting_set($con, "shorts_count", (string) $count);
 
 	if ($ok) {
-		$msg = "YouTube Shorts settings saved. Homepage refreshes Shorts about every 10 minutes.";
+		$msg = "YouTube Shorts settings saved. The homepage keeps your last real Shorts if Google is slow — it will not show demo clips.";
 	} else {
 		$err = "Could not save settings. Check DB permissions.";
 	}
@@ -119,8 +119,7 @@ if ($count < 1) {
       </form>
 
       <div class="alert alert-info" style="margin-top:16px;">
-        <strong>Tip:</strong> After saving, wait up to 10 minutes (or restart Next once) to see changes on
-        <a href="<?php echo htmlspecialchars($publicroot); ?>" target="_blank" rel="noreferrer"><?php echo htmlspecialchars($publicroot); ?></a>.
+        <strong>Tip:</strong> After saving, hard-refresh the homepage. If Google is slow, the last real Shorts stay on screen — demo clips are not used.
       </div>
     </div>
     <?php include "footer.php"; ?>

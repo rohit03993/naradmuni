@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import { getSiteSettings } from "@/lib/settings";
 
 export type YoutubeShort = {
@@ -7,6 +6,16 @@ export type YoutubeShort = {
   thumb: string;
   url: string;
 };
+
+type ShortsFetch = { kind: "off" } | { kind: "ok"; items: YoutubeShort[] } | { kind: "fail" };
+
+const FRESH_MS = 10 * 60 * 1000;
+const PAGE_WAIT_MS = 3500;
+const YT_WAIT_MS = 8000;
+
+let lastGood: YoutubeShort[] = [];
+let lastGoodAt = 0;
+let inflight: Promise<ShortsFetch> | null = null;
 
 function parseChannelInput(raw: string): { kind: "id" | "handle"; value: string } | null {
   const s = raw.trim();
@@ -37,6 +46,13 @@ function parseChannelInput(raw: string): { kind: "id" | "handle"; value: string 
   return { kind: "handle", value: s.replace(/^@/, "") };
 }
 
+async function youtubeGet(url: string, ms: number): Promise<Response> {
+  return fetch(url, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(ms),
+  });
+}
+
 async function resolveChannelId(apiKey: string, channelInput: string): Promise<string | null> {
   const parsed = parseChannelInput(channelInput);
   if (!parsed) return null;
@@ -44,16 +60,13 @@ async function resolveChannelId(apiKey: string, channelInput: string): Promise<s
 
   const handle = encodeURIComponent(parsed.value);
   const url = `https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=${handle}&key=${encodeURIComponent(apiKey)}`;
-  const res = await fetch(url, {
-    next: { revalidate: 600 },
-    signal: AbortSignal.timeout(2500),
-  });
+  const res = await youtubeGet(url, YT_WAIT_MS);
   if (!res.ok) return null;
   const data = (await res.json()) as { items?: { id?: string }[] };
   return data.items?.[0]?.id || null;
 }
 
-async function fetchShortsUncached(): Promise<YoutubeShort[]> {
+async function fetchShortsOnce(): Promise<ShortsFetch> {
   const settings = await getSiteSettings([
     "shorts_enabled",
     "youtube_api_key",
@@ -61,34 +74,28 @@ async function fetchShortsUncached(): Promise<YoutubeShort[]> {
     "shorts_count",
   ]);
 
-  if (settings.shorts_enabled !== "1") return [];
+  if (settings.shorts_enabled !== "1") return { kind: "off" };
   const apiKey = (settings.youtube_api_key || "").trim();
   const channelRaw = (settings.youtube_channel || "").trim();
-  if (!apiKey || !channelRaw) return [];
+  if (!apiKey || !channelRaw) return { kind: "off" };
 
   let count = Number(settings.shorts_count || 8);
   if (!Number.isFinite(count) || count < 1) count = 8;
   if (count > 16) count = 16;
 
   const channelId = await resolveChannelId(apiKey, channelRaw);
-  if (!channelId) return [];
+  if (!channelId) return { kind: "fail" };
 
   const searchUrl =
     `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${encodeURIComponent(channelId)}` +
     `&type=video&videoDuration=short&order=date&maxResults=${count}&key=${encodeURIComponent(apiKey)}`;
 
-  const res = await fetch(searchUrl, {
-    next: { revalidate: 600 },
-    signal: AbortSignal.timeout(2500),
-  });
-  if (!res.ok) return [];
+  const res = await youtubeGet(searchUrl, YT_WAIT_MS);
+  if (!res.ok) return { kind: "fail" };
   const data = (await res.json()) as {
     items?: {
       id?: { videoId?: string };
-      snippet?: {
-        title?: string;
-        thumbnails?: { medium?: { url?: string }; high?: { url?: string }; default?: { url?: string } };
-      };
+      snippet?: { title?: string };
     }[];
   };
 
@@ -96,7 +103,6 @@ async function fetchShortsUncached(): Promise<YoutubeShort[]> {
   for (const item of data.items || []) {
     const id = item.id?.videoId;
     if (!id) continue;
-    // hq720 is sharp enough for large Shorts cards; API "medium" blurs when upscaled
     out.push({
       id,
       title: item.snippet?.title || "Short",
@@ -104,46 +110,64 @@ async function fetchShortsUncached(): Promise<YoutubeShort[]> {
       url: `https://www.youtube.com/shorts/${id}`,
     });
   }
-  return out;
+  return out.length ? { kind: "ok", items: out } : { kind: "fail" };
 }
 
-/** Placeholder Shorts before API is connected.
- *  Only IDs that allow embedding (Error 150 = owner blocked embed).
- */
-export function getDemoShorts(): YoutubeShort[] {
-  // Official / commonly embeddable public samples (not random viral clips).
-  const demos: { id: string; title: string }[] = [
-    { id: "M7lc1UVf-VE", title: "YouTube API demo — प्ले" },
-    { id: "C0DPdy98e4c", title: "Google test clip — प्ले" },
-    { id: "jNQXAC9IVRw", title: "Me at the zoo — प्ले" },
-    { id: "aqz-KE-bpKQ", title: "Big Buck Bunny — प्ले" },
-    { id: "tgbNymZ7vqY", title: "Sample media — प्ले" },
-    { id: "YE7VzlLtp-4", title: "Sintel trailer — प्ले" },
-  ];
-  return demos.map((d) => ({
-    id: d.id,
-    title: d.title,
-    thumb: `https://i.ytimg.com/vi/${d.id}/hq720.jpg`,
-    url: `https://www.youtube.com/watch?v=${d.id}`,
-  }));
+function loadShorts(): Promise<ShortsFetch> {
+  if (!inflight) {
+    inflight = fetchShortsOnce()
+      .then((result) => {
+        if (result.kind === "ok" && result.items.length) {
+          remember(result.items);
+        }
+        if (result.kind === "off") {
+          lastGood = [];
+          lastGoodAt = 0;
+        }
+        return result;
+      })
+      .finally(() => {
+        inflight = null;
+      });
+  }
+  return inflight;
 }
 
-/** Homepage Shorts — refresh ~every 10 minutes; demos if not configured yet.
- *  Hard cap so a slow YouTube API never keeps the homepage spinning. */
+function remember(items: YoutubeShort[]) {
+  lastGood = items;
+  lastGoodAt = Date.now();
+}
+
+/** Homepage Shorts — last good set is kept if YouTube is slow or errors. No demo clips. */
 export async function getHomepageShorts(): Promise<{ items: YoutubeShort[]; isDemo: boolean }> {
-  const cached = unstable_cache(fetchShortsUncached, ["homepage-youtube-shorts-hq720-v2"], {
-    revalidate: 600,
-  });
+  const fresh = lastGood.length > 0 && Date.now() - lastGoodAt < FRESH_MS;
+  if (fresh) {
+    return { items: lastGood, isDemo: false };
+  }
+
   try {
-    const items = await Promise.race([
-      cached(),
-      new Promise<YoutubeShort[]>((resolve) => {
-        setTimeout(() => resolve([]), 3000);
+    const raced = await Promise.race([
+      loadShorts(),
+      new Promise<null>((resolve) => {
+        setTimeout(() => resolve(null), PAGE_WAIT_MS);
       }),
     ]);
-    if (items.length) return { items, isDemo: false };
+
+    if (raced?.kind === "off") {
+      lastGood = [];
+      lastGoodAt = 0;
+      return { items: [], isDemo: false };
+    }
+    if (raced?.kind === "ok" && raced.items.length) {
+      remember(raced.items);
+      return { items: raced.items, isDemo: false };
+    }
   } catch {
-    // fall through to demos
+    // keep last good
   }
-  return { items: getDemoShorts(), isDemo: true };
+
+  if (lastGood.length) {
+    return { items: lastGood, isDemo: false };
+  }
+  return { items: [], isDemo: false };
 }

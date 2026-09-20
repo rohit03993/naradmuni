@@ -44,7 +44,7 @@ export default async function HomePage() {
   let recent: Awaited<ReturnType<typeof getRecentPublished>> = [];
   let topics: Awaited<ReturnType<typeof getTopicSections>> = [];
   let naradKahin: Awaited<ReturnType<typeof getNaradKahinSection>> = null;
-  let shorts: Awaited<ReturnType<typeof getHomepageShorts>> = { items: [], isDemo: true };
+  let shorts: Awaited<ReturnType<typeof getHomepageShorts>> = { items: [], isDemo: false };
   let youtubeUrl = SOCIAL_DEFAULTS.youtube;
   let err = "";
 
