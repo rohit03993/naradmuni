@@ -483,17 +483,18 @@ if (!function_exists('nm_ckeditor_photo_ui')) {
   <input type="file" id="nm-inline-photo-file" accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp">
   <span class="nm-form-hint" id="nm-inline-photo-status"></span>
 </div>
+<p class="nm-form-hint">Click <strong>Add photo in article</strong>, pick a JPG or PNG (max 600 KB). Resize buttons appear under the story.</p>
 <div class="nm-inline-photo-bar" id="nm-inline-photo-bar" hidden>
-  <span>Photo:</span>
+  <strong>Resize photo:</strong>
   <button type="button" data-nm-photo="size" data-value="small">Small</button>
   <button type="button" data-nm-photo="size" data-value="medium">Medium</button>
   <button type="button" data-nm-photo="size" data-value="full">Full width</button>
+  <span class="nm-inline-photo-bar__sep">Align:</span>
   <button type="button" data-nm-photo="align" data-value="left">Left</button>
   <button type="button" data-nm-photo="align" data-value="center">Center</button>
   <button type="button" data-nm-photo="align" data-value="right">Right</button>
   <button type="button" data-nm-photo="remove">Remove</button>
 </div>
-<p class="nm-form-hint">Click <strong>Add photo in article</strong>, pick a file from this computer (max 600 KB). It uploads and drops into the story. Then click the photo to resize or align.</p>
 HTML;
 	}
 }
@@ -526,15 +527,27 @@ function nmBindInlinePhoto(fieldId) {
     selected = null;
     if (bar) bar.hidden = true;
   }
+  function asCkeEl(el) {
+    if (!el) return null;
+    if (el.setStyle) return el;
+    try { return new CKEDITOR.dom.element(el); } catch (eEl) { return null; }
+  }
+  function lastImg(ed) {
+    if (!ed || !ed.document || !ed.document.\$) return null;
+    var list = ed.document.\$.getElementsByTagName('img');
+    if (!list || !list.length) return null;
+    return asCkeEl(list[list.length - 1]);
+  }
   function showBar(el) {
-    selected = el;
-    if (bar) bar.hidden = false;
+    selected = asCkeEl(el) || lastImg(editor());
+    if (bar && selected) bar.hidden = false;
   }
   function openPicker() {
     input.value = '';
     input.click();
   }
   function applySize(kind) {
+    if (!selected) selected = lastImg(editor());
     if (!selected) return;
     var w = kind === 'small' ? '40%' : (kind === 'medium' ? '70%' : '100%');
     selected.setStyle('width', w);
@@ -543,6 +556,7 @@ function nmBindInlinePhoto(fieldId) {
     selected.removeAttribute('height');
   }
   function applyAlign(kind) {
+    if (!selected) selected = lastImg(editor());
     if (!selected) return;
     selected.removeStyle('float');
     selected.removeAttribute('align');
@@ -562,20 +576,22 @@ function nmBindInlinePhoto(fieldId) {
     }
   }
   function bindClicks(ed) {
-    function onDocClick(evt) {
-      var t = evt.data.getTarget();
-      if (t && t.getName && t.getName() === 'img') {
+    function onNativeClick(e) {
+      var t = e.target;
+      if (t && t.nodeName && t.nodeName.toLowerCase() === 'img') {
         showBar(t);
-      } else {
-        hideBar();
       }
     }
-    ed.on('contentDom', function () {
-      ed.document.on('click', onDocClick);
-    });
-    if (ed.document) {
-      ed.document.on('click', onDocClick);
+    function attach() {
+      if (!ed.document || !ed.document.\$) return;
+      var nativeDoc = ed.document.\$;
+      if (nativeDoc.nmPhotoBound) return;
+      nativeDoc.nmPhotoBound = true;
+      if (nativeDoc.addEventListener) nativeDoc.addEventListener('click', onNativeClick, false);
+      else if (nativeDoc.attachEvent) nativeDoc.attachEvent('onclick', onNativeClick);
     }
+    ed.on('contentDom', attach);
+    attach();
     ed.on('doubleclick', function (evt) {
       var el = evt.data.element;
       if (el && el.is && el.is('img')) {
@@ -593,7 +609,9 @@ function nmBindInlinePhoto(fieldId) {
       var t = e.target;
       if (!t || !t.getAttribute) return;
       var act = t.getAttribute('data-nm-photo');
-      if (!act || !selected) return;
+      if (!act) return;
+      if (!selected) selected = lastImg(editor());
+      if (!selected) return;
       if (act === 'size') applySize(t.getAttribute('data-value'));
       if (act === 'align') applyAlign(t.getAttribute('data-value'));
       if (act === 'remove') {
@@ -615,17 +633,19 @@ function nmBindInlinePhoto(fieldId) {
   function insertPhoto(ed, url) {
     ed.focus();
     var safe = String(url || '').replace(/"/g, '');
+    var img = null;
     try {
-      var img = ed.document.createElement('img');
+      img = ed.document.createElement('img');
       img.setAttribute('src', safe);
       img.setAttribute('alt', '');
       img.setStyles({ width: '100%', height: 'auto', display: 'block', margin: '12px auto' });
       ed.insertElement(img);
-      return true;
     } catch (eIns) {
       ed.insertHtml('<p><img src="' + safe + '" alt="" style="width:100%;height:auto;display:block;margin:12px auto;"></p>');
-      return true;
+      img = lastImg(ed);
     }
+    showBar(img || lastImg(ed));
+    return true;
   }
   input.addEventListener('change', function () {
     var file = input.files && input.files[0];
@@ -655,7 +675,7 @@ function nmBindInlinePhoto(fieldId) {
         return;
       }
       insertPhoto(ed, data.url);
-      setStatus('Photo added. Click it to resize or align.');
+      setStatus('Photo added. Use Small / Medium / Full width under the story to resize.');
     };
     xhr.onerror = function () {
       btn.disabled = false;
@@ -666,6 +686,8 @@ function nmBindInlinePhoto(fieldId) {
   });
   var readyEd = editor();
   function startEditorHooks(ed) {
+    if (!ed || ed.nmPhotoHooked) return;
+    ed.nmPhotoHooked = true;
     bindClicks(ed);
     var oldExec = ed.execCommand;
     ed.execCommand = function (cmdName) {
@@ -677,8 +699,8 @@ function nmBindInlinePhoto(fieldId) {
     };
   }
   if (readyEd) {
-    if (readyEd.status === 'ready') startEditorHooks(readyEd);
-    else readyEd.on('instanceReady', function () { startEditorHooks(readyEd); });
+    readyEd.on('instanceReady', function () { startEditorHooks(readyEd); });
+    if (readyEd.document || readyEd.status === 'ready') startEditorHooks(readyEd);
   }
 }
 CKEDITOR.replace({$id}, {

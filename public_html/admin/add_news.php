@@ -317,7 +317,7 @@ if(isset($_POST['add']))
 
               <section class="nm-form-section">
                 <h2 class="nm-form-section__title">Full article</h2>
-                <div class="nm-form-field nm-form-field--full">
+                <div class="nm-form-field nm-form-field--full nm-form-field--article">
                   <label class="control-label" for="description">Description</label>
                   <?php echo nm_ckeditor_photo_ui(); ?>
                   <textarea class="ckeditor form-control" id="description" name="description"><?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['description']); } ?></textarea>
