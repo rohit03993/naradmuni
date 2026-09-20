@@ -3,8 +3,10 @@
  * CKEditor in-article image upload. Login required. Max 600 KB.
  * Saves under public_html/images/news/ so Next already serves the file.
  */
+ob_start();
 include __DIR__ . '/config.php';
 require_once __DIR__ . '/admin_helpers.php';
+ob_end_clean();
 
 $funcNum = isset($_GET['CKEditorFuncNum']) ? preg_replace('/[^0-9]/', '', (string) $_GET['CKEditorFuncNum']) : '0';
 $nmCkeWantJson = isset($_GET['format']) && $_GET['format'] === 'json';
@@ -52,15 +54,24 @@ if ((int) $file['size'] > 600 * 1024) {
 	nm_cke_upload_done($funcNum, '', 'Image must be under 600 KB. Compress it and try again.');
 }
 
-$ext = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
-$allowed = array('jpg' => 1, 'jpeg' => 1, 'png' => 1, 'gif' => 1, 'webp' => 1);
-if (!isset($allowed[$ext])) {
-	nm_cke_upload_done($funcNum, '', 'Use JPG, PNG, GIF, or WebP.');
+$info = @getimagesize($file['tmp_name']);
+if ($info === false || empty($info[2])) {
+	nm_cke_upload_done($funcNum, '', 'Use a JPG, PNG, GIF, or WebP photo.');
 }
 
-if (@getimagesize($file['tmp_name']) === false) {
-	nm_cke_upload_done($funcNum, '', 'That file is not a valid image.');
+$typeMap = array(
+	IMAGETYPE_JPEG => 'jpg',
+	IMAGETYPE_PNG => 'png',
+	IMAGETYPE_GIF => 'gif',
+);
+if (defined('IMAGETYPE_WEBP')) {
+	$typeMap[IMAGETYPE_WEBP] = 'webp';
 }
+$type = (int) $info[2];
+if (!isset($typeMap[$type])) {
+	nm_cke_upload_done($funcNum, '', 'Use a JPG, PNG, GIF, or WebP photo.');
+}
+$ext = $typeMap[$type];
 
 $dir = dirname(__DIR__) . '/images/news/';
 if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
@@ -74,6 +85,5 @@ if (!move_uploaded_file($file['tmp_name'], $dest)) {
 	nm_cke_upload_done($funcNum, '', 'Could not save the image.');
 }
 
-$base = isset($urlroot) ? rtrim((string) $urlroot, '/') : '';
-$url = $base . '/images/news/' . $name;
+$url = '/naradmuni/images/news/' . $name;
 nm_cke_upload_done($funcNum, $url, '');

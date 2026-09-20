@@ -602,6 +602,31 @@ function nmBindInlinePhoto(fieldId) {
       }
     });
   }
+  function parseUpload(text) {
+    var raw = (text || '').replace(/^\uFEFF/, '').trim();
+    try { return JSON.parse(raw); } catch (e1) {}
+    var start = raw.indexOf('{');
+    var end = raw.lastIndexOf('}');
+    if (start >= 0 && end > start) {
+      try { return JSON.parse(raw.slice(start, end + 1)); } catch (e2) {}
+    }
+    return { ok: false, error: 'Upload failed.' };
+  }
+  function insertPhoto(ed, url) {
+    ed.focus();
+    var safe = String(url || '').replace(/"/g, '');
+    try {
+      var img = ed.document.createElement('img');
+      img.setAttribute('src', safe);
+      img.setAttribute('alt', '');
+      img.setStyles({ width: '100%', height: 'auto', display: 'block', margin: '12px auto' });
+      ed.insertElement(img);
+      return true;
+    } catch (eIns) {
+      ed.insertHtml('<p><img src="' + safe + '" alt="" style="width:100%;height:auto;display:block;margin:12px auto;"></p>');
+      return true;
+    }
+  }
   input.addEventListener('change', function () {
     var file = input.files && input.files[0];
     if (!file) return;
@@ -618,19 +643,18 @@ function nmBindInlinePhoto(fieldId) {
     btn.disabled = true;
     setStatus('Uploading…');
     var fd = new FormData();
-    fd.append('upload', file);
+    fd.append('upload', file, file.name || 'photo.jpg');
     var xhr = new XMLHttpRequest();
     xhr.open('POST', 'ckeditor_image_upload.php?format=json');
     xhr.onload = function () {
       btn.disabled = false;
       input.value = '';
-      var data = {};
-      try { data = JSON.parse(xhr.responseText); } catch (err) { data = { ok: false, error: 'Upload failed.' }; }
+      var data = parseUpload(xhr.responseText);
       if (!data.ok || !data.url) {
         setStatus(data.error || 'Upload failed.');
         return;
       }
-      ed.insertHtml('<p><img src="' + data.url.replace(/"/g, '') + '" alt="" style="width:100%;height:auto;display:block;margin:12px auto;"></p>');
+      insertPhoto(ed, data.url);
       setStatus('Photo added. Click it to resize or align.');
     };
     xhr.onerror = function () {

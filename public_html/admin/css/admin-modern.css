@@ -1948,6 +1948,10 @@ body.nm-dialog-page {
   opacity: 0;
   overflow: hidden;
 }
+.nm-inline-photo #nm-inline-photo-status {
+  color: #b45309;
+  font-weight: 600;
+}
 .nm-inline-photo-bar {
   display: flex;
   flex-wrap: wrap;
