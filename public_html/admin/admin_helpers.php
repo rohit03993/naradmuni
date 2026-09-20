@@ -473,20 +473,193 @@ if (!function_exists('nm_js_notice')) {
 	}
 }
 
+/** Button + file picker for in-article photos (Add/Edit News). */
+if (!function_exists('nm_ckeditor_photo_ui')) {
+	function nm_ckeditor_photo_ui()
+	{
+		return <<<'HTML'
+<div class="nm-inline-photo">
+  <button type="button" class="btn btn-info" id="nm-inline-photo-btn">Add photo in article</button>
+  <input type="file" id="nm-inline-photo-file" accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp">
+  <span class="nm-form-hint" id="nm-inline-photo-status"></span>
+</div>
+<div class="nm-inline-photo-bar" id="nm-inline-photo-bar" hidden>
+  <span>Photo:</span>
+  <button type="button" data-nm-photo="size" data-value="small">Small</button>
+  <button type="button" data-nm-photo="size" data-value="medium">Medium</button>
+  <button type="button" data-nm-photo="size" data-value="full">Full width</button>
+  <button type="button" data-nm-photo="align" data-value="left">Left</button>
+  <button type="button" data-nm-photo="align" data-value="center">Center</button>
+  <button type="button" data-nm-photo="align" data-value="right">Right</button>
+  <button type="button" data-nm-photo="remove">Remove</button>
+</div>
+<p class="nm-form-hint">Click <strong>Add photo in article</strong>, pick a file from this computer (max 600 KB). It uploads and drops into the story. Then click the photo to resize or align.</p>
+HTML;
+	}
+}
+
 /** Relative CKEditor filebrowser config (works when $urlroot is wrong on production). */
 if (!function_exists('nm_ckeditor_js')) {
-	function nm_ckeditor_js($fieldId = 'description')
+	function nm_ckeditor_js($fieldId = 'description', $directPhoto = false)
 	{
 		$id = json_encode((string) $fieldId);
+		$direct = $directPhoto ? 'true' : 'false';
 		return <<<JS
 if (!window.nmCkeditorCssAdded && window.CKEDITOR && CKEDITOR.addCss) {
   window.nmCkeditorCssAdded = true;
   CKEDITOR.addCss('img{max-width:100%;height:auto;cursor:pointer;}');
 }
+function nmBindInlinePhoto(fieldId) {
+  var btn = document.getElementById('nm-inline-photo-btn');
+  var input = document.getElementById('nm-inline-photo-file');
+  var status = document.getElementById('nm-inline-photo-status');
+  var bar = document.getElementById('nm-inline-photo-bar');
+  if (!btn || !input) return;
+  var selected = null;
+  function editor() {
+    return CKEDITOR.instances[fieldId];
+  }
+  function setStatus(msg) {
+    if (status) status.textContent = msg || '';
+  }
+  function hideBar() {
+    selected = null;
+    if (bar) bar.hidden = true;
+  }
+  function showBar(el) {
+    selected = el;
+    if (bar) bar.hidden = false;
+  }
+  function openPicker() {
+    input.value = '';
+    input.click();
+  }
+  function applySize(kind) {
+    if (!selected) return;
+    var w = kind === 'small' ? '40%' : (kind === 'medium' ? '70%' : '100%');
+    selected.setStyle('width', w);
+    selected.setStyle('height', 'auto');
+    selected.removeAttribute('width');
+    selected.removeAttribute('height');
+  }
+  function applyAlign(kind) {
+    if (!selected) return;
+    selected.removeStyle('float');
+    selected.removeAttribute('align');
+    if (kind === 'left') {
+      selected.setAttribute('align', 'left');
+      selected.setStyle('float', 'left');
+      selected.setStyle('display', 'inline');
+      selected.setStyle('margin', '6px 16px 12px 0');
+    } else if (kind === 'right') {
+      selected.setAttribute('align', 'right');
+      selected.setStyle('float', 'right');
+      selected.setStyle('display', 'inline');
+      selected.setStyle('margin', '6px 0 12px 16px');
+    } else {
+      selected.setStyle('display', 'block');
+      selected.setStyle('margin', '12px auto');
+    }
+  }
+  function bindClicks(ed) {
+    function onDocClick(evt) {
+      var t = evt.data.getTarget();
+      if (t && t.getName && t.getName() === 'img') {
+        showBar(t);
+      } else {
+        hideBar();
+      }
+    }
+    ed.on('contentDom', function () {
+      ed.document.on('click', onDocClick);
+    });
+    if (ed.document) {
+      ed.document.on('click', onDocClick);
+    }
+    ed.on('doubleclick', function (evt) {
+      var el = evt.data.element;
+      if (el && el.is && el.is('img')) {
+        evt.data.dialog = '';
+        showBar(el);
+      }
+    });
+  }
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    openPicker();
+  });
+  if (bar) {
+    bar.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.getAttribute) return;
+      var act = t.getAttribute('data-nm-photo');
+      if (!act || !selected) return;
+      if (act === 'size') applySize(t.getAttribute('data-value'));
+      if (act === 'align') applyAlign(t.getAttribute('data-value'));
+      if (act === 'remove') {
+        selected.remove();
+        hideBar();
+      }
+    });
+  }
+  input.addEventListener('change', function () {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    if (file.size > 600 * 1024) {
+      setStatus('Image must be under 600 KB.');
+      input.value = '';
+      return;
+    }
+    var ed = editor();
+    if (!ed) {
+      setStatus('Editor is not ready yet.');
+      return;
+    }
+    btn.disabled = true;
+    setStatus('Uploading…');
+    var fd = new FormData();
+    fd.append('upload', file);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'ckeditor_image_upload.php?format=json');
+    xhr.onload = function () {
+      btn.disabled = false;
+      input.value = '';
+      var data = {};
+      try { data = JSON.parse(xhr.responseText); } catch (err) { data = { ok: false, error: 'Upload failed.' }; }
+      if (!data.ok || !data.url) {
+        setStatus(data.error || 'Upload failed.');
+        return;
+      }
+      ed.insertHtml('<p><img src="' + data.url.replace(/"/g, '') + '" alt="" style="width:100%;height:auto;display:block;margin:12px auto;"></p>');
+      setStatus('Photo added. Click it to resize or align.');
+    };
+    xhr.onerror = function () {
+      btn.disabled = false;
+      input.value = '';
+      setStatus('Upload failed. Try again.');
+    };
+    xhr.send(fd);
+  });
+  var readyEd = editor();
+  function startEditorHooks(ed) {
+    bindClicks(ed);
+    var oldExec = ed.execCommand;
+    ed.execCommand = function (cmdName) {
+      if (cmdName === 'image' || cmdName === 'imagebutton') {
+        openPicker();
+        return true;
+      }
+      return oldExec.apply(this, arguments);
+    };
+  }
+  if (readyEd) {
+    if (readyEd.status === 'ready') startEditorHooks(readyEd);
+    else readyEd.on('instanceReady', function () { startEditorHooks(readyEd); });
+  }
+}
 CKEDITOR.replace({$id}, {
   width: '100%',
-  extraAllowedContent: 'img[src,alt,width,height,border,align,hspace,vspace]{*}(*)',
-  removeDialogTabs: 'image:advanced',
+  extraAllowedContent: 'img[src,alt,width,height,border,align]{*}(*)',
   filebrowserBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Connector=ckeditor/filemanager/connectors/php/connector.php',
   filebrowserImageBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Type=Image&Connector=ckeditor/filemanager/connectors/php/connector.php',
   filebrowserFlashBrowseUrl: 'ckeditor/filemanager/browser/default/browser.html?Type=Flash&Connector=ckeditor/filemanager/connectors/php/connector.php',
@@ -494,38 +667,8 @@ CKEDITOR.replace({$id}, {
   filebrowserImageUploadUrl: 'ckeditor_image_upload.php',
   filebrowserFlashUploadUrl: 'ckeditor/filemanager/connectors/php/upload.php?Type=Flash'
 });
-if (!window.nmCkeditorImageDialogHooked) {
-  window.nmCkeditorImageDialogHooked = true;
-  CKEDITOR.on('dialogDefinition', function (ev) {
-    if (ev.data.name !== 'image') return;
-    var def = ev.data.definition;
-    try { def.removeContents('advanced'); } catch (e1) {}
-    var contents = def.contents;
-    if (contents && contents.length) {
-      var i, uploadIdx = -1;
-      for (i = 0; i < contents.length; i++) {
-        if (contents[i] && contents[i].id === 'Upload') { uploadIdx = i; break; }
-      }
-      if (uploadIdx > 0) {
-        contents.unshift(contents.splice(uploadIdx, 1)[0]);
-      }
-    }
-    var upload = def.getContents('Upload');
-    if (!upload) return;
-    var fileField = upload.get('upload');
-    if (!fileField) return;
-    var prev = fileField.onChange;
-    fileField.onChange = function () {
-      var el = this.getInputElement && this.getInputElement();
-      var input = el && el.\$;
-      if (input && input.files && input.files[0] && input.files[0].size > 600 * 1024) {
-        alert('Image must be under 600 KB. Compress it and try again.');
-        input.value = '';
-        return false;
-      }
-      if (typeof prev === 'function') return prev.apply(this, arguments);
-    };
-  });
+if ({$direct}) {
+  nmBindInlinePhoto({$id});
 }
 JS;
 	}

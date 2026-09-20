@@ -7,13 +7,24 @@ include __DIR__ . '/config.php';
 require_once __DIR__ . '/admin_helpers.php';
 
 $funcNum = isset($_GET['CKEditorFuncNum']) ? preg_replace('/[^0-9]/', '', (string) $_GET['CKEditorFuncNum']) : '0';
+$nmCkeWantJson = isset($_GET['format']) && $_GET['format'] === 'json';
 
 function nm_cke_upload_done($funcNum, $url, $message)
 {
+	global $nmCkeWantJson;
+	if (!empty($nmCkeWantJson)) {
+		header('Content-Type: application/json; charset=utf-8');
+		echo json_encode(array(
+			'ok' => ($url !== ''),
+			'url' => $url,
+			'error' => $message,
+		));
+		exit;
+	}
 	header('Content-Type: text/html; charset=utf-8');
 	$fn = (int) $funcNum;
-	$u = json_encode((string) $url, JSON_UNESCAPED_SLASHES);
-	$m = json_encode((string) $message, JSON_UNESCAPED_UNICODE);
+	$u = json_encode((string) $url);
+	$m = json_encode((string) $message);
 	echo '<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(' . $fn . ', ' . $u . ', ' . $m . ');</script>';
 	exit;
 }

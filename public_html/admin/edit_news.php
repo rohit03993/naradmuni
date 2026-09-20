@@ -356,8 +356,8 @@ if (isset($_POST['update'])) {
           <h2 class="nm-form-section__title">Full article</h2>
           <div class="nm-form-field nm-form-field--full">
             <label class="control-label" for="description">Description</label>
+            <?php echo nm_ckeditor_photo_ui(); ?>
             <textarea class="ckeditor form-control" id="description" name="description"><?php echo nm_h(isset($rs['description']) ? $rs['description'] : ''); ?></textarea>
-            <p class="nm-form-hint">To put a photo in the story: click the image icon in the toolbar → <strong>Upload</strong>. Max 600 KB. Click the photo again to set width, height, or left/right.</p>
           </div>
         </section>
 
@@ -394,7 +394,7 @@ if (isset($_POST['update'])) {
 <?php include "footer.php"; ?>
 <script type="text/javascript" src="ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
-<?php echo nm_ckeditor_js('description'); ?>
+<?php echo nm_ckeditor_js('description', true); ?>
 document.getElementById('SubmitForm').addEventListener('submit', function () {
   for (var name in CKEDITOR.instances) {
     if (CKEDITOR.instances.hasOwnProperty(name)) {
