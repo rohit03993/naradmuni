@@ -151,7 +151,7 @@ export default async function HomePage() {
 
       <YoutubeShortsRail items={shorts.items} channelUrl={youtubeUrl} />
 
-      {naradBlock ? (
+      {naradBlock && (naradBlock.items.length > 0 || naradFromDb === 0) ? (
         <TopicBlock section={naradBlock} showEmptyHint={naradFromDb === 0} singleOnly />
       ) : null}
 
