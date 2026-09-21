@@ -563,7 +563,7 @@ if (!function_exists('nm_title_nearest_hex')) {
 	{
 		$raw = strtolower(trim((string) $raw));
 		$hex = '';
-		if (preg_match('/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/', $raw, $m)) {
+		if (preg_match('/rgba?\(\s*(\d+)\s*[,\/\s]\s*(\d+)\s*[,\/\s]\s*(\d+)/', $raw, $m)) {
 			$hex = sprintf('#%02x%02x%02x', (int) $m[1], (int) $m[2], (int) $m[3]);
 		} elseif (preg_match('/^#([0-9a-f]{3})$/', $raw, $m)) {
 			$h = $m[1];
@@ -603,6 +603,49 @@ if (!function_exists('nm_title_highlight_to_allowed')) {
 	}
 }
 
+if (!function_exists('nm_title_span_styles')) {
+	function nm_title_span_styles($attrs)
+	{
+		$bg = '';
+		$fg = '';
+		$attrs = (string) $attrs;
+		if (preg_match('/background-color\s*:\s*([^;"]+)/i', $attrs, $bm)
+			|| preg_match('/(?:^|;|\s)background\s*:\s*([^;"]+)/i', $attrs, $bm)) {
+			$bg = nm_title_highlight_to_allowed($bm[1]);
+		}
+		if (preg_match('/(?:^|[;\s"])color\s*:\s*([^;"]+)/i', $attrs, $cm)) {
+			$fg = nm_title_color_to_allowed($cm[1]);
+		} elseif (preg_match('/(?:^|\s)color\s*=\s*["\']?([^"\'\s>]+)/i', $attrs, $cm)) {
+			$fg = nm_title_color_to_allowed($cm[1]);
+		}
+		return array($fg, $bg);
+	}
+}
+
+if (!function_exists('nm_title_span_html')) {
+	function nm_title_span_html($text, $fg, $bg)
+	{
+		$bits = array();
+		if ($fg !== '' && $fg !== '#111111') {
+			$bits[] = 'color:' . $fg;
+		}
+		if ($bg !== '') {
+			$bits[] = 'background-color:' . $bg;
+		}
+		if (!$bits) {
+			return $text;
+		}
+		return '<span style="' . implode(';', $bits) . '">' . $text . '</span>';
+	}
+}
+
+if (!function_exists('nm_title_keep_span_re')) {
+	function nm_title_keep_span_re()
+	{
+		return '/<span style="(?:color:#[0-9a-f]{6}(?:;background-color:#[0-9a-f]{6})?|background-color:#[0-9a-f]{6})">.*?<\/span>/i';
+	}
+}
+
 if (!function_exists('nm_sanitize_title_html')) {
 	function nm_sanitize_title_html($html)
 	{
@@ -610,39 +653,45 @@ if (!function_exists('nm_sanitize_title_html')) {
 		if (trim($html) === '') {
 			return '';
 		}
+		for ($i = 0; $i < 3; $i++) {
+			if (stripos($html, '&lt;span') === false && stripos($html, '&amp;lt;span') === false) {
+				break;
+			}
+			$html = html_entity_decode($html, ENT_QUOTES, 'UTF-8');
+		}
 		$html = preg_replace('/<script\b[^>]*>.*?<\/script>/is', '', $html);
 		$html = preg_replace('/<font([^>]*)>/i', '<span$1>', $html);
 		$html = str_ireplace('</font>', '</span>', $html);
 		$html = strip_tags($html, '<span>');
 		for ($i = 0; $i < 8; $i++) {
 			$html = preg_replace_callback('/<span\b([^>]*)>([^<]*)<\/span>/i', function ($m) {
-				$bg = '';
-				$fg = '';
-				if (preg_match('/background-color\s*:\s*([^;"]+)/i', $m[1], $bm)) {
-					$bg = nm_title_highlight_to_allowed($bm[1]);
+				if (preg_match('/^\sstyle="(?:color:#[0-9a-f]{6}(?:;background-color:#[0-9a-f]{6})?|background-color:#[0-9a-f]{6})"$/i', $m[1])) {
+					return $m[0];
 				}
-				if (preg_match('/(?:^|;|\s)color\s*:\s*([^;"]+)/i', $m[1], $cm)) {
-					$fg = nm_title_color_to_allowed($cm[1]);
-				} elseif (preg_match('/(?:^|\s)color\s*=\s*["\']?([^"\'\s>]+)/i', $m[1], $cm)) {
-					$fg = nm_title_color_to_allowed($cm[1]);
-				}
-				$text = htmlspecialchars($m[2], ENT_QUOTES, 'UTF-8');
-				$bits = array();
-				if ($fg !== '' && $fg !== '#111111') {
-					$bits[] = 'color:' . $fg;
-				}
-				if ($bg !== '') {
-					$bits[] = 'background-color:' . $bg;
-				}
-				if (!$bits) {
-					return $text;
-				}
-				return '<span style="' . implode(';', $bits) . '">' . $text . '</span>';
+				list($fg, $bg) = nm_title_span_styles($m[1]);
+				$text = htmlspecialchars(html_entity_decode($m[2], ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
+				return nm_title_span_html($text, $fg, $bg);
 			}, $html);
+		}
+		for ($i = 0; $i < 8; $i++) {
+			$next = preg_replace_callback('/<span\b([^>]*)>(<span style="[^"]*">[^<]*<\/span>)<\/span>/i', function ($m) {
+				list($pFg, $pBg) = nm_title_span_styles($m[1]);
+				if (!preg_match('/<span style="([^"]*)">([^<]*)<\/span>/i', $m[2], $c)) {
+					return $m[0];
+				}
+				list($cFg, $cBg) = nm_title_span_styles(' style="' . $c[1] . '"');
+				$fg = ($cFg !== '' && $cFg !== '#111111') ? $cFg : $pFg;
+				$bg = $cBg !== '' ? $cBg : $pBg;
+				return nm_title_span_html($c[2], $fg, $bg);
+			}, $html);
+			if ($next === null || $next === $html) {
+				break;
+			}
+			$html = $next;
 		}
 		$out = '';
 		$offset = 0;
-		if (preg_match_all('/<span style="(?:color:#[0-9a-f]{6};)?(?:background-color:#[0-9a-f]{6})?">.*?<\/span>/i', $html, $mm, PREG_OFFSET_CAPTURE)) {
+		if (preg_match_all(nm_title_keep_span_re(), $html, $mm, PREG_OFFSET_CAPTURE)) {
 			foreach ($mm[0] as $hit) {
 				$pos = (int) $hit[1];
 				$out .= htmlspecialchars(substr($html, $offset, $pos - $offset), ENT_QUOTES, 'UTF-8');
@@ -690,11 +739,39 @@ if (!function_exists('nm_title_color_js')) {
   var ed = document.getElementById('nm-title-editor');
   var hidden = document.getElementById('nm-title');
   if (!ed || !hidden) return;
+  function titlePlain() {
+    return (ed.innerText || ed.textContent || '').replace(/\s+/g, ' ').trim();
+  }
   function sync() {
     hidden.value = ed.innerHTML;
   }
-  function titlePlain() {
-    return (ed.innerText || ed.textContent || '').replace(/\s+/g, ' ').trim();
+  function paintSelection(kind, hex) {
+    ed.focus();
+    var sel = window.getSelection();
+    if (!sel) return;
+    var range;
+    if (sel.rangeCount && !sel.getRangeAt(0).collapsed && ed.contains(sel.anchorNode)) {
+      range = sel.getRangeAt(0);
+    } else {
+      range = document.createRange();
+      range.selectNodeContents(ed);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    var span = document.createElement('span');
+    span.setAttribute('style', kind === 'hl' ? ('background-color:' + hex) : ('color:' + hex));
+    try {
+      range.surroundContents(span);
+    } catch (err) {
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+    }
+    sel.removeAllRanges();
+    var after = document.createRange();
+    after.selectNodeContents(span);
+    after.collapse(false);
+    sel.addRange(after);
+    sync();
   }
   ed.addEventListener('input', sync);
   ed.addEventListener('blur', sync);
@@ -711,30 +788,15 @@ if (!function_exists('nm_title_color_js')) {
       if (!t || !t.getAttribute) return;
       var color = t.getAttribute('data-nm-title-color');
       var hl = t.getAttribute('data-nm-title-hl');
-      if (color) {
-        ed.focus();
-        try { document.execCommand('styleWithCSS', false, true); } catch (e1) {}
-        document.execCommand('foreColor', false, color);
-        sync();
-      }
-      if (hl) {
-        ed.focus();
-        try { document.execCommand('styleWithCSS', false, true); } catch (e3) {}
-        if (!document.execCommand('hiliteColor', false, hl)) {
-          document.execCommand('backColor', false, hl);
-        }
-        sync();
-      }
+      if (color) paintSelection('fg', color);
+      if (hl) paintSelection('hl', hl);
     });
   }
   var clearBtn = document.getElementById('nm-title-color-clear');
   if (clearBtn) {
     clearBtn.addEventListener('click', function () {
       ed.focus();
-      try { document.execCommand('styleWithCSS', false, true); } catch (e2) {}
-      document.execCommand('foreColor', false, '#111111');
-      try { document.execCommand('hiliteColor', false, 'transparent'); } catch (e4) {}
-      document.execCommand('removeFormat', false, null);
+      ed.innerHTML = titlePlain();
       sync();
     });
   }
