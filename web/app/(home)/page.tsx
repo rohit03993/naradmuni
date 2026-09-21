@@ -8,6 +8,7 @@ import {
   getBreaking,
   getLead,
   getNaradKahinSection,
+  getPinnedHomepageLead,
   getRecentPublished,
   getTopicSections,
 } from "@/lib/queries";
@@ -46,11 +47,12 @@ export default async function HomePage() {
   let naradKahin: Awaited<ReturnType<typeof getNaradKahinSection>> = null;
   let shorts: Awaited<ReturnType<typeof getHomepageShorts>> = { items: [], isDemo: false };
   let youtubeUrl = SOCIAL_DEFAULTS.youtube;
+  let pinnedLead: NewsCard | null = null;
   let err = "";
 
   try {
     let branding: Awaited<ReturnType<typeof getBranding>>;
-    [sliderLead, breaking, recent, topics, naradKahin, shorts, branding] = await Promise.all([
+    [sliderLead, breaking, recent, topics, naradKahin, shorts, branding, pinnedLead] = await Promise.all([
       getLead(),
       getBreaking(6),
       getRecentPublished(60),
@@ -58,6 +60,7 @@ export default async function HomePage() {
       getNaradKahinSection(),
       getHomepageShorts(),
       getBranding(),
+      getPinnedHomepageLead(),
     ]);
     youtubeUrl = branding.social.youtube;
   } catch (e) {
@@ -66,10 +69,18 @@ export default async function HomePage() {
 
   const seen = new Set<number>();
 
-  // Top hero = Breaking only (newest = big lead, next up to 5 = right list).
+  // Top hero: pinned "main news" if set, else newest Breaking (unchanged).
   let lead: NewsCard | null = null;
   let secondaries: NewsCard[] = [];
-  if (breaking.length > 0) {
+  if (pinnedLead?.newsid) {
+    lead = pinnedLead;
+    const pinId = Number(pinnedLead.newsid);
+    secondaries = breaking.filter((n) => Number(n.newsid) !== pinId).slice(0, 5);
+    seen.add(pinId);
+    for (const n of secondaries) {
+      if (n.newsid) seen.add(Number(n.newsid));
+    }
+  } else if (breaking.length > 0) {
     lead = breaking[0] ?? null;
     secondaries = breaking.slice(1, 6);
     if (lead?.newsid) seen.add(Number(lead.newsid));

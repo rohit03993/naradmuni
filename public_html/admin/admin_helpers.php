@@ -473,6 +473,53 @@ if (!function_exists('nm_js_notice')) {
 	}
 }
 
+/** One pinned homepage lead. Stored in site_settings, not on the news table. */
+if (!function_exists('nm_homepage_main_newsid')) {
+	function nm_homepage_main_newsid($con)
+	{
+		if (!($con instanceof mysqli)) {
+			return 0;
+		}
+		if (!function_exists('nm_setting_get')) {
+			require_once __DIR__ . '/site_settings_lib.php';
+		}
+		nm_ensure_site_settings($con);
+		return (int) nm_setting_get($con, 'homepage_main_newsid', '0');
+	}
+}
+
+if (!function_exists('nm_is_homepage_main_news')) {
+	function nm_is_homepage_main_news($con, $newsid)
+	{
+		$id = (int) $newsid;
+		return $id > 0 && nm_homepage_main_newsid($con) === $id;
+	}
+}
+
+if (!function_exists('nm_apply_homepage_main_news')) {
+	function nm_apply_homepage_main_news($con, $newsid, $wantPin)
+	{
+		if (!($con instanceof mysqli)) {
+			return;
+		}
+		$id = (int) $newsid;
+		if ($id <= 0) {
+			return;
+		}
+		if (!function_exists('nm_setting_set')) {
+			require_once __DIR__ . '/site_settings_lib.php';
+		}
+		nm_ensure_site_settings($con);
+		if ($wantPin) {
+			nm_setting_set($con, 'homepage_main_newsid', (string) $id);
+			return;
+		}
+		if (nm_homepage_main_newsid($con) === $id) {
+			nm_setting_set($con, 'homepage_main_newsid', '');
+		}
+	}
+}
+
 /** Button + file picker for in-article photos (Add/Edit News). */
 if (!function_exists('nm_ckeditor_photo_ui')) {
 	function nm_ckeditor_photo_ui()

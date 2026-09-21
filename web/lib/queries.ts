@@ -1,5 +1,6 @@
 import { query } from "./db";
 import { asHtmlString } from "./html";
+import { getSiteSettings } from "./settings";
 import type { Ad, Category, NewsArticle, NewsCard, SitePage, Team } from "./types";
 
 const PUB = "Published";
@@ -347,6 +348,22 @@ export async function getLead(): Promise<NewsCard | null> {
   if (slider[0]) return slider[0];
   const latest = await getTaza(1);
   return latest[0] || null;
+}
+
+/** Admin "Make this main news" pin. Empty/unpublished = homepage uses normal Breaking lead. */
+export async function getPinnedHomepageLead(): Promise<NewsCard | null> {
+  const settings = await getSiteSettings(["homepage_main_newsid"]);
+  const id = Number(settings.homepage_main_newsid || 0);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  const rows = await query<NewsCard>(
+    `SELECT ${CARD_COLS}
+     FROM news n
+     LEFT JOIN categories c ON c.id = n.category
+     WHERE n.newsid = ? AND n.status = ? AND ${NOT_VIDEO}
+     LIMIT 1`,
+    [id, PUB]
+  );
+  return rows[0] || null;
 }
 
 export async function getLatest(limit = 20, exclude: number[] = []): Promise<NewsCard[]> {

@@ -179,6 +179,9 @@ if(isset($_POST['add']))
                             if (!empty($category) && $category !== '0') {
                               mysqli_query($con, "INSERT INTO `news_cat`(`category`, `news_id`) VALUES('$category','$lastInsertId')");
                             }
+                            if (function_exists('nm_apply_homepage_main_news')) {
+                              nm_apply_homepage_main_news($con, (int) $lastInsertId, isset($_POST['pin_main_news']) && $_POST['pin_main_news'] === 'Yes');
+                            }
                                    nm_js_notice($status === 'Scheduled' ? 'Scheduled successfully' : 'Published successfully', 'news.php');
                               }
                               else{ array_push($errors, "Sorry, there was an error: " . mysqli_error($con)); }
@@ -311,6 +314,11 @@ if(isset($_POST['add']))
                       Breaking news — show in homepage top list (latest 5)
                     </label>
                     <p class="nm-form-hint">Add-on only. Story still belongs to the category above.</p>
+                    <label class="checkbox-inline" style="font-weight:600;display:block;margin-top:10px;">
+                      <input type="checkbox" name="pin_main_news" value="Yes" <?php echo (isset($_POST['pin_main_news']) && $_POST['pin_main_news'] === 'Yes') ? 'checked' : ''; ?>>
+                      Make this main news — stick in the big homepage photo
+                    </label>
+                    <p class="nm-form-hint">Only one story at a time. Tick another story later and this one leaves the big slot. Untick to go back to automatic.</p>
                   </div>
                 </div>
               </section>

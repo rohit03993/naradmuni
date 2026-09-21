@@ -205,6 +205,9 @@ if (isset($_POST['update'])) {
                     mysqli_query($con, "INSERT INTO `news_cat`(`category`, `news_id`) VALUES('$category','$srid')");
                 }
             }
+            if (function_exists('nm_apply_homepage_main_news')) {
+                nm_apply_homepage_main_news($con, (int) $srid, isset($_POST['pin_main_news']) && $_POST['pin_main_news'] === 'Yes');
+            }
 
             $okMsg = ($sched['status'] === 'Scheduled') ? 'Scheduled successfully' : 'Updated successfully';
             nm_js_notice($okMsg, 'news.php');
@@ -348,6 +351,14 @@ if (isset($_POST['update'])) {
                 Breaking news — show in homepage top list (latest 5)
               </label>
               <p class="nm-form-hint">Add-on only. Story still belongs to the category above.</p>
+              <label class="checkbox-inline" style="font-weight:600;display:block;margin-top:10px;">
+                <input type="checkbox" name="pin_main_news" value="Yes" <?php echo (
+                  (isset($_POST['update']) && isset($_POST['pin_main_news']) && $_POST['pin_main_news'] === 'Yes')
+                  || (!isset($_POST['update']) && function_exists('nm_is_homepage_main_news') && nm_is_homepage_main_news($con, (int) $srid))
+                ) ? 'checked' : ''; ?>>
+                Make this main news — stick in the big homepage photo
+              </label>
+              <p class="nm-form-hint">Only one story at a time. Tick another story later and this one leaves the big slot. Untick to go back to automatic.</p>
             </div>
           </div>
         </section>
