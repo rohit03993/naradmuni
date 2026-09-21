@@ -576,6 +576,10 @@ strong, b { font-weight: 700; }
   margin: 0 0 12px;
   letter-spacing: normal;
 }
+.news-title span {
+  display: inline;
+  font-weight: inherit;
+}
 
 .meta-row {
   display: flex;

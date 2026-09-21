@@ -1,5 +1,7 @@
 import type { NewsCard } from "@/lib/types";
 import { newsImage } from "@/lib/images";
+import { plainTitle } from "@/lib/titleHtml";
+import NewsTitle from "@/components/NewsTitle";
 
 /** MP Breaking–style tile: image on top, title below */
 export default function NewsCardTile({
@@ -17,7 +19,7 @@ export default function NewsCardTile({
       {src ? (
         <img
           src={src}
-          alt={item.title}
+          alt={plainTitle(item.title)}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
           {...(priority ? { fetchPriority: "high" as const } : {})}
@@ -25,7 +27,7 @@ export default function NewsCardTile({
       ) : (
         <div className="ph card-ph" />
       )}
-      <h3>{item.title}</h3>
+      <h3><NewsTitle html={item.title} /></h3>
     </a>
   );
 }

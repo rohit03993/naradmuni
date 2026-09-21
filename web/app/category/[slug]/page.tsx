@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import NewsDate from "@/components/NewsDate";
+import NewsTitle from "@/components/NewsTitle";
 import { newsImage } from "@/lib/images";
 import { getCategoryByUrl, getChildCategories, countNewsByCategory, getNewsByCategory } from "@/lib/queries";
 import { listingMeta } from "@/lib/seo";
@@ -81,7 +82,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                   <div className="ph cat-tile-ph" />
                 )}
                 <div className="cat-tile-text">
-                  <h3>{n.title}</h3>
+                  <h3><NewsTitle html={n.title} /></h3>
                   <NewsDate date={n.date} />
                 </div>
               </a>

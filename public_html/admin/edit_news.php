@@ -104,7 +104,10 @@ if (isset($_POST['update'])) {
         return mysqli_real_escape_string($con, $v);
     };
 
-    $title = mysqli_real_escape_string($con, isset($_POST['title']) ? (string) $_POST['title'] : '');
+    $titleRaw = isset($_POST['title']) ? (string) $_POST['title'] : '';
+    $titleHtml = function_exists('nm_sanitize_title_html') ? nm_sanitize_title_html($titleRaw) : strip_tags($titleRaw);
+    $titlePlain = function_exists('nm_plain_title') ? nm_plain_title($titleHtml) : trim(strip_tags($titleHtml));
+    $title = mysqli_real_escape_string($con, $titleHtml);
     $latest_news = (isset($_POST['latest_news']) && $_POST['latest_news'] === 'Yes') ? 'Yes' : 'No';
     $latest_news = mysqli_real_escape_string($con, $latest_news);
     $descriptionRaw = isset($_POST['description']) ? (string) $_POST['description'] : '';
@@ -144,14 +147,14 @@ if (isset($_POST['update'])) {
     $newstype = $keep('newstype', 'Content');
     $video_id = $keep('videoid');
     $name = $keep('video_file');
-    if ($short_description === '' && $title !== '') {
-        $short_description = $title;
+    if ($short_description === '' && $titlePlain !== '') {
+        $short_description = mysqli_real_escape_string($con, $titlePlain);
     }
-    if ($metat === '' && $title !== '') {
-        $metat = $title;
+    if ($metat === '' && $titlePlain !== '') {
+        $metat = mysqli_real_escape_string($con, $titlePlain);
     }
-    if ($metad === '' && $title !== '') {
-        $metad = $title;
+    if ($metad === '' && $titlePlain !== '') {
+        $metad = mysqli_real_escape_string($con, $titlePlain);
     }
 
     $pub_date_time = isset($_POST['pub_date_time']) ? trim((string) $_POST['pub_date_time']) : '';
@@ -174,7 +177,7 @@ if (isset($_POST['update'])) {
         move_uploaded_file($_FILES['image']['tmp_name'], $news_img_dir . $post_image);
     }
 
-    if ($title === '') {
+    if ($titlePlain === '') {
         array_push($errors, 'Kindly fill news title');
     }
     if ($linkname === '') {
@@ -271,8 +274,8 @@ if (isset($_POST['update'])) {
           <h2 class="nm-form-section__title">Story</h2>
           <div class="nm-form-grid">
             <div class="nm-form-field nm-form-field--full">
-              <label class="control-label" for="nm-title">Title</label>
-              <input class="form-control" id="nm-title" type="text" name="title" value="<?php echo nm_h(isset($rs['title']) ? $rs['title'] : ''); ?>" required>
+              <label class="control-label" for="nm-title-editor">Title</label>
+              <?php echo nm_title_color_ui(isset($rs['title']) ? $rs['title'] : ''); ?>
             </div>
             <div class="nm-form-field nm-form-field--full">
               <label class="control-label">News URL</label>
@@ -406,6 +409,7 @@ if (isset($_POST['update'])) {
 <script type="text/javascript" src="ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
 <?php echo nm_ckeditor_js('description', true); ?>
+<?php echo nm_title_color_js(); ?>
 document.getElementById('SubmitForm').addEventListener('submit', function () {
   for (var name in CKEDITOR.instances) {
     if (CKEDITOR.instances.hasOwnProperty(name)) {

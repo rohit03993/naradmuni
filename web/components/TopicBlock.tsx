@@ -1,6 +1,8 @@
 import NewsCardTile from "@/components/NewsCardTile";
 import NewsListItem from "@/components/NewsListItem";
+import NewsTitle from "@/components/NewsTitle";
 import { newsImage } from "@/lib/images";
+import { plainTitle } from "@/lib/titleHtml";
 import type { TopicSection } from "@/lib/queries";
 
 /** Homepage category block: feature + side list + card row (MP style). */
@@ -47,21 +49,21 @@ export default function TopicBlock({
         singleOnly ? (
           <a className="topic-feature topic-feature--solo" href={`/news/${feature.newsurl}`}>
             {featureSrc ? (
-              <img src={featureSrc} alt={feature.title} loading="lazy" />
+              <img src={featureSrc} alt={plainTitle(feature.title)} loading="lazy" />
             ) : (
               <div className="ph topic-feature-ph" />
             )}
-            <h3>{feature.title}</h3>
+            <h3><NewsTitle html={feature.title} /></h3>
           </a>
         ) : (
           <div className="topic-split">
             <a className="topic-feature" href={`/news/${feature.newsurl}`}>
               {featureSrc ? (
-                <img src={featureSrc} alt={feature.title} loading="lazy" />
+                <img src={featureSrc} alt={plainTitle(feature.title)} loading="lazy" />
               ) : (
                 <div className="ph topic-feature-ph" />
               )}
-              <h3>{feature.title}</h3>
+              <h3><NewsTitle html={feature.title} /></h3>
             </a>
             <div className="topic-side">
               {side.map((n) => (

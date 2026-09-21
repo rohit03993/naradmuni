@@ -1931,7 +1931,32 @@ body.nm-dialog-page {
   font-weight: 600;
   color: var(--nm-ink);
 }
-.nm-inline-photo {
+.nm-title-color-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+}
+.nm-title-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #d1d5db;
+  padding: 0;
+  cursor: pointer;
+}
+.nm-title-swatch:hover {
+  border-color: #111;
+}
+.nm-title-editor {
+  min-height: 44px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  background: #fff;
+  color: #111;
+}
   display: flex;
   flex-wrap: wrap;
   align-items: center;

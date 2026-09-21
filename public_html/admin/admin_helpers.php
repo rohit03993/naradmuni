@@ -520,6 +520,174 @@ if (!function_exists('nm_apply_homepage_main_news')) {
 	}
 }
 
+/** Dark title colours that stay readable on a white page. */
+if (!function_exists('nm_title_allowed_colors')) {
+	function nm_title_allowed_colors()
+	{
+		return array(
+			'#111111' => 'Black',
+			'#b91c1c' => 'Red',
+			'#c2410c' => 'Saffron',
+			'#1d4ed8' => 'Blue',
+			'#15803d' => 'Green',
+			'#6d28d9' => 'Purple',
+		);
+	}
+}
+
+if (!function_exists('nm_plain_title')) {
+	function nm_plain_title($html)
+	{
+		$t = html_entity_decode(strip_tags(str_replace(array('<br>', '<br/>', '<br />', '<br/>'), ' ', (string) $html)), ENT_QUOTES, 'UTF-8');
+		$t = str_replace("\xc2\xa0", ' ', $t);
+		$t = preg_replace('/\s+/u', ' ', $t);
+		return trim((string) $t);
+	}
+}
+
+if (!function_exists('nm_title_color_to_allowed')) {
+	function nm_title_color_to_allowed($raw)
+	{
+		$raw = strtolower(trim((string) $raw));
+		$hex = '';
+		if (preg_match('/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/', $raw, $m)) {
+			$hex = sprintf('#%02x%02x%02x', (int) $m[1], (int) $m[2], (int) $m[3]);
+		} elseif (preg_match('/^#([0-9a-f]{3})$/', $raw, $m)) {
+			$h = $m[1];
+			$hex = '#' . $h[0] . $h[0] . $h[1] . $h[1] . $h[2] . $h[2];
+		} elseif (preg_match('/^#([0-9a-f]{6})$/', $raw)) {
+			$hex = $raw;
+		}
+		if ($hex === '') {
+			return '';
+		}
+		$best = '#111111';
+		$bestD = 99999;
+		foreach (array_keys(nm_title_allowed_colors()) as $a) {
+			$d = abs(hexdec(substr($hex, 1, 2)) - hexdec(substr($a, 1, 2)))
+				+ abs(hexdec(substr($hex, 3, 2)) - hexdec(substr($a, 3, 2)))
+				+ abs(hexdec(substr($hex, 5, 2)) - hexdec(substr($a, 5, 2)));
+			if ($d < $bestD) {
+				$bestD = $d;
+				$best = $a;
+			}
+		}
+		return $best;
+	}
+}
+
+if (!function_exists('nm_sanitize_title_html')) {
+	function nm_sanitize_title_html($html)
+	{
+		$html = (string) $html;
+		if (trim($html) === '') {
+			return '';
+		}
+		$html = preg_replace('/<script\b[^>]*>.*?<\/script>/is', '', $html);
+		$html = preg_replace('/<font([^>]*)>/i', '<span$1>', $html);
+		$html = str_ireplace('</font>', '</span>', $html);
+		$html = strip_tags($html, '<span>');
+		for ($i = 0; $i < 8; $i++) {
+			$html = preg_replace_callback('/<span\b([^>]*)>([^<]*)<\/span>/i', function ($m) {
+				$color = '';
+				if (preg_match('/color\s*:\s*([^;"]+)/i', $m[1], $cm)) {
+					$color = nm_title_color_to_allowed($cm[1]);
+				} elseif (preg_match('/(?:^|\s)color\s*=\s*["\']?([^"\'\s>]+)/i', $m[1], $cm)) {
+					$color = nm_title_color_to_allowed($cm[1]);
+				}
+				$text = htmlspecialchars($m[2], ENT_QUOTES, 'UTF-8');
+				if ($color === '' || $color === '#111111') {
+					return $text;
+				}
+				return '<span style="color:' . $color . '">' . $text . '</span>';
+			}, $html);
+		}
+		$out = '';
+		$offset = 0;
+		if (preg_match_all('/<span style="color:#[0-9a-f]{6}">.*?<\/span>/i', $html, $mm, PREG_OFFSET_CAPTURE)) {
+			foreach ($mm[0] as $hit) {
+				$pos = (int) $hit[1];
+				$out .= htmlspecialchars(substr($html, $offset, $pos - $offset), ENT_QUOTES, 'UTF-8');
+				$out .= $hit[0];
+				$offset = $pos + strlen($hit[0]);
+			}
+		}
+		$out .= htmlspecialchars(substr($html, $offset), ENT_QUOTES, 'UTF-8');
+		return $out;
+	}
+}
+
+if (!function_exists('nm_title_color_ui')) {
+	function nm_title_color_ui($value = '')
+	{
+		$safe = nm_sanitize_title_html($value);
+		$buttons = '';
+		foreach (nm_title_allowed_colors() as $hex => $label) {
+			$buttons .= '<button type="button" class="nm-title-swatch" data-nm-title-color="' . $hex . '" title="' . nm_h($label) . '" style="background:' . $hex . '"></button>';
+		}
+		return '<div class="nm-title-color">'
+			. '<div class="nm-title-color-bar"><span>Title colour — select words, then a colour:</span>'
+			. $buttons
+			. '<button type="button" class="btn btn-outline-secondary btn-sm" id="nm-title-color-clear">Remove colour</button>'
+			. '</div>'
+			. '<div id="nm-title-editor" class="form-control nm-title-editor" contenteditable="true" role="textbox">' . $safe . '</div>'
+			. '<input type="hidden" name="title" id="nm-title" value="' . nm_h($safe) . '">'
+			. '<p class="nm-form-hint">Colours are dark so they stay readable on the white site. Google and WhatsApp still get the plain title.</p>'
+			. '</div>';
+	}
+}
+
+if (!function_exists('nm_title_color_js')) {
+	function nm_title_color_js()
+	{
+		return <<<'JS'
+(function () {
+  var ed = document.getElementById('nm-title-editor');
+  var hidden = document.getElementById('nm-title');
+  if (!ed || !hidden) return;
+  function sync() {
+    hidden.value = ed.innerHTML;
+  }
+  function titlePlain() {
+    return (ed.innerText || ed.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+  ed.addEventListener('input', sync);
+  ed.addEventListener('blur', sync);
+  var bar = document.querySelector('.nm-title-color-bar');
+  if (bar) {
+    bar.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    bar.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.getAttribute) return;
+      var color = t.getAttribute('data-nm-title-color');
+      if (color) {
+        ed.focus();
+        try { document.execCommand('styleWithCSS', false, true); } catch (e1) {}
+        document.execCommand('foreColor', false, color);
+        sync();
+      }
+    });
+  }
+  var clearBtn = document.getElementById('nm-title-color-clear');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function () {
+      ed.focus();
+      try { document.execCommand('styleWithCSS', false, true); } catch (e2) {}
+      document.execCommand('foreColor', false, '#111111');
+      document.execCommand('removeFormat', false, null);
+      sync();
+    });
+  }
+  var form = document.getElementById('SubmitForm');
+  if (form) {
+    form.addEventListener('submit', function () { sync(); });
+  }
+  window.nmTitlePlain = titlePlain;
+})();
+JS;
+	}
+}
+
 /** Button + file picker for in-article photos (Add/Edit News). */
 if (!function_exists('nm_ckeditor_photo_ui')) {
 	function nm_ckeditor_photo_ui()

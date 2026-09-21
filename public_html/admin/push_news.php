@@ -6,6 +6,8 @@
 function naradmuni_send_news_push($con, $title, $body, $imageFile, $newsurl) {
     global $urlroot, $publicroot;
 
+    $title = function_exists('nm_plain_title') ? nm_plain_title($title) : trim(strip_tags((string) $title));
+    $body = function_exists('nm_plain_title') ? nm_plain_title($body) : trim(strip_tags((string) $body));
     if (!$title || !$newsurl) {
         return false;
     }

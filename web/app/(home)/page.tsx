@@ -1,9 +1,11 @@
 import NewsCardTile from "@/components/NewsCardTile";
 import NewsListItem from "@/components/NewsListItem";
+import NewsTitle from "@/components/NewsTitle";
 import TopicBlock from "@/components/TopicBlock";
 import YoutubeShortsRail from "@/components/YoutubeShortsRail";
 import { getBranding, SOCIAL_DEFAULTS } from "@/lib/branding";
 import { newsImage } from "@/lib/images";
+import { plainTitle } from "@/lib/titleHtml";
 import {
   getBreaking,
   getLead,
@@ -133,11 +135,11 @@ export default async function HomePage() {
         {lead ? (
           <a className="hero-lead" href={`/news/${lead.newsurl}`}>
             {leadSrc ? (
-              <img src={leadSrc} alt={lead.title} fetchPriority="high" />
+              <img src={leadSrc} alt={plainTitle(lead.title)} fetchPriority="high" />
             ) : (
               <div className="ph hero-ph" />
             )}
-            <h2>{lead.title}</h2>
+            <h2><NewsTitle html={lead.title} /></h2>
           </a>
         ) : (
           <p>No published news found.</p>

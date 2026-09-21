@@ -38,7 +38,10 @@ if(isset($_POST['add']))
                                 return mysqli_real_escape_string($con, isset($_POST[$key]) ? $_POST[$key] : $default);
                             };
 
-                            $title = $post('title');
+                            $titleRaw = isset($_POST['title']) ? (string) $_POST['title'] : '';
+                            $titleHtml = function_exists('nm_sanitize_title_html') ? nm_sanitize_title_html($titleRaw) : strip_tags($titleRaw);
+                            $titlePlain = function_exists('nm_plain_title') ? nm_plain_title($titleHtml) : trim(strip_tags($titleHtml));
+                            $title = mysqli_real_escape_string($con, $titleHtml);
                             $latest_news = (isset($_POST['latest_news']) && $_POST['latest_news'] === 'Yes') ? 'Yes' : 'No';
                             $latest_news = mysqli_real_escape_string($con, $latest_news);
                             $descriptionRaw = isset($_POST['description']) ? (string) $_POST['description'] : '';
@@ -82,17 +85,17 @@ if(isset($_POST['add']))
                             $post_image = '';
 
                             // Lean form: fill SEO/summary from title when not posted
-                            if ($short_description === '' && $title !== '') {
-                                $short_description = $title;
+                            if ($short_description === '' && $titlePlain !== '') {
+                                $short_description = mysqli_real_escape_string($con, $titlePlain);
                             }
-                            if ($metat === '' && $title !== '') {
-                                $metat = $title;
+                            if ($metat === '' && $titlePlain !== '') {
+                                $metat = mysqli_real_escape_string($con, $titlePlain);
                             }
-                            if ($metad === '' && $title !== '') {
-                                $metad = $title;
+                            if ($metad === '' && $titlePlain !== '') {
+                                $metad = mysqli_real_escape_string($con, $titlePlain);
                             }
 
-                            if (empty($title)) { array_push($errors, "Kindly fill news title"); }
+                            if (empty($titlePlain)) { array_push($errors, "Kindly fill news title"); }
                             if (empty($description) || trim(strip_tags($description)) === '') {
                                 array_push($errors, "Kindly fill the full article Description");
                             }
@@ -225,8 +228,8 @@ if(isset($_POST['add']))
                 <h2 class="nm-form-section__title">Story</h2>
                 <div class="nm-form-grid">
                   <div class="nm-form-field nm-form-field--full">
-                    <label class="control-label" for="nm-title">Title</label>
-                    <input class="form-control" id="nm-title" type="text" name="title" value="<?php if(isset($_POST['add'])){ echo htmlspecialchars($_POST['title']); } ?>" required>
+                    <label class="control-label" for="nm-title-editor">Title</label>
+                    <?php echo nm_title_color_ui(isset($_POST['title']) ? $_POST['title'] : ''); ?>
                   </div>
                   <div class="nm-form-field nm-form-field--full">
                     <label class="control-label" for="nm-newsurl">News URL</label>
@@ -369,6 +372,7 @@ if(isset($_POST['add']))
 <script type="text/javascript" src="ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
 <?php echo nm_ckeditor_js('description', true); ?>
+<?php echo nm_title_color_js(); ?>
 document.getElementById('SubmitForm').addEventListener('submit', function () {
   for (var name in CKEDITOR.instances) {
     if (CKEDITOR.instances.hasOwnProperty(name)) {
@@ -532,13 +536,21 @@ document.getElementById('SubmitForm').addEventListener('submit', function () {
   }
 
   function fillFromTitle() {
-    var slug = slugify(titleEl.value);
+    var text = (typeof window.nmTitlePlain === 'function') ? window.nmTitlePlain() : (titleEl.value || '');
+    var slug = slugify(text);
     if (slug) urlEl.value = slug;
   }
 
-  titleEl.addEventListener("input", function () {
-    if (!urlManual) fillFromTitle();
-  });
+  var titleEditor = document.getElementById("nm-title-editor");
+  if (titleEditor) {
+    titleEditor.addEventListener("input", function () {
+      if (!urlManual) fillFromTitle();
+    });
+  } else {
+    titleEl.addEventListener("input", function () {
+      if (!urlManual) fillFromTitle();
+    });
+  }
 
   urlEl.addEventListener("input", function () {
     urlManual = true;
@@ -552,7 +564,7 @@ document.getElementById('SubmitForm').addEventListener('submit', function () {
     });
   }
 
-  if (!urlEl.value && titleEl.value) fillFromTitle();
+  if (!urlEl.value) fillFromTitle();
 })();
 </script>
 </body>
