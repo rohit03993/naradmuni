@@ -535,6 +535,19 @@ if (!function_exists('nm_title_allowed_colors')) {
 	}
 }
 
+if (!function_exists('nm_title_allowed_highlights')) {
+	function nm_title_allowed_highlights()
+	{
+		return array(
+			'#fde047' => 'Yellow',
+			'#86efac' => 'Green',
+			'#f9a8d4' => 'Pink',
+			'#fdba74' => 'Orange',
+			'#7dd3fc' => 'Sky',
+		);
+	}
+}
+
 if (!function_exists('nm_plain_title')) {
 	function nm_plain_title($html)
 	{
@@ -545,8 +558,8 @@ if (!function_exists('nm_plain_title')) {
 	}
 }
 
-if (!function_exists('nm_title_color_to_allowed')) {
-	function nm_title_color_to_allowed($raw)
+if (!function_exists('nm_title_nearest_hex')) {
+	function nm_title_nearest_hex($raw, $allowed, $fallback = '')
 	{
 		$raw = strtolower(trim((string) $raw));
 		$hex = '';
@@ -559,11 +572,11 @@ if (!function_exists('nm_title_color_to_allowed')) {
 			$hex = $raw;
 		}
 		if ($hex === '') {
-			return '';
+			return $fallback;
 		}
-		$best = '#111111';
+		$best = $fallback !== '' ? $fallback : reset($allowed);
 		$bestD = 99999;
-		foreach (array_keys(nm_title_allowed_colors()) as $a) {
+		foreach ($allowed as $a) {
 			$d = abs(hexdec(substr($hex, 1, 2)) - hexdec(substr($a, 1, 2)))
 				+ abs(hexdec(substr($hex, 3, 2)) - hexdec(substr($a, 3, 2)))
 				+ abs(hexdec(substr($hex, 5, 2)) - hexdec(substr($a, 5, 2)));
@@ -573,6 +586,20 @@ if (!function_exists('nm_title_color_to_allowed')) {
 			}
 		}
 		return $best;
+	}
+}
+
+if (!function_exists('nm_title_color_to_allowed')) {
+	function nm_title_color_to_allowed($raw)
+	{
+		return nm_title_nearest_hex($raw, array_keys(nm_title_allowed_colors()), '#111111');
+	}
+}
+
+if (!function_exists('nm_title_highlight_to_allowed')) {
+	function nm_title_highlight_to_allowed($raw)
+	{
+		return nm_title_nearest_hex($raw, array_keys(nm_title_allowed_highlights()), '');
 	}
 }
 
@@ -589,22 +616,33 @@ if (!function_exists('nm_sanitize_title_html')) {
 		$html = strip_tags($html, '<span>');
 		for ($i = 0; $i < 8; $i++) {
 			$html = preg_replace_callback('/<span\b([^>]*)>([^<]*)<\/span>/i', function ($m) {
-				$color = '';
-				if (preg_match('/color\s*:\s*([^;"]+)/i', $m[1], $cm)) {
-					$color = nm_title_color_to_allowed($cm[1]);
+				$bg = '';
+				$fg = '';
+				if (preg_match('/background-color\s*:\s*([^;"]+)/i', $m[1], $bm)) {
+					$bg = nm_title_highlight_to_allowed($bm[1]);
+				}
+				if (preg_match('/(?:^|;|\s)color\s*:\s*([^;"]+)/i', $m[1], $cm)) {
+					$fg = nm_title_color_to_allowed($cm[1]);
 				} elseif (preg_match('/(?:^|\s)color\s*=\s*["\']?([^"\'\s>]+)/i', $m[1], $cm)) {
-					$color = nm_title_color_to_allowed($cm[1]);
+					$fg = nm_title_color_to_allowed($cm[1]);
 				}
 				$text = htmlspecialchars($m[2], ENT_QUOTES, 'UTF-8');
-				if ($color === '' || $color === '#111111') {
+				$bits = array();
+				if ($fg !== '' && $fg !== '#111111') {
+					$bits[] = 'color:' . $fg;
+				}
+				if ($bg !== '') {
+					$bits[] = 'background-color:' . $bg;
+				}
+				if (!$bits) {
 					return $text;
 				}
-				return '<span style="color:' . $color . '">' . $text . '</span>';
+				return '<span style="' . implode(';', $bits) . '">' . $text . '</span>';
 			}, $html);
 		}
 		$out = '';
 		$offset = 0;
-		if (preg_match_all('/<span style="color:#[0-9a-f]{6}">.*?<\/span>/i', $html, $mm, PREG_OFFSET_CAPTURE)) {
+		if (preg_match_all('/<span style="(?:color:#[0-9a-f]{6};)?(?:background-color:#[0-9a-f]{6})?">.*?<\/span>/i', $html, $mm, PREG_OFFSET_CAPTURE)) {
 			foreach ($mm[0] as $hit) {
 				$pos = (int) $hit[1];
 				$out .= htmlspecialchars(substr($html, $offset, $pos - $offset), ENT_QUOTES, 'UTF-8');
@@ -625,14 +663,21 @@ if (!function_exists('nm_title_color_ui')) {
 		foreach (nm_title_allowed_colors() as $hex => $label) {
 			$buttons .= '<button type="button" class="nm-title-swatch" data-nm-title-color="' . $hex . '" title="' . nm_h($label) . '" style="background:' . $hex . '"></button>';
 		}
+		$hl = '';
+		foreach (nm_title_allowed_highlights() as $hex => $label) {
+			$hl .= '<button type="button" class="nm-title-swatch nm-title-swatch--hl" data-nm-title-hl="' . $hex . '" title="' . nm_h($label . ' highlight') . '" style="background:' . $hex . '"></button>';
+		}
 		return '<div class="nm-title-color">'
-			. '<div class="nm-title-color-bar"><span>Title colour — select words, then a colour:</span>'
+			. '<div class="nm-title-color-bar"><span>Text colour:</span>'
 			. $buttons
 			. '<button type="button" class="btn btn-outline-secondary btn-sm" id="nm-title-color-clear">Remove colour</button>'
 			. '</div>'
+			. '<div class="nm-title-color-bar"><span>Highlighter (optional):</span>'
+			. $hl
+			. '</div>'
 			. '<div id="nm-title-editor" class="form-control nm-title-editor" contenteditable="true" role="textbox">' . $safe . '</div>'
 			. '<input type="hidden" name="title" id="nm-title" value="' . nm_h($safe) . '">'
-			. '<p class="nm-form-hint">Colours are dark so they stay readable on the white site. Google and WhatsApp still get the plain title.</p>'
+			. '<p class="nm-form-hint">Select words, then a colour and/or highlighter. Highlighter paints behind the words. Google and WhatsApp still get the plain title.</p>'
 			. '</div>';
 	}
 }
@@ -653,17 +698,31 @@ if (!function_exists('nm_title_color_js')) {
   }
   ed.addEventListener('input', sync);
   ed.addEventListener('blur', sync);
-  var bar = document.querySelector('.nm-title-color-bar');
-  if (bar) {
-    bar.addEventListener('mousedown', function (e) { e.preventDefault(); });
-    bar.addEventListener('click', function (e) {
+  var wrap = document.querySelector('.nm-title-color');
+  if (wrap) {
+    wrap.addEventListener('mousedown', function (e) {
+      var t = e.target;
+      if (t && t.getAttribute && (t.getAttribute('data-nm-title-color') || t.getAttribute('data-nm-title-hl') || t.id === 'nm-title-color-clear')) {
+        e.preventDefault();
+      }
+    });
+    wrap.addEventListener('click', function (e) {
       var t = e.target;
       if (!t || !t.getAttribute) return;
       var color = t.getAttribute('data-nm-title-color');
+      var hl = t.getAttribute('data-nm-title-hl');
       if (color) {
         ed.focus();
         try { document.execCommand('styleWithCSS', false, true); } catch (e1) {}
         document.execCommand('foreColor', false, color);
+        sync();
+      }
+      if (hl) {
+        ed.focus();
+        try { document.execCommand('styleWithCSS', false, true); } catch (e3) {}
+        if (!document.execCommand('hiliteColor', false, hl)) {
+          document.execCommand('backColor', false, hl);
+        }
         sync();
       }
     });
@@ -674,6 +733,7 @@ if (!function_exists('nm_title_color_js')) {
       ed.focus();
       try { document.execCommand('styleWithCSS', false, true); } catch (e2) {}
       document.execCommand('foreColor', false, '#111111');
+      try { document.execCommand('hiliteColor', false, 'transparent'); } catch (e4) {}
       document.execCommand('removeFormat', false, null);
       sync();
     });

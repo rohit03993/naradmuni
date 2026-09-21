@@ -1,6 +1,6 @@
 import { asHtmlString } from "@/lib/html";
 
-/** Dark colours that stay readable on a white page. */
+/** Dark text colours that stay readable on a white page. */
 export const TITLE_COLORS = [
   "#111111",
   "#b91c1c",
@@ -8,6 +8,15 @@ export const TITLE_COLORS = [
   "#1d4ed8",
   "#15803d",
   "#6d28d9",
+] as const;
+
+/** Marker backgrounds. Text stays dark. */
+export const TITLE_HIGHLIGHTS = [
+  "#fde047",
+  "#86efac",
+  "#f9a8d4",
+  "#fdba74",
+  "#7dd3fc",
 ] as const;
 
 export function plainTitle(raw: unknown): string {
@@ -45,13 +54,13 @@ function normHex(raw: string): string {
   return "";
 }
 
-function nearestAllowed(hex: string): string {
-  let best = "#111111";
+function nearest(hex: string, allowed: readonly string[], fallback: string): string {
+  let best = fallback;
   let bestD = 99999;
   const br = parseInt(hex.slice(1, 3), 16);
   const bg = parseInt(hex.slice(3, 5), 16);
   const bb = parseInt(hex.slice(5, 7), 16);
-  for (const a of TITLE_COLORS) {
+  for (const a of allowed) {
     const d =
       Math.abs(br - parseInt(a.slice(1, 3), 16)) +
       Math.abs(bg - parseInt(a.slice(3, 5), 16)) +
@@ -72,21 +81,28 @@ function esc(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function extractColor(attrs: string): string {
-  const style = attrs.match(/color\s*:\s*([^;"]+)/i);
+function extractFg(attrs: string): string {
+  const style = attrs.match(/(?:^|;|\s)color\s*:\s*([^;"]+)/i);
   if (style) {
     const hex = normHex(style[1]);
-    return hex ? nearestAllowed(hex) : "";
+    return hex ? nearest(hex, TITLE_COLORS, "#111111") : "";
   }
   const named = attrs.match(/(?:^|\s)color\s*=\s*["']?([^"'\s>]+)/i);
   if (named) {
     const hex = normHex(named[1]);
-    return hex ? nearestAllowed(hex) : "";
+    return hex ? nearest(hex, TITLE_COLORS, "#111111") : "";
   }
   return "";
 }
 
-/** Allow only colour spans. Everything else becomes plain text. */
+function extractBg(attrs: string): string {
+  const style = attrs.match(/background-color\s*:\s*([^;"]+)/i);
+  if (!style) return "";
+  const hex = normHex(style[1]);
+  return hex ? nearest(hex, TITLE_HIGHLIGHTS, "") : "";
+}
+
+/** Allow only colour / highlighter spans. Everything else becomes plain text. */
 export function sanitizeTitleHtml(raw: unknown): string {
   let html = asHtmlString(raw);
   if (!html.trim()) return "";
@@ -96,13 +112,18 @@ export function sanitizeTitleHtml(raw: unknown): string {
   html = html.replace(/<(?!\/?span\b)[^>]+>/gi, "");
   for (let i = 0; i < 8; i++) {
     html = html.replace(/<span\b([^>]*)>([^<]*)<\/span>/gi, (_full, attrs, inner) => {
-      const color = extractColor(String(attrs || ""));
+      const fg = extractFg(String(attrs || ""));
+      const bg = extractBg(String(attrs || ""));
       const text = esc(String(inner || ""));
-      if (!color || color === "#111111") return text;
-      return `<span style="color:${color}">${text}</span>`;
+      const bits: string[] = [];
+      if (fg && fg !== "#111111") bits.push(`color:${fg}`);
+      if (bg) bits.push(`background-color:${bg}`);
+      if (!bits.length) return text;
+      return `<span style="${bits.join(";")}">${text}</span>`;
     });
   }
-  const re = /<span style="color:#[0-9a-f]{6}">[\s\S]*?<\/span>/gi;
+  const re =
+    /<span style="(?:color:#[0-9a-f]{6};)?(?:background-color:#[0-9a-f]{6})?">[\s\S]*?<\/span>/gi;
   const parts: string[] = [];
   let last = 0;
   let m: RegExpExecArray | null;

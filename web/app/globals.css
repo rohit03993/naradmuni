@@ -580,6 +580,12 @@ strong, b { font-weight: 700; }
   display: inline;
   font-weight: inherit;
 }
+.news-title span[style*="background"] {
+  padding: 0 0.2em;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
 
 .meta-row {
   display: flex;

@@ -1950,6 +1950,10 @@ body.nm-dialog-page {
 .nm-title-swatch:hover {
   border-color: #111;
 }
+.nm-title-swatch--hl {
+  border-radius: 4px;
+  border-color: #9ca3af;
+}
 .nm-title-editor {
   min-height: 44px;
   line-height: 1.45;
@@ -1957,6 +1961,11 @@ body.nm-dialog-page {
   background: #fff;
   color: #111;
 }
+.nm-title-editor span[style*="background"] {
+  padding: 0 0.15em;
+  border-radius: 3px;
+}
+.nm-inline-photo {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
