@@ -165,6 +165,21 @@ if (isset($_POST['update'])) {
     }
     $status = mysqli_real_escape_string($con, $sched['status']);
     $pub_date_time = mysqli_real_escape_string($con, $sched['pub_date_time']);
+    $oldStatus = isset($rs['status']) ? (string) $rs['status'] : '';
+    $publishMode = isset($_POST['publish_mode']) ? trim((string) $_POST['publish_mode']) : 'now';
+    $dateSql = '';
+    $keepLiveDate = ($oldStatus === 'Published' && $sched['status'] === 'Published' && $publishMode !== 'schedule');
+    if (!$keepLiveDate) {
+        $stamp = null;
+        if ($publishMode === 'schedule' && $sched['pub_date_time'] !== '') {
+            $stamp = nm_stamp_from_pub_date_time($sched['pub_date_time']);
+        } elseif ($sched['status'] === 'Published' && $oldStatus !== 'Published') {
+            $stamp = array('date' => date('d-m-Y'), 'time' => date('H:i'));
+        }
+        if (is_array($stamp)) {
+            $dateSql = ", `date`='" . mysqli_real_escape_string($con, $stamp['date']) . "', `time`='" . mysqli_real_escape_string($con, $stamp['time']) . "'";
+        }
+    }
 
     $post_image = $keep('image');
     if (!empty($_FILES['image']['tmp_name'])) {
@@ -191,7 +206,7 @@ if (isset($_POST['update'])) {
     }
 
     if (count($errors) == 0) {
-        $up = "UPDATE `news` SET `latest_news`='$latest_news',`metat`='$metat',`metad`='$metad',`slider`='$slider',`title`='$title',`short_description`='$short_description',`description`='$description',`image`='$post_image',`img_abt`='$img_abt',`img_source`='$img_source',`newstype`='$newstype',`category`='$category',`video_file`='$name',`videoid`='$video_id', `show_home`='$show_home', `slider_priority`='$slider_priority', `latest_priority`='$latest_priority', `team_id`='$team_id', `hashtags`='$hashtags', `pub_date_time`='$pub_date_time', `status`='$status' WHERE newsid='$srid'";
+        $up = "UPDATE `news` SET `latest_news`='$latest_news',`metat`='$metat',`metad`='$metad',`slider`='$slider',`title`='$title',`short_description`='$short_description',`description`='$description',`image`='$post_image',`img_abt`='$img_abt',`img_source`='$img_source',`newstype`='$newstype',`category`='$category',`video_file`='$name',`videoid`='$video_id', `show_home`='$show_home', `slider_priority`='$slider_priority', `latest_priority`='$latest_priority', `team_id`='$team_id', `hashtags`='$hashtags', `pub_date_time`='$pub_date_time', `status`='$status'$dateSql WHERE newsid='$srid'";
         $exUp = mysqli_query($con, $up);
 
         if ($exUp) {

@@ -67,9 +67,11 @@ while ($row = mysqli_fetch_assoc($q)) {
 	if ($when === false || $when > $nowTs) {
 		continue;
 	}
+	$stampDate = mysqli_real_escape_string($con, date('d-m-Y', $when));
+	$stampTime = mysqli_real_escape_string($con, date('H:i', $when));
 	$ok = mysqli_query(
 		$con,
-		"UPDATE `news` SET `status`='Published' WHERE `newsid`='$id' AND `status`='Scheduled' LIMIT 1"
+		"UPDATE `news` SET `status`='Published', `date`='$stampDate', `time`='$stampTime' WHERE `newsid`='$id' AND `status`='Scheduled' LIMIT 1"
 	);
 	if (!$ok || mysqli_affected_rows($con) < 1) {
 		continue;

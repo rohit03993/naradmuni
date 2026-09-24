@@ -80,6 +80,14 @@ if(isset($_POST['add']))
                             }
                             $status = $sched['status'];
                             $pub_date_time = mysqli_real_escape_string($con, $sched['pub_date_time']);
+                            $publishMode = isset($_POST['publish_mode']) ? trim((string) $_POST['publish_mode']) : 'now';
+                            if ($publishMode === 'schedule' && $sched['pub_date_time'] !== '') {
+                                $stamp = nm_stamp_from_pub_date_time($sched['pub_date_time']);
+                                if (is_array($stamp)) {
+                                    $date = $stamp['date'];
+                                    $time = $stamp['time'];
+                                }
+                            }
                             $name = (isset($_FILES['video_file']['name']) ? $_FILES['video_file']['name'] : '');
                             $video_id = '';
                             $post_image = '';

@@ -157,6 +157,24 @@ if (!function_exists('nm_resolve_publish_schedule')) {
 }
 
 /**
+ * Reader-facing date/time from a go-live stamp. Same shape as news.date and news.time.
+ * Returns array(date, time) or null.
+ */
+if (!function_exists('nm_stamp_from_pub_date_time')) {
+	function nm_stamp_from_pub_date_time($pubDateTime)
+	{
+		$ts = strtotime(str_replace('T', ' ', trim((string) $pubDateTime)));
+		if ($ts === false) {
+			return null;
+		}
+		return array(
+			'date' => date('d-m-Y', $ts),
+			'time' => date('H:i', $ts),
+		);
+	}
+}
+
+/**
  * Ensure admin login accounts support role + linked public Team profile.
  * Adds columns safely if missing. Never fatals if ALTER is denied.
  */
