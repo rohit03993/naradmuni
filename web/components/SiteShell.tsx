@@ -3,7 +3,6 @@ import Header from "./Header";
 import Footer from "./Footer";
 import CitiesRail from "./CitiesRail";
 import PwaClient from "./PwaClient";
-import InstallAppButton from "./InstallAppButton";
 import type { SocialLinks } from "@/lib/branding";
 import type { Ad, Category, SitePage } from "@/lib/types";
 import { logoSrc } from "@/lib/images";
@@ -52,7 +51,6 @@ export default function SiteShell({
       ) : null}
       <div className="layout">
         <div>
-          <InstallAppButton iconUrl={iconUrl} />
           {children}
         </div>
         <aside className="rail">

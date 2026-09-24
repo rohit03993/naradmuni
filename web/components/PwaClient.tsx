@@ -1,13 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 const TOKEN_URL = "/naradmuni/token.php";
 const LS_INSTALLED = "nm_pwa_installed";
-const LS_DISMISS_UNTIL = "nm_pwa_dismiss_until";
-const SS_SESSION_DISMISS = "nm_pwa_session_dismiss";
-const SHOW_DELAY_MS = 45_000; // don't fight first paint / menu taps
-const REDISPLAY_AFTER_MS = 24 * 60 * 60 * 1000;
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -48,17 +44,6 @@ async function saveToken(token: string) {
   localStorage.setItem("nm_fcm_token_saved", token);
 }
 
-function detectIosMode(): "none" | "safari" | "other" {
-  if (typeof navigator === "undefined") return "none";
-  const ua = navigator.userAgent || "";
-  if (!/iPhone|iPad|iPod/i.test(ua)) return "none";
-  const nav = navigator as Navigator & { standalone?: boolean };
-  if (nav.standalone) return "none";
-  if (/CriOS|FxiOS|EdgiOS|FBAN|FBAV|Instagram|Line\//i.test(ua)) return "other";
-  if (/Safari/i.test(ua)) return "safari";
-  return "other";
-}
-
 function isStandaloneDisplay(): boolean {
   if (typeof window === "undefined") return false;
   if (window.matchMedia("(display-mode: standalone)").matches) return true;
@@ -68,35 +53,9 @@ function isStandaloneDisplay(): boolean {
   return nav.standalone === true;
 }
 
-function isPwaInstalled(): boolean {
-  if (typeof window === "undefined") return false;
-  if (isStandaloneDisplay()) return true;
-  try {
-    if (localStorage.getItem(LS_INSTALLED) === "1") return true;
-  } catch {
-    /* ignore */
-  }
-  return false;
-}
-
-/** True only when the app is really running as installed — not a sticky localStorage flag */
-function isReallyInstalled(): boolean {
-  return isStandaloneDisplay();
-}
-
-function clearInstalledFlag() {
-  try {
-    localStorage.removeItem(LS_INSTALLED);
-  } catch {
-    /* ignore */
-  }
-}
-
 function markInstalled() {
   try {
     localStorage.setItem(LS_INSTALLED, "1");
-    localStorage.removeItem(LS_DISMISS_UNTIL);
-    sessionStorage.removeItem(SS_SESSION_DISMISS);
   } catch {
     /* ignore */
   }
@@ -119,30 +78,6 @@ async function detectInstalledRelatedApp(): Promise<boolean> {
   return false;
 }
 
-async function shouldAutoShowInstall(): Promise<boolean> {
-  if (isReallyInstalled()) {
-    markInstalled();
-    return false;
-  }
-  try {
-    if (sessionStorage.getItem(SS_SESSION_DISMISS) === "1") return false;
-    const until = Number(localStorage.getItem(LS_DISMISS_UNTIL) || "0");
-    if (until && Date.now() < until) return false;
-  } catch {
-    /* allow */
-  }
-  return true;
-}
-
-function dismissInstallPrompt() {
-  try {
-    sessionStorage.setItem(SS_SESSION_DISMISS, "1");
-    localStorage.setItem(LS_DISMISS_UNTIL, String(Date.now() + REDISPLAY_AFTER_MS));
-  } catch {
-    /* ignore */
-  }
-}
-
 export function openNaradmuniInstall() {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event("nm:open-install"));
@@ -157,16 +92,10 @@ export function requestNaradmuniNotifications() {
 
 export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?: string }) {
   const deferredRef = useRef<BeforeInstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [manualTip, setManualTip] = useState(false);
-  const [notifState, setNotifState] = useState<"idle" | "on" | "denied" | "unsupported">("idle");
-  const [iosMode, setIosMode] = useState<"none" | "safari" | "other">("none");
 
   const enableNotifications = useCallback(async () => {
     if (typeof window === "undefined") return;
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-      setNotifState("unsupported");
       return;
     }
 
@@ -200,7 +129,6 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
 
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
-        setNotifState("denied");
         return;
       }
 
@@ -209,7 +137,6 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
       const token = await messaging.getToken();
       if (token) {
         await saveToken(token);
-        setNotifState("on");
       }
 
       messaging.onMessage((payload) => {
@@ -230,40 +157,37 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
       });
     } catch (err) {
       console.warn("Naradmuni notifications:", err);
-      setNotifState("denied");
     }
   }, [iconUrl]);
 
-  const openInstallModal = useCallback(() => {
-    // Sticky localStorage often blocked the modal with a silent no-op
-    if (isReallyInstalled()) {
-      setInstalled(true);
-      setShowModal(true);
-      setManualTip(false);
+  const startInstall = useCallback(async () => {
+    if (isStandaloneDisplay()) {
+      markInstalled();
       return;
     }
-    if (localStorage.getItem(LS_INSTALLED) === "1" && !isReallyInstalled()) {
-      clearInstalledFlag();
+    const ev = deferredRef.current;
+    if (!ev) return;
+    try {
+      await ev.prompt();
+      const choice = await ev.userChoice;
+      deferredRef.current = null;
+      if (choice.outcome === "accepted") {
+        markInstalled();
+        void enableNotifications();
+      }
+    } catch {
+      /* browser refused the prompt; no card is shown */
     }
-    setInstalled(false);
-    setManualTip(false);
-    setShowModal(true);
-  }, []);
+  }, [enableNotifications]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setIosMode(detectIosMode());
 
-    const syncInstalled = async () => {
-      if (isReallyInstalled()) {
-        markInstalled();
-        setInstalled(true);
-        return;
-      }
-      // Related Play app ≠ PWA; don't block install UI
+    if (isStandaloneDisplay()) {
+      markInstalled();
+    } else {
       void detectInstalledRelatedApp();
-    };
-    void syncInstalled();
+    }
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
@@ -273,10 +197,7 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
     }
 
     if ("Notification" in window && Notification.permission === "granted") {
-      setNotifState("on");
       void enableNotifications();
-    } else if ("Notification" in window && Notification.permission === "denied") {
-      setNotifState("denied");
     }
 
     const onBip = (e: Event) => {
@@ -285,134 +206,23 @@ export default function PwaClient({ iconUrl = "/icons/nm-192.png" }: { iconUrl?:
     };
     const onInstalled = () => {
       markInstalled();
-      setInstalled(true);
-      setShowModal(false);
-      setManualTip(false);
     };
 
     window.addEventListener("beforeinstallprompt", onBip);
     window.addEventListener("appinstalled", onInstalled);
 
-    const onOpen = () => openInstallModal();
+    const onOpen = () => void startInstall();
     const onNotif = () => void enableNotifications();
     window.addEventListener("nm:open-install", onOpen);
     window.addEventListener("nm:enable-notifications", onNotif);
 
-    const timer = window.setTimeout(() => {
-      void shouldAutoShowInstall().then((ok) => {
-        // Don't stack our install card on a Google vignette — wait for Close.
-        if (location.hash.includes("google_vignette")) return;
-        if (ok && !isReallyInstalled()) setShowModal(true);
-      });
-    }, SHOW_DELAY_MS);
-
     return () => {
-      window.clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", onBip);
       window.removeEventListener("appinstalled", onInstalled);
       window.removeEventListener("nm:open-install", onOpen);
       window.removeEventListener("nm:enable-notifications", onNotif);
     };
-  }, [enableNotifications, openInstallModal]);
+  }, [enableNotifications, startInstall]);
 
-  const onInstall = async () => {
-    const ev = deferredRef.current;
-    if (ev) {
-      try {
-        await ev.prompt();
-        const choice = await ev.userChoice;
-        deferredRef.current = null;
-        if (choice.outcome === "accepted") {
-          markInstalled();
-          setInstalled(true);
-          setShowModal(false);
-          void enableNotifications();
-        } else {
-          dismissInstallPrompt();
-          setManualTip(true);
-        }
-      } catch {
-        setManualTip(true);
-      }
-      return;
-    }
-    setManualTip(true);
-  };
-
-  const dismissModal = () => {
-    dismissInstallPrompt();
-    setShowModal(false);
-    setManualTip(false);
-  };
-
-  return (
-    <>
-      {showModal ? (
-        <div className="pwa-overlay" role="dialog" aria-modal="true" aria-label="Install Naradmuni app">
-          <div className="pwa-card">
-            <button type="button" className="pwa-card-close" onClick={dismissModal} aria-label="Close">
-              ✕
-            </button>
-            <img className="pwa-card-icon" src={iconUrl} alt="" width={64} height={64} />
-            <h3>The Naradmuni</h3>
-            {installed && isReallyInstalled() ? (
-              <p>App is already installed on your home screen.</p>
-            ) : iosMode === "other" ? (
-              <>
-                <p>iPhone cannot install from this browser.</p>
-                <div className="pwa-ios-tip">
-                  <p>
-                    Open this page in <strong>Safari</strong>, then tap <strong>Share</strong> (□↑) →{" "}
-                    <strong>Add to Home Screen</strong>.
-                  </p>
-                  <button type="button" className="pwa-later-btn" onClick={dismissModal} style={{ marginTop: 8 }}>
-                    Close
-                  </button>
-                </div>
-              </>
-            ) : iosMode === "safari" ? (
-              <>
-                <p>Add The Naradmuni to your home screen.</p>
-                <div className="pwa-ios-tip">
-                  <p>
-                    Tap <strong>Share</strong> (□↑) at the bottom → <strong>Add to Home Screen</strong>.
-                  </p>
-                  <button type="button" className="pwa-later-btn" onClick={dismissModal} style={{ marginTop: 8 }}>
-                    Close
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p>Install the app on your home screen for faster access.</p>
-                {manualTip ? (
-                  <div className="pwa-ios-tip">
-                    <p>
-                      Chrome menu <strong>⋮</strong> → <strong>Install app</strong> / <strong>Add to Home screen</strong>
-                      <br />
-                      <small>Does not work in Incognito — use a normal Chrome window.</small>
-                    </p>
-                    <button type="button" className="pwa-later-btn" onClick={dismissModal} style={{ marginTop: 8 }}>
-                      Close
-                    </button>
-                  </div>
-                ) : (
-                  <div className="pwa-card-actions">
-                    {!isReallyInstalled() ? (
-                      <button type="button" className="pwa-install-btn pwa-install-btn--block" onClick={() => void onInstall()}>
-                        Install App now
-                      </button>
-                    ) : null}
-                    <button type="button" className="pwa-later-btn" onClick={dismissModal}>
-                      Later
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      ) : null}
-    </>
-  );
+  return null;
 }
